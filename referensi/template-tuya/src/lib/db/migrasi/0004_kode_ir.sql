@@ -1,0 +1,1 @@
+ALTER TABLE "perangkat" ADD COLUMN "kode_ir" jsonb;

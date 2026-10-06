@@ -1,0 +1,18 @@
+#!/bin/sh
+# Peran basis data Tuya MCP - dijalankan SEKALI saat direktori data Postgres
+# baru diinisialisasi. Tidak ada peran aplikasi yang superuser atau BYPASSRLS;
+# pemilik tabel (tuya_migrasi) pun terkena RLS lewat FORCE.
+set -eu
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<SQL
+CREATE EXTENSION IF NOT EXISTS citext;
+CREATE ROLE tuya_migrasi LOGIN PASSWORD '${TUYA_MIGRASI_PASSWORD}' NOSUPERUSER NOBYPASSRLS NOCREATEROLE NOCREATEDB;
+CREATE ROLE tuya_app LOGIN PASSWORD '${TUYA_APP_PASSWORD}' NOSUPERUSER NOBYPASSRLS NOCREATEROLE NOCREATEDB;
+CREATE ROLE tuya_worker LOGIN PASSWORD '${TUYA_WORKER_PASSWORD}' NOSUPERUSER NOBYPASSRLS NOCREATEROLE NOCREATEDB;
+GRANT CONNECT, CREATE ON DATABASE ${POSTGRES_DB} TO tuya_migrasi;
+GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO tuya_app, tuya_worker;
+ALTER SCHEMA public OWNER TO tuya_migrasi;
+GRANT USAGE ON SCHEMA public TO tuya_app, tuya_worker;
+ALTER DEFAULT PRIVILEGES FOR ROLE tuya_migrasi IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO tuya_app, tuya_worker;
+ALTER DEFAULT PRIVILEGES FOR ROLE tuya_migrasi IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO tuya_app, tuya_worker;
+ALTER DEFAULT PRIVILEGES FOR ROLE tuya_migrasi IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO tuya_app, tuya_worker;
+SQL

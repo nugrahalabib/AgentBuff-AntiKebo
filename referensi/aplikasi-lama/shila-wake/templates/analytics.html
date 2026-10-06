@@ -1,0 +1,1453 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Shila Wake System{% endblock %}
+{% block page_title %}Analytics{% endblock %}
+{% block page_sub %}Track your wake patterns and improve sleep habits{% endblock %}
+
+{% block content %}
+<!-- Wake Performance Score (Hero) -->
+<section class="card" style="margin-top: 8px;">
+    <div class="card-title">📊 Wake Performance Score</div>
+    <div class="card-sub">Your overall wake performance this week</div>
+
+    <div class="stats-grid">
+        <div class="stat-card accent-green">
+            <div class="stat-value">{{ score.score }}%</div>
+            <div class="stat-label">Wake Success Rate</div>
+            <div class="stat-icon">✅</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ score.on_time }}<span class="stat-unit">/{{ score.total }}</span></div>
+            <div class="stat-label">On Time This Week</div>
+            <div class="stat-icon">⏱️</div>
+        </div>
+        <div class="stat-card accent-orange">
+            <div class="stat-value">{{ streaks.current }}</div>
+            <div class="stat-label">Current Streak 🔥</div>
+            <div class="stat-icon">🔄</div>
+        </div>
+        <div class="stat-card accent-purple">
+            <div class="stat-value">{{ streaks.longest }}</div>
+            <div class="stat-label">Longest Streak</div>
+            <div class="stat-icon">🏆</div>
+        </div>
+    </div>
+
+    <div class="progress-section">
+        <div class="progress-header">
+            <span>Weekly Progress</span>
+            <span class="progress-value">{{ score.score }}% - {% if score.score >= 80 %}Excellent!{% elif score.score >=
+                60 %}Good!{% elif score.score >= 40 %}Keep trying!{% else %}Let's improve!{% endif %}</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ score.score }}%"></div>
+        </div>
+        <div class="progress-days">
+            <span class="day done">Mon</span>
+            <span class="day done">Tue</span>
+            <span class="day done">Wed</span>
+            <span class="day done">Thu</span>
+            <span class="day current">Fri</span>
+            <span class="day">Sat</span>
+            <span class="day">Sun</span>
+        </div>
+    </div>
+</section>
+
+<!-- Snooze Analysis & Alarm Patterns -->
+<div class="analytics-grid">
+    <!-- Snooze Analysis -->
+    <section class="card">
+        <div class="card-title">🔄 Snooze Analysis</div>
+        <div class="card-sub">Deep dive into your snooze behavior</div>
+
+        <div class="heatmap-container">
+            <div class="heatmap-label">Snooze frequency by hour</div>
+            <div class="heatmap">
+                <div class="heatmap-row">
+                    <span class="heatmap-day">Mon</span>
+                    <div class="heatmap-cells" id="heatmapMon"></div>
+                </div>
+                <div class="heatmap-row">
+                    <span class="heatmap-day">Tue</span>
+                    <div class="heatmap-cells" id="heatmapTue"></div>
+                </div>
+                <div class="heatmap-row">
+                    <span class="heatmap-day">Wed</span>
+                    <div class="heatmap-cells" id="heatmapWed"></div>
+                </div>
+                <div class="heatmap-row">
+                    <span class="heatmap-day">Thu</span>
+                    <div class="heatmap-cells" id="heatmapThu"></div>
+                </div>
+                <div class="heatmap-row">
+                    <span class="heatmap-day">Fri</span>
+                    <div class="heatmap-cells" id="heatmapFri"></div>
+                </div>
+                <div class="heatmap-row">
+                    <span class="heatmap-day">Sat</span>
+                    <div class="heatmap-cells" id="heatmapSat"></div>
+                </div>
+                <div class="heatmap-row">
+                    <span class="heatmap-day">Sun</span>
+                    <div class="heatmap-cells" id="heatmapSun"></div>
+                </div>
+            </div>
+            <div class="heatmap-hours">
+                <span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span>
+            </div>
+            <div class="heatmap-legend">
+                <span class="legend-item"><span class="legend-color c0"></span>0</span>
+                <span class="legend-item"><span class="legend-color c1"></span>1-2</span>
+                <span class="legend-item"><span class="legend-color c2"></span>3-4</span>
+                <span class="legend-item"><span class="legend-color c3"></span>5+</span>
+            </div>
+        </div>
+
+        <!-- Insight & Streak Boxes -->
+        <div class="snooze-info-boxes">
+            <div class="insight-box">
+                <span class="insight-icon">💡</span>
+                <div class="insight-content">
+                    <div class="insight-title-small">Insight</div>
+                    {% if insight.has_data %}
+                    <span class="insight-text">{{ insight.worst_day }} jam {{ insight.worst_hour }} pagi adalah waktu
+                        tersulit bangun. Pertimbangkan Mode Nuclear!</span>
+                    {% else %}
+                    <span class="insight-text">Belum cukup data untuk insight. Gunakan alarm beberapa minggu untuk
+                        melihat pola.</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="streak-badge">
+                <span class="streak-icon">🏆</span>
+                <div class="streak-info">
+                    <span class="streak-label">Current Streak</span>
+                    <span class="streak-value">{{ streaks.current }} hari tanpa snooze!</span>
+                    <span class="streak-target">Target: 7 hari berturut-turut</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Alarm Patterns -->
+    <section class="card">
+        <div class="card-title">⏰ Alarm Patterns</div>
+        <div class="card-sub">Your alarm timing habits</div>
+
+        <div class="chart-section">
+            <div class="chart-label">Most Common Alarm Times</div>
+            <div class="bar-chart">
+                {% if alarm_patterns %}
+                {% for pattern in alarm_patterns %}
+                <div class="bar-item">
+                    <span class="bar-label">{{ pattern.time }}</span>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: {{ pattern.percent }}%"></div>
+                    </div>
+                    <span class="bar-value">{{ pattern.count }}x</span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state" style="padding: 20px; text-align: center; color: var(--muted);">
+                    <span>No alarm data yet</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-label">Wake Mode Distribution</div>
+            <div class="mode-distribution">
+                <div class="mode-item gentle">
+                    <div class="mode-icon">🌅</div>
+                    <div class="mode-bar" style="width: {{ mode_dist.gentle }}%"></div>
+                    <div class="mode-info">
+                        <span class="mode-name">Gentle</span>
+                        <span class="mode-value">{{ mode_dist.gentle }}%</span>
+                    </div>
+                </div>
+                <div class="mode-item normal">
+                    <div class="mode-icon">☀️</div>
+                    <div class="mode-bar" style="width: {{ mode_dist.normal }}%"></div>
+                    <div class="mode-info">
+                        <span class="mode-name">Normal</span>
+                        <span class="mode-value">{{ mode_dist.normal }}%</span>
+                    </div>
+                </div>
+                <div class="mode-item nuclear">
+                    <div class="mode-icon">🔥</div>
+                    <div class="mode-bar" style="width: {{ mode_dist.nuclear }}%"></div>
+                    <div class="mode-info">
+                        <span class="mode-name">Nuclear</span>
+                        <span class="mode-value">{{ mode_dist.nuclear }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Best Wake Time & Routine Effectiveness -->
+<div class="analytics-grid">
+    <!-- Best Wake Time -->
+    <section class="card">
+        <div class="card-title">⏱️ Best Wake Time</div>
+        <div class="card-sub">Find your optimal wake time</div>
+
+        <!-- Chart Container Box -->
+        <div class="scatter-container">
+            <div class="scatter-header">
+                <span class="scatter-title">Snooze Count vs Wake Time</span>
+                <span class="scatter-legend">🔴 High • 🟠 Medium • 🟢 Low</span>
+            </div>
+            <div class="scatter-chart">
+                <div class="scatter-y-axis">
+                    <span>5</span>
+                    <span>4</span>
+                    <span>3</span>
+                    <span>2</span>
+                    <span>1</span>
+                    <span>0</span>
+                </div>
+                <div class="scatter-plot">
+                    {% if optimal_wake.has_data and optimal_wake.scatter_points %}
+                    {% for point in optimal_wake.scatter_points %}
+                    <div class="scatter-point {{ point.class }}" style="left: {{ point.x }}%; bottom: {{ point.y }}%"
+                        title="{{ point.time }} - Avg {{ point.snooze }} snoozes ({{ point.triggered }} alarms)">●</div>
+                    {% endfor %}
+                    {% if optimal_wake.optimal_time %}
+                    <div class="optimal-zone"
+                        style="left: {{ optimal_wake.scatter_points|selectattr('class', 'equalto', 'optimal')|first|attr('x') - 5 }}%; bottom: 0; width: 15%; height: 35px;">
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="no-data"
+                        style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--muted);">
+                        Need more data to analyze</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="scatter-x-axis">
+                <span>5:00</span>
+                <span>6:00</span>
+                <span>7:00</span>
+                <span>8:00</span>
+                <span>9:00</span>
+                <span>10:00</span>
+            </div>
+        </div>
+
+        <!-- Optimal Time Result Box -->
+        <div class="optimal-time-box">
+            <span class="optimal-icon">🎯</span>
+            <div class="optimal-info">
+                <span class="optimal-label">Optimal Wake Time</span>
+                <span class="optimal-value">{% if optimal_wake.optimal_time %}{{ optimal_wake.optimal_time }}{% else
+                    %}--:--{% endif %}</span>
+            </div>
+            <span class="optimal-desc">{% if optimal_wake.optimal_time %}Lowest snooze rate detected (avg {{
+                optimal_wake.optimal_snooze }} snoozes){% else %}Need more alarm data{% endif %}</span>
+        </div>
+    </section>
+
+    <!-- Routine Effectiveness -->
+    <section class="card">
+        <div class="card-title">🎛️ Routine Effectiveness</div>
+        <div class="card-sub">How well your routines perform</div>
+
+        <div class="routine-stats">
+            {% if routine_stats %}
+            {% for routine in routine_stats %}
+            <div class="routine-stat-item">
+                <div
+                    class="routine-stat-icon {% if routine.mode == 'gentle' %}orange{% elif routine.mode == 'nuclear' %}purple{% else %}blue{% endif %}">
+                    {{ routine.icon }}</div>
+                <div class="routine-stat-info">
+                    <div class="routine-stat-name">{{ routine.name }}</div>
+                    <div class="routine-stat-meta">{{ routine.mode|title }} mode</div>
+                </div>
+                <div class="routine-stat-data">
+                    <div class="routine-stat-runs">{{ routine.runs }} runs</div>
+                    <div class="routine-stat-success success">{{ routine.success_rate }}%</div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state" style="padding: 20px; text-align: center; color: var(--muted);">
+                <span>No routine data yet</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="device-usage">
+            <div class="chart-label">Most Activated Devices</div>
+            <div class="device-chips">
+                {% if device_stats %}
+                {% for device in device_stats %}
+                <span class="device-chip-stat">💡 {{ device.name }} <strong>{{ device.count }}</strong></span>
+                {% endfor %}
+                {% else %}
+                <span class="device-chip-stat" style="color: var(--muted);">No device data yet</span>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- AI Insights -->
+<section class="card">
+    <div class="card-title">💡 AI Insights from Shila</div>
+    <div class="card-sub">Smart recommendations based on your patterns</div>
+
+    <div class="insights-grid">
+        {% for insight in ai_insights %}
+        <div class="insight-card">
+            <div class="insight-header">
+                <span class="insight-type {{ insight.type }}">{{ insight.icon }} {{ insight.category }}</span>
+            </div>
+            <div class="insight-title">{{ insight.title }}</div>
+            <div class="insight-desc">{{ insight.description }}</div>
+            <button class="btn insight-action">{{ insight.action }}</button>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- Historical View -->
+<section class="card">
+    <div class="card-title">📅 Historical View</div>
+    <div class="card-sub">Your wake performance over time (Last 12 months)</div>
+
+    <div class="calendar-heatmap-container">
+        <div class="calendar-wrapper">
+            <!-- Day Labels -->
+            <div class="calendar-day-labels">
+                <span></span>
+                <span>Mon</span>
+                <span></span>
+                <span>Wed</span>
+                <span></span>
+                <span>Fri</span>
+                <span></span>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="calendar-main">
+                <!-- Month Labels (generated by JS) -->
+                <div class="calendar-months" id="calendarMonths"></div>
+
+                <!-- Grid (7 rows x 53 weeks) -->
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+        </div>
+
+        <div class="calendar-footer">
+            <div class="calendar-legend">
+                <span>Less Snooze</span>
+                <span class="legend-color c0"></span>
+                <span class="legend-color c1"></span>
+                <span class="legend-color c2"></span>
+                <span class="legend-color c3"></span>
+                <span>More Snooze</span>
+            </div>
+            <div class="calendar-current-date" id="calendarCurrentDate"></div>
+        </div>
+    </div>
+
+    <div class="history-summary">
+        <div class="history-stat">
+            <span class="history-value">{{ totals.total_alarms }}</span>
+            <span class="history-label">Total Alarms</span>
+        </div>
+        <div class="history-stat">
+            <span class="history-value">{{ totals.perfect_days }}</span>
+            <span class="history-label">Perfect Days</span>
+        </div>
+        <div class="history-stat">
+            <span class="history-value">{{ streaks.longest }}</span>
+            <span class="history-label">Longest Streak</span>
+        </div>
+        <div class="history-stat">
+            <span class="history-value">{{ score.score }}%</span>
+            <span class="history-label">Weekly Success</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin: 20px 0;
+    }
+
+    .stat-card {
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card.accent-green {
+        border-left: 3px solid var(--success);
+    }
+
+    .stat-card.accent-orange {
+        border-left: 3px solid var(--warning);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1;
+    }
+
+    .stat-unit {
+        font-size: 1rem;
+        opacity: 0.7;
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    .stat-icon {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        font-size: 1.5rem;
+        opacity: 0.5;
+    }
+
+    /* Progress Section */
+    .progress-section {
+        margin-top: 20px;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .progress-value {
+        color: var(--success);
+        font-weight: 600;
+    }
+
+    .progress-bar {
+        height: 12px;
+        background: var(--secondary);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--success));
+        border-radius: var(--radius-full);
+        transition: width 0.5s ease;
+    }
+
+    .progress-days {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+    }
+
+    .progress-days .day {
+        padding: 6px 12px;
+        background: var(--secondary);
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .progress-days .day.done {
+        background: var(--success);
+        color: white;
+    }
+
+    .progress-days .day.current {
+        background: var(--accent);
+        color: white;
+    }
+
+    /* Analytics Grid */
+    .analytics-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    /* Heatmap - Full Width */
+    .heatmap-container {
+        margin: 16px 0;
+        padding: 20px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+    }
+
+    .heatmap-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 16px;
+    }
+
+    .heatmap {
+        width: 100%;
+    }
+
+    .heatmap-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+    .heatmap-day {
+        width: 35px;
+        font-size: 12px;
+        color: var(--muted);
+        flex-shrink: 0;
+    }
+
+    .heatmap-cells {
+        display: flex;
+        flex: 1;
+        gap: 4px;
+    }
+
+    .heatmap-cell {
+        flex: 1;
+        height: 28px;
+        border-radius: 4px;
+        background: var(--border);
+        min-width: 0;
+    }
+
+    .heatmap-cell.c1 {
+        background: #2ea043;
+    }
+
+    .heatmap-cell.c2 {
+        background: #faa61a;
+    }
+
+    .heatmap-cell.c3 {
+        background: #f85149;
+    }
+
+    .heatmap-hours {
+        display: flex;
+        flex: 1;
+        margin-left: 43px;
+        margin-top: 8px;
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .heatmap-hours span {
+        flex: 1;
+        text-align: center;
+    }
+
+    .heatmap-legend {
+        display: flex;
+        gap: 12px;
+        margin-top: 12px;
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+    }
+
+    .legend-color.c0 {
+        background: var(--border);
+    }
+
+    .legend-color.c1 {
+        background: #2ea043;
+    }
+
+    .legend-color.c2 {
+        background: #faa61a;
+    }
+
+    .legend-color.c3 {
+        background: #f85149;
+    }
+
+    /* Snooze Info Boxes Container */
+    .snooze-info-boxes {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    /* Insight Box */
+    .insight-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--warning);
+        border-radius: var(--radius-md);
+    }
+
+    .insight-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .insight-content {
+        flex: 1;
+    }
+
+    .insight-title-small {
+        font-size: 12px;
+        color: var(--warning);
+        font-weight: 600;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .insight-text {
+        font-size: 13px;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    /* Streak Badge */
+    .streak-badge {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--success);
+        border-radius: var(--radius-md);
+    }
+
+    .streak-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+
+    .streak-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .streak-label {
+        font-size: 12px;
+        color: var(--success);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .streak-value {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .streak-target {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    /* Bar Chart */
+    .chart-section {
+        margin: 16px 0;
+    }
+
+    .chart-label {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 12px;
+    }
+
+    .bar-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .bar-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .bar-label {
+        width: 50px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .bar-track {
+        flex: 1;
+        height: 24px;
+        background: var(--secondary);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+    }
+
+    .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), #ff6b9d);
+        border-radius: var(--radius-md);
+    }
+
+    .bar-value {
+        width: 40px;
+        font-size: 13px;
+        font-weight: 600;
+        text-align: right;
+    }
+
+    /* Mode Distribution */
+    .mode-distribution {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .mode-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .mode-icon {
+        font-size: 1.2rem;
+        width: 30px;
+    }
+
+    .mode-bar {
+        height: 20px;
+        background: var(--accent);
+        border-radius: var(--radius-md);
+    }
+
+    .mode-item.gentle .mode-bar {
+        background: #2ea043;
+    }
+
+    .mode-item.normal .mode-bar {
+        background: #faa61a;
+    }
+
+    .mode-item.nuclear .mode-bar {
+        background: #f85149;
+    }
+
+    .mode-info {
+        display: flex;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .mode-name {
+        color: var(--muted);
+    }
+
+    .mode-value {
+        font-weight: 600;
+    }
+
+    /* Scatter Chart Container */
+    .scatter-container {
+        margin: 16px 0;
+        padding: 20px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+    }
+
+    .scatter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .scatter-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .scatter-legend {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .scatter-chart {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .scatter-y-axis {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--muted);
+        width: 20px;
+        flex-shrink: 0;
+        padding: 5px 0;
+    }
+
+    .scatter-plot {
+        flex: 1;
+        height: 180px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        position: relative;
+    }
+
+    .scatter-point {
+        position: absolute;
+        font-size: 16px;
+        transform: translate(-50%, 50%);
+        text-shadow: 0 0 8px currentColor;
+    }
+
+    .scatter-point.high {
+        color: #f85149;
+    }
+
+    .scatter-point.medium {
+        color: #faa61a;
+    }
+
+    .scatter-point.low {
+        color: #2ea043;
+    }
+
+    .scatter-point.optimal {
+        color: var(--accent);
+        font-size: 20px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: translate(-50%, 50%) scale(1);
+        }
+
+        50% {
+            transform: translate(-50%, 50%) scale(1.2);
+        }
+    }
+
+    .optimal-zone {
+        position: absolute;
+        background: rgba(255, 107, 157, 0.15);
+        border: 2px dashed var(--accent);
+        border-radius: var(--radius-md);
+    }
+
+    .scatter-x-axis {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 12px;
+        padding-left: 32px;
+    }
+
+    /* Optimal Time Result Box */
+    .optimal-time-box {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+        margin-top: 16px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: var(--radius-md);
+    }
+
+    .optimal-icon {
+        font-size: 2.5rem;
+        flex-shrink: 0;
+    }
+
+    .optimal-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .optimal-label {
+        font-size: 12px;
+        color: var(--accent);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .optimal-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .optimal-desc {
+        font-size: 13px;
+        color: var(--muted);
+        margin-left: auto;
+    }
+
+    /* Routine Stats */
+    .routine-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin: 16px 0;
+    }
+
+    .routine-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+    }
+
+    .routine-stat-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-md);
+        font-size: 1.2rem;
+    }
+
+    .routine-stat-icon.orange {
+        background: rgba(255, 160, 0, 0.2);
+    }
+
+    .routine-stat-icon.blue {
+        background: rgba(0, 149, 255, 0.2);
+    }
+
+    .routine-stat-icon.purple {
+        background: rgba(139, 92, 246, 0.2);
+    }
+
+    .routine-stat-info {
+        flex: 1;
+    }
+
+    .routine-stat-name {
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .routine-stat-meta {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .routine-stat-data {
+        text-align: right;
+    }
+
+    .routine-stat-runs {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .routine-stat-success {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .routine-stat-success.success {
+        color: var(--success);
+    }
+
+    /* Device Usage */
+    .device-usage {
+        margin-top: 16px;
+    }
+
+    .device-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .device-chip-stat {
+        padding: 8px 12px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+    }
+
+    .device-chip-stat strong {
+        color: var(--accent);
+        margin-left: 4px;
+    }
+
+    /* Insights Grid */
+    .insights-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .insight-card {
+        padding: 20px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+    }
+
+    .insight-header {
+        margin-bottom: 12px;
+    }
+
+    .insight-type {
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 600;
+    }
+
+    .insight-type.optimize {
+        background: rgba(46, 160, 67, 0.2);
+        color: var(--success);
+    }
+
+    .insight-type.adjust {
+        background: rgba(250, 166, 26, 0.2);
+        color: var(--warning);
+    }
+
+    .insight-type.limit {
+        background: rgba(248, 81, 73, 0.2);
+        color: var(--danger);
+    }
+
+    .insight-title {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 8px;
+    }
+
+    .insight-desc {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+
+    .insight-action {
+        width: 100%;
+    }
+
+    /* Calendar Heatmap - GitHub Style */
+    .calendar-heatmap-container {
+        margin: 20px 0;
+        padding: 20px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow-x: auto;
+    }
+
+    .calendar-wrapper {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .calendar-day-labels {
+        display: flex;
+        flex-direction: column;
+        font-size: 10px;
+        color: var(--muted);
+        padding-top: 24px;
+        flex-shrink: 0;
+        width: 28px;
+    }
+
+    .calendar-day-labels span {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+
+    .calendar-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .calendar-months {
+        display: flex;
+        font-size: 11px;
+        color: var(--muted);
+        height: 18px;
+    }
+
+    .calendar-months span {
+        text-align: left;
+        flex-shrink: 0;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-rows: repeat(7, 1fr);
+        grid-auto-flow: column;
+        grid-auto-columns: 1fr;
+        gap: 3px;
+        width: 100%;
+    }
+
+    .calendar-cell {
+        aspect-ratio: 1;
+        min-width: 8px;
+        min-height: 8px;
+        max-height: 16px;
+        border-radius: 2px;
+        background: var(--border);
+        cursor: pointer;
+        transition: transform 0.1s, background 0.2s;
+    }
+
+    .calendar-cell:hover {
+        transform: scale(1.2);
+    }
+
+    .calendar-cell.future {
+        background: transparent;
+        border: 1px dashed var(--border);
+    }
+
+    .calendar-cell.today {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+    }
+
+    .calendar-cell.c1 {
+        background: #0e4429;
+    }
+
+    /* Good - no snooze */
+    .calendar-cell.c2 {
+        background: #006d32;
+    }
+
+    /* Light snooze */
+    .calendar-cell.c3 {
+        background: #26a641;
+    }
+
+    /* Some snooze */
+    .calendar-cell.c4 {
+        background: #39d353;
+    }
+
+    /* More snooze */
+
+    /* Alternative: Red scale for snooze (bad) */
+    .calendar-cell.s1 {
+        background: #2ea043;
+    }
+
+    /* Perfect - no snooze */
+    .calendar-cell.s2 {
+        background: #faa61a;
+    }
+
+    /* 1-2 snoozes */
+    .calendar-cell.s3 {
+        background: #f85149;
+    }
+
+    /* 3+ snoozes */
+
+    .calendar-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+
+    .calendar-legend {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .calendar-legend .legend-color {
+        width: 13px;
+        height: 13px;
+        border-radius: 2px;
+    }
+
+    .calendar-current-date {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    /* History Summary */
+    .history-summary {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+
+    .history-stat {
+        text-align: center;
+    }
+
+    .history-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent);
+    }
+
+    .history-label {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .analytics-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .insights-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .history-summary {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 600px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Real snooze heatmap data from server
+    const snoozeHeatmapData = {{ snooze_heatmap | tojson | safe }};
+
+    // Real daily data from server
+    const dailyData = {{ daily_data | tojson | safe }};
+
+    // Generate heatmap cells with real data
+    function generateHeatmap() {
+        const dayMap = {
+            'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday',
+            'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday', 'Sun': 'Sunday'
+        };
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const hours = [5, 6, 7, 8, 9, 10, 11, 12];
+
+        days.forEach(day => {
+            const container = document.getElementById(`heatmap${day}`);
+            if (container) {
+                const fullDay = dayMap[day];
+                const dayData = snoozeHeatmapData[fullDay] || {};
+
+                container.innerHTML = hours.map(hour => {
+                    const val = dayData[hour] || 0;
+                    const cls = val === 0 ? '' : val <= 2 ? 'c1' : val <= 4 ? 'c2' : 'c3';
+                    return `<div class="heatmap-cell ${cls}" title="${day} ${hour}:00 - ${val} snoozes"></div>`;
+                }).join('');
+            }
+        });
+    }
+
+    // Generate calendar grid with real data - GitHub style
+    function generateCalendar() {
+        const gridContainer = document.getElementById('calendarGrid');
+        const monthsContainer = document.getElementById('calendarMonths');
+        const dateDisplay = document.getElementById('calendarCurrentDate');
+        if (!gridContainer || !monthsContainer) return;
+
+        const today = new Date();
+        const oneYearAgo = new Date(today);
+        oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+        // Start from the Sunday of the week containing oneYearAgo
+        const startDate = new Date(oneYearAgo);
+        startDate.setDate(startDate.getDate() - startDate.getDay());
+
+        // Calculate total weeks (53 weeks max)
+        const endDate = new Date(today);
+        const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+        const totalWeeks = Math.ceil(totalDays / 7);
+
+        // Generate cells
+        let cells = '';
+        let currentDate = new Date(startDate);
+        let monthPositions = []; // Track where each month starts
+        let currentMonth = -1;
+        let weekIndex = 0;
+
+        for (let week = 0; week < totalWeeks; week++) {
+            for (let day = 0; day < 7; day++) {
+                const isToday = currentDate.toDateString() === today.toDateString();
+                const isFuture = currentDate > today;
+                const isPast = currentDate < oneYearAgo;
+
+                // Track month positions (first day of month in first row)
+                if (day === 0 && currentDate.getMonth() !== currentMonth) {
+                    currentMonth = currentDate.getMonth();
+                    monthPositions.push({
+                        month: currentMonth,
+                        week: week
+                    });
+                }
+
+                let cellClass = 'calendar-cell';
+
+                if (isFuture) {
+                    cellClass += ' future';
+                } else if (!isPast) {
+                    // Use real daily data
+                    const dateKey = currentDate.toISOString().split('T')[0];
+                    const dayStats = dailyData[dateKey];
+
+                    if (dayStats) {
+                        const triggered = dayStats.triggered || 0;
+                        const snoozed = dayStats.snoozed || 0;
+
+                        if (triggered > 0) {
+                            if (snoozed === 0) {
+                                cellClass += ' s1'; // No snooze - green
+                            } else if (snoozed <= 2) {
+                                cellClass += ' s2'; // Some snooze - orange  
+                            } else {
+                                cellClass += ' s3'; // Many snooze - red
+                            }
+                        }
+                        // else: no alarm that day - gray (default)
+                    }
+                }
+
+                if (isToday) {
+                    cellClass += ' today';
+                }
+
+                const dateStr = currentDate.toLocaleDateString('id-ID', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+
+                cells += `<div class="${cellClass}" title="${dateStr}"></div>`;
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            weekIndex++;
+        }
+
+        gridContainer.innerHTML = cells;
+
+        // Generate month labels with correct positioning using flex
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let monthsHtml = '';
+
+        monthPositions.forEach((pos, idx) => {
+            const nextPos = monthPositions[idx + 1];
+            const weeksSpan = nextPos
+                ? (nextPos.week - pos.week)
+                : (totalWeeks - pos.week);
+
+            // Use flex-grow based on number of weeks
+            monthsHtml += `<span style="flex: ${weeksSpan}">${monthNames[pos.month]}</span>`;
+        });
+
+        monthsContainer.innerHTML = monthsHtml;
+
+        // Update current date display
+        if (dateDisplay) {
+            dateDisplay.textContent = `Data sampai: ${today.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            })}`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        generateHeatmap();
+        generateCalendar();
+    });
+</script>
+{% endblock %}

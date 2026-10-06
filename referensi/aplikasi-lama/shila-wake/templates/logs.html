@@ -1,0 +1,485 @@
+{% extends "base.html" %}
+
+{% block title %}Event Logs - Shila Wake System{% endblock %}
+{% block page_title %}Event Logs{% endblock %}
+{% block page_sub %}Complete history of all wake system events{% endblock %}
+
+{% block content %}
+<!-- Stats Overview -->
+<section class="card" style="margin-top: 8px;">
+    <div class="card-title">📊 Quick Stats</div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.total_events }}</div>
+            <div class="stat-label">Total Events</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.alarms.total_triggered }}</div>
+            <div class="stat-label">Alarms Triggered</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.alarms.total_snoozed }}</div>
+            <div class="stat-label">Times Snoozed</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ stats.alarms.total_dismissed }}</div>
+            <div class="stat-label">Dismissed</div>
+        </div>
+    </div>
+</section>
+
+<!-- Filters -->
+<section class="card">
+    <div class="card-title">🔍 Filter Events</div>
+    <form method="GET" action="/logs" class="filter-form">
+        <div class="filter-row">
+            <label class="field">
+                <span>Category</span>
+                <select name="category">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {% if filters.category==cat %}selected{% endif %}>{{ cat|title }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="field">
+                <span>Event Type</span>
+                <select name="type">
+                    <option value="">All Types</option>
+                    {% for type in event_types %}
+                    <option value="{{ type }}" {% if filters.type==type %}selected{% endif %}>{{ type }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label class="field">
+                <span>From Date</span>
+                <input type="date" name="from" value="{{ filters.from }}">
+            </label>
+
+            <label class="field">
+                <span>To Date</span>
+                <input type="date" name="to" value="{{ filters.to }}">
+            </label>
+        </div>
+
+        <div class="filter-row">
+            <label class="field" style="flex: 2;">
+                <span>Search</span>
+                <input type="text" name="search" value="{{ filters.search }}"
+                    placeholder="Search in event summaries...">
+            </label>
+
+            <div class="filter-actions">
+                <button type="submit" class="btn">Apply Filters</button>
+                <a href="/logs" class="btn btn-outline">Clear</a>
+            </div>
+        </div>
+    </form>
+</section>
+
+<!-- Events Table -->
+<section class="card">
+    <div class="card-title">
+        📜 Event History
+        <span class="event-count">({{ total }} events{% if page > 1 %}, page {{ page }}/{{ total_pages }}{% endif
+            %})</span>
+    </div>
+
+    {% if events %}
+    <div class="events-table-wrapper">
+        <table class="events-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th style="width: 160px;">Time</th>
+                    <th style="width: 140px;">Type</th>
+                    <th>Summary</th>
+                    <th style="width: 120px;">Category</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for evt in events %}
+                <tr class="event-row category-{{ evt.category }}">
+                    <td class="event-icon">{{ evt.icon }}</td>
+                    <td class="event-time">
+                        <span class="date">{{ evt.date }}</span>
+                        <span class="time">{{ evt.time[:8] }}</span>
+                    </td>
+                    <td class="event-type">
+                        <span class="type-badge type-{{ evt.category }}">{{ evt.event_type }}</span>
+                    </td>
+                    <td class="event-summary">
+                        {{ evt.summary }}
+                        {% if evt.data %}
+                        <button class="btn-details" onclick="toggleDetails('{{ evt.id }}')">▼</button>
+                        <div class="event-details hidden" id="details-{{ evt.id }}">
+                            <pre>{{ evt.data | tojson(indent=2) }}</pre>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="event-category">
+                        <span class="category-tag cat-{{ evt.category }}">{{ evt.category }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="/logs?page={{ page - 1 }}&type={{ filters.type }}&category={{ filters.category }}&from={{ filters.from }}&to={{ filters.to }}&search={{ filters.search }}"
+            class="btn btn-sm">← Prev</a>
+        {% endif %}
+
+        <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+
+        {% if has_more %}
+        <a href="/logs?page={{ page + 1 }}&type={{ filters.type }}&category={{ filters.category }}&from={{ filters.from }}&to={{ filters.to }}&search={{ filters.search }}"
+            class="btn btn-sm">Next →</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-text">No events found</div>
+        <div class="empty-sub">Events will appear here as you use the wake system</div>
+    </div>
+    {% endif %}
+</section>
+
+<!-- API Info for Shila -->
+<section class="card">
+    <div class="card-title">🤖 API Access for Shila</div>
+    <div class="card-sub">These endpoints provide event data for Shila's context awareness</div>
+
+    <div class="api-info">
+        <code>GET /api/logs</code> - Query events with filters<br>
+        <code>GET /api/stats</code> - Get aggregated statistics<br>
+        <code>GET /api/logs/summary</code> - Get text summary for AI context
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-top: 16px;
+    }
+
+    .stat-card {
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent);
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    /* Filter Form */
+    .filter-form {
+        margin-top: 16px;
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 16px;
+        align-items: flex-end;
+    }
+
+    .filter-row .field {
+        flex: 1;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 8px;
+        padding-bottom: 4px;
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+    }
+
+    .btn-outline:hover {
+        border-color: var(--accent);
+        color: var(--text);
+    }
+
+    /* Events Table */
+    .events-table-wrapper {
+        overflow-x: auto;
+        margin-top: 16px;
+    }
+
+    .events-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .events-table th,
+    .events-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .events-table th {
+        background: var(--secondary);
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .event-row:hover {
+        background: var(--secondary);
+    }
+
+    .event-icon {
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
+    .event-time {
+        font-family: monospace;
+        font-size: 13px;
+    }
+
+    .event-time .date {
+        display: block;
+        color: var(--text);
+    }
+
+    .event-time .time {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .type-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        font-size: 11px;
+        font-family: monospace;
+        background: var(--secondary);
+    }
+
+    .type-badge.type-alarm {
+        border-left: 3px solid var(--warning);
+    }
+
+    .type-badge.type-routine {
+        border-left: 3px solid var(--accent);
+    }
+
+    .type-badge.type-device {
+        border-left: 3px solid var(--success);
+    }
+
+    .type-badge.type-action {
+        border-left: 3px solid #9b59b6;
+    }
+
+    .type-badge.type-system {
+        border-left: 3px solid var(--muted);
+    }
+
+    .event-summary {
+        position: relative;
+    }
+
+    .btn-details {
+        background: none;
+        border: none;
+        color: var(--muted);
+        cursor: pointer;
+        padding: 2px 6px;
+        font-size: 10px;
+        margin-left: 8px;
+    }
+
+    .btn-details:hover {
+        color: var(--accent);
+    }
+
+    .event-details {
+        margin-top: 8px;
+        padding: 12px;
+        background: #1a1a2e;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        border-left: 3px solid var(--accent);
+    }
+
+    .event-details pre {
+        margin: 0;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #a0a0b0;
+    }
+
+    .category-tag {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        text-transform: uppercase;
+    }
+
+    .cat-alarm {
+        background: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+    }
+
+    .cat-routine {
+        background: rgba(255, 107, 157, 0.15);
+        color: #ff6b9d;
+    }
+
+    .cat-device {
+        background: rgba(46, 160, 67, 0.15);
+        color: #2ea043;
+    }
+
+    .cat-action {
+        background: rgba(155, 89, 182, 0.15);
+        color: #9b59b6;
+    }
+
+    .cat-system {
+        background: rgba(128, 128, 128, 0.15);
+        color: #888;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 16px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+
+    .page-info {
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        margin-bottom: 16px;
+    }
+
+    .empty-text {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .empty-sub {
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    /* API Info */
+    .api-info {
+        margin-top: 16px;
+        padding: 16px;
+        background: #1a1a2e;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-family: monospace;
+        font-size: 13px;
+        line-height: 2;
+    }
+
+    .api-info code {
+        background: #252538;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        color: #ff6b9d;
+    }
+
+    .event-count {
+        font-weight: normal;
+        font-size: 14px;
+        color: var(--muted);
+        margin-left: 8px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .filter-row {
+            flex-wrap: wrap;
+        }
+
+        .filter-row .field {
+            min-width: calc(50% - 8px);
+        }
+
+        .events-table th:nth-child(4),
+        .events-table td:nth-child(4) {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleDetails(id) {
+        const details = document.getElementById('details-' + id);
+        if (details) {
+            details.classList.toggle('hidden');
+        }
+    }
+</script>
+{% endblock %}

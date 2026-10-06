@@ -1,0 +1,32 @@
+# Asli aplikasi lama (berisi data pribadi), hanya di laptop Chief
+/Referensi Project/
+
+# Dependensi dan hasil build
+node_modules/
+.pnpm-store/
+.next/
+dist/
+out/
+coverage/
+*.tsbuildinfo
+
+# Rahasia dan data lokal
+.env
+.env.*
+!.env.example
+/data/
+*.pem
+*.key
+
+# Uji peramban
+playwright-report/
+test-results/
+/blob-report/
+
+# Lain-lain
+*.log
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+.claude/settings.local.json

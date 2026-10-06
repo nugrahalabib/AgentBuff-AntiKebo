@@ -1,0 +1,922 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Shila Wake System{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}Overview of your wake system{% endblock %}
+
+{% block content %}
+<!-- Section 1: Hero - Next Alarm -->
+<section class="hero-section">
+    {% if next_alarm %}
+    <div class="hero-card">
+        <div class="hero-content">
+            <div class="hero-label">Next Alarm</div>
+            <div class="hero-time">{{ next_alarm.time }}</div>
+            <div class="hero-countdown" id="countdown">in {{ next_alarm.countdown }}</div>
+            {% if next_alarm.label %}
+            <div class="hero-alarm-label">{{ next_alarm.label }}</div>
+            {% endif %}
+        </div>
+        <div class="hero-meta">
+            <div class="mode-badge {{ next_alarm.mode|lower }}">
+                <span>{{ next_alarm.mode_icon }}</span>
+                <span>{{ next_alarm.mode }} Mode</span>
+            </div>
+            <div class="hero-actions">
+                <button class="btn-hero" onclick="skipAlarm()">⏭️ Skip</button>
+                <a href="/alarms" class="btn-hero primary">✏️ Edit</a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="hero-card no-alarm">
+        <div class="hero-content">
+            <div class="hero-label">No Alarm Set</div>
+            <div class="hero-time">--:--</div>
+            <div class="hero-countdown">Create your first alarm</div>
+        </div>
+        <div class="hero-meta">
+            <a href="/alarms" class="btn primary large">+ Add Alarm</a>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Section 2: Stats Row -->
+<section class="stats-row">
+    <div class="stat-card">
+        <div class="stat-icon">☀️</div>
+        <div class="stat-info">
+            <div class="stat-label">Today's Wake</div>
+            <div class="stat-value">{{ stats.wake_status or 'Pending' }}</div>
+        </div>
+    </div>
+    <a href="/analytics" class="stat-card clickable">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+            <div class="stat-label">Weekly Score</div>
+            <div class="stat-value accent">{{ stats.weekly_score or 0 }}%</div>
+        </div>
+    </a>
+    <a href="/alarms" class="stat-card clickable">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-info">
+            <div class="stat-label">Active Alarms</div>
+            <div class="stat-value">{{ stats.alarm_count or '0' }}</div>
+        </div>
+    </a>
+    <a href="/routines" class="stat-card clickable">
+        <div class="stat-icon">🎛️</div>
+        <div class="stat-info">
+            <div class="stat-label">Routines</div>
+            <div class="stat-value">{{ stats.routine_count or '0' }}</div>
+        </div>
+    </a>
+</section>
+
+<!-- Section 3: Date Display + Quick Actions -->
+<div class="date-display">
+    <span class="date-label">Today</span>
+    <span class="date-value">{{ current_date }}</span>
+</div>
+
+<section class="card">
+    <div class="card-title">Quick Actions</div>
+    <div class="card-sub">Launch your routines</div>
+
+    <div class="quick-actions-grid">
+        {% if routines %}
+        {% for routine in routines[:6] %}
+        <button class="action-card" onclick="runRoutine('{{ routine.id }}')" title="{{ routine.name }}">
+            <span class="action-icon">{{ routine.icon or '🎛️' }}</span>
+            <span class="action-label">{{ routine.name[:15] }}{% if routine.name|length > 15 %}...{% endif %}</span>
+        </button>
+        {% endfor %}
+        {% else %}
+        <a href="/routines" class="action-card">
+            <span class="action-icon">➕</span>
+            <span class="action-label">Create Routine</span>
+        </a>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Section 4: Upcoming Alarms -->
+<section class="card">
+    <div class="card-header-row">
+        <div>
+            <div class="card-title">Upcoming Alarms</div>
+            <div class="card-sub">Your next scheduled wake-ups</div>
+        </div>
+        <a href="/alarms" class="btn">View All →</a>
+    </div>
+
+    <div class="alarms-scroll">
+        {% if alarms %}
+        {% for alarm in alarms[:5] %}
+        <div class="alarm-card">
+            <div class="alarm-card-time">{{ alarm.time }}</div>
+            <div class="alarm-card-date">{{ alarm.date_short }}</div>
+            {% if alarm.label %}
+            <div class="alarm-card-label">{{ alarm.label }}</div>
+            {% endif %}
+            <div class="alarm-card-footer">
+                <span class="mode-pill {{ alarm.mode|lower }}">{{ alarm.mode_icon }} {{ alarm.mode }}</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" {% if alarm.enabled %}checked{% endif %}
+                        onchange="toggleAlarm('{{ alarm.id }}')">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state-inline">
+            <span>⏰</span>
+            <span>No alarms set. <a href="/alarms">Create one</a></span>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Section 5: Recent Activity + AI Insight -->
+<section class="bottom-grid">
+    <!-- Left: Recent Activity -->
+    <div class="card">
+        <div class="card-title">Recent Activity</div>
+        <div class="card-sub">Latest events from your system</div>
+
+        <div class="activity-feed">
+            {% if activity %}
+            {% for item in activity[:4] %}
+            <div class="activity-item">
+                <span class="activity-icon">{{ item.icon }}</span>
+                <div class="activity-content">
+                    <span class="activity-text">{{ item.text }}</span>
+                    <span class="activity-time">{{ item.time }}</span>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="activity-item">
+                <span class="activity-icon">📝</span>
+                <div class="activity-content">
+                    <span class="activity-text muted">No recent activity</span>
+                    <span class="activity-time">Start using alarms to see activity here</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right: AI Insight -->
+    <div class="card insight-card">
+        <div class="insight-header">
+            <span class="insight-badge">💡 AI Insight</span>
+            <a href="/analytics" class="link-small">View Analytics →</a>
+        </div>
+        <div class="insight-content">
+            <p>{{ ai_insight or 'Keep using Shila Wake to get personalized insights based on your wake patterns!' }}</p>
+        </div>
+        <div class="insight-footer">
+            <span class="muted small">Based on your last 30 days</span>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Hero Section */
+    .hero-section {
+        margin-top: 8px;
+    }
+
+    .hero-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 32px 40px;
+        background: linear-gradient(135deg, var(--secondary) 0%, rgba(255, 107, 157, 0.08) 100%);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 107, 157, 0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .hero-card.no-alarm {
+        background: var(--secondary);
+    }
+
+    .hero-content {
+        z-index: 1;
+    }
+
+    .hero-label {
+        font-size: 14px;
+        color: var(--muted);
+        margin-bottom: 4px;
+    }
+
+    .hero-time {
+        font-size: 4rem;
+        font-weight: 700;
+        color: var(--text);
+        line-height: 1;
+        letter-spacing: -2px;
+    }
+
+    .hero-countdown {
+        font-size: 18px;
+        color: var(--accent);
+        margin-top: 8px;
+        font-weight: 500;
+    }
+
+    .hero-alarm-label {
+        font-size: 14px;
+        color: var(--muted);
+        margin-top: 8px;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: var(--radius-full);
+        display: inline-block;
+    }
+
+    .hero-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 16px;
+        z-index: 1;
+    }
+
+    .mode-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: var(--radius-full);
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .mode-badge.gentle {
+        background: rgba(46, 160, 67, 0.15);
+        color: var(--success);
+        border: 1px solid rgba(46, 160, 67, 0.3);
+    }
+
+    .mode-badge.normal {
+        background: rgba(250, 166, 26, 0.15);
+        color: var(--warning);
+        border: 1px solid rgba(250, 166, 26, 0.3);
+    }
+
+    .mode-badge.nuclear {
+        background: rgba(248, 81, 73, 0.15);
+        color: var(--danger);
+        border: 1px solid rgba(248, 81, 73, 0.3);
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-hero {
+        padding: 10px 18px;
+        border-radius: var(--radius-md);
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-hero:hover {
+        border-color: var(--accent);
+    }
+
+    .btn-hero.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+
+    /* Stats Row */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .stat-card {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 20px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s;
+    }
+
+    .stat-card.clickable:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+    }
+
+    .stat-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .stat-value.accent {
+        color: var(--accent);
+    }
+
+    /* Date Display */
+    .date-display {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 20px 0 16px 0;
+    }
+
+    .date-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .date-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    /* Overview Grid */
+    .overview-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .today-card {
+        padding: 24px;
+    }
+
+    .today-header {
+        margin-bottom: 16px;
+    }
+
+    .today-label {
+        font-size: 12px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .today-date {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-top: 4px;
+    }
+
+    .today-stats {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .today-stat {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: var(--radius-md);
+    }
+
+    .today-stat-icon {
+        font-size: 1.5rem;
+    }
+
+    .today-stat-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .today-stat-label {
+        font-size: 12px;
+        color: var(--muted);
+    }
+
+    .today-stat-value {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .weather-mini {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: var(--radius-md);
+    }
+
+    .weather-icon {
+        font-size: 2rem;
+    }
+
+    .weather-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .weather-temp {
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .weather-condition {
+        font-size: 13px;
+        color: var(--muted);
+    }
+
+    .divider {
+        height: 1px;
+        background: var(--border);
+        margin: 16px 0;
+    }
+
+    .section-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 12px;
+    }
+
+    .events-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .event-item {
+        display: flex;
+        gap: 12px;
+        font-size: 13px;
+    }
+
+    .event-time {
+        color: var(--accent);
+        font-weight: 500;
+        min-width: 70px;
+    }
+
+    .event-title {
+        color: var(--text);
+    }
+
+    /* Quick Actions Grid */
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+    }
+
+    .action-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 20px 16px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .action-card:hover {
+        border-color: var(--accent);
+        background: rgba(255, 107, 157, 0.05);
+        transform: translateY(-2px);
+    }
+
+    .action-icon {
+        font-size: 1.5rem;
+    }
+
+    .action-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text);
+    }
+
+    /* Card Header Row */
+    .card-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    /* Alarms Scroll */
+    .alarms-scroll {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        padding: 8px 0;
+        margin-top: 16px;
+    }
+
+    .alarms-scroll::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .alarms-scroll::-webkit-scrollbar-track {
+        background: var(--secondary);
+        border-radius: 3px;
+    }
+
+    .alarms-scroll::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 3px;
+    }
+
+    .alarm-card {
+        flex-shrink: 0;
+        width: 160px;
+        padding: 16px;
+        background: var(--secondary);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        transition: all 0.2s;
+    }
+
+    .alarm-card:hover {
+        border-color: var(--accent);
+    }
+
+    .alarm-card-time {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text);
+    }
+
+    .alarm-card-date {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 4px;
+    }
+
+    .alarm-card-label {
+        font-size: 12px;
+        color: var(--text);
+        margin-top: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .alarm-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+
+    .mode-pill {
+        font-size: 11px;
+        padding: 4px 8px;
+        border-radius: var(--radius-full);
+    }
+
+    .mode-pill.gentle {
+        background: rgba(46, 160, 67, 0.15);
+        color: var(--success);
+    }
+
+    .mode-pill.normal {
+        background: rgba(250, 166, 26, 0.15);
+        color: var(--warning);
+    }
+
+    .mode-pill.nuclear {
+        background: rgba(248, 81, 73, 0.15);
+        color: var(--danger);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        width: 36px;
+        height: 20px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--border);
+        border-radius: 20px;
+        transition: 0.3s;
+    }
+
+    .toggle-slider::before {
+        content: '';
+        position: absolute;
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background: white;
+        border-radius: 50%;
+        transition: 0.3s;
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+        background: var(--accent);
+    }
+
+    .toggle-switch input:checked+.toggle-slider::before {
+        transform: translateX(16px);
+    }
+
+    .empty-state-inline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        padding: 20px;
+    }
+
+    .empty-state-inline a {
+        color: var(--accent);
+    }
+
+    /* Bottom Grid */
+    .bottom-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    /* Activity Feed */
+    .activity-feed {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        background: var(--secondary);
+        border-radius: var(--radius-md);
+    }
+
+    .activity-icon {
+        font-size: 1.2rem;
+    }
+
+    .activity-content {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .activity-text {
+        font-size: 13px;
+        color: var(--text);
+    }
+
+    .activity-time {
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    /* Insight Card */
+    .insight-card {
+        background: linear-gradient(135deg, var(--secondary) 0%, rgba(255, 107, 157, 0.05) 100%);
+        border-left: 3px solid var(--accent);
+    }
+
+    .insight-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .insight-badge {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--accent);
+    }
+
+    .link-small {
+        font-size: 12px;
+        color: var(--muted);
+        text-decoration: none;
+    }
+
+    .link-small:hover {
+        color: var(--accent);
+    }
+
+    .insight-content {
+        margin: 16px 0;
+    }
+
+    .insight-content p {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text);
+    }
+
+    .insight-footer {
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+    }
+
+    /* Utilities */
+    .small {
+        font-size: 12px;
+    }
+
+    .muted {
+        color: var(--muted);
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .overview-grid,
+        .bottom-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 24px;
+        }
+
+        .hero-meta {
+            align-items: center;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+
+        .hero-time {
+            font-size: 3rem;
+        }
+
+        .quick-actions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Countdown timer
+    {% if next_alarm %}
+    const nextAlarmTime = new Date('{{ next_alarm.datetime_iso }}');
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+
+    function updateCountdown() {
+        const now = new Date();
+        const diff = nextAlarmTime - now;
+
+        if (diff <= 0) {
+            document.getElementById('countdown').textContent = '🔔 Ringing!';
+            document.getElementById('countdown').classList.add('ringing');
+            return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+        if (hours > 0) {
+            document.getElementById('countdown').textContent = `in ${hours}h ${mins}m`;
+        } else {
+            document.getElementById('countdown').textContent = `in ${mins}m ${secs}s`;
+        }
+    }
+    {% endif %}
+
+    // Skip alarm
+    function skipAlarm() {
+        if (confirm('Skip the next alarm?')) {
+            fetch('/api/alarms/skip', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    showToast('Alarm skipped', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                })
+                .catch(e => showToast('Failed to skip alarm', 'error'));
+        }
+    }
+
+    // Routine activation by name (legacy)
+    function activateRoutine(name) {
+        fetch(`/api/routines/${name}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => showToast(`${name} routine activated!`, 'success'))
+            .catch(e => showToast('Failed to activate routine', 'error'));
+    }
+
+    // Run routine by ID (for Quick Actions)
+    function runRoutine(id) {
+        fetch(`/api/routines/${id}/run`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showToast(`Routine executed!`, 'success');
+                } else {
+                    showToast(data.message || 'Routine completed', 'success');
+                }
+            })
+            .catch(e => showToast('Failed to run routine', 'error'));
+    }
+
+    // Alarm toggle
+    function toggleAlarm(id) {
+        fetch(`/api/alarms/${id}/toggle`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => showToast(data.enabled ? 'Alarm enabled' : 'Alarm disabled', 'success'))
+            .catch(e => showToast('Failed to toggle alarm', 'error'));
+    }
+</script>
+{% endblock %}

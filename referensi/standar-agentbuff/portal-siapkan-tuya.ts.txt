@@ -1,0 +1,219 @@
+/**
+ * Menyiapkan produk Marketplace "Tuya MCP - Smart Home Connector" lewat rute
+ * admin yang SAMA dengan panel /admin (validasi, audit, singgahan ikut jalan).
+ * Pola: scripts/siapkan-bym.ts.
+ *
+ *   pnpm tsx --env-file=.env.local scripts/siapkan-tuya.ts [--basis https://agentbuff.id] [--terbitkan]
+ *
+ * Idempoten. Status bawaan `coming_soon`; `--terbitkan` menjadikannya `available`
+ * (sesudah diuji dengan kunci Tuya sungguhan). Produk yang sudah dijual tidak
+ * pernah diturunkan diam-diam.
+ *
+ * Langkah: katalog -> konektor MCP `tuya` (https://tuya.agentbuff.id/mcp) ->
+ * SKILL.md pendamping (dibaca dari repo AgentBuff-Tuya: --skill <berkas>,
+ * TUYA_SKILL_PATH, /opt/tuya/app/skill/SKILL.md, lalu ../AgentBuff-Tuya/skill/SKILL.md).
+ */
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { and, desc, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import * as schema from "@/lib/db/schema";
+import { headerCookie, pastikanSesiDiterima } from "./_sesi-tempaan";
+
+const argBasis = process.argv.indexOf("--basis");
+const BASIS = argBasis > 0 ? process.argv[argBasis + 1] : "https://agentbuff.id";
+const KUNCI = "tuya-mcp";
+const TERBITKAN = process.argv.includes("--terbitkan");
+
+const TUTORIAL = [
+  "## Syarat",
+  "- Akun AgentBuff yang aktif (trial atau berlangganan).",
+  "- Perangkat sudah terpasang di app Smart Life atau Tuya Smart di HP-mu.",
+  "- Laptop/komputer untuk satu langkah memindai QR (sekali saja).",
+  "",
+  "## Cara sambungkan (3 menit, sekali saja)",
+  "- Konektor ke agenmu terpasang sendiri 1-2 menit sesudah membeli. Tidak perlu menempel token apa pun.",
+  "- Di laptop, buka https://auth.tuya.ai/login?loginSource=web_hey_tuya (halaman masuk resmi Tuya, sama dengan tombol Get API Key di tuya.ai/developer).",
+  "- Pilih SmartLife APP (atau Tuya APP), pindai QR dengan app di HP (tab Saya, ikon pindai di pojok kanan atas), lalu Konfirmasi di HP. Akun app dibuat dengan Google? Boleh masuk dengan Google (akun yang sama).",
+  "- Halaman Hey Tuya terbuka: di menu kiri ketuk Toolbox, lalu API Key. Buat kunci baru (Create atau +), nama bebas, misalnya AgentBuff.",
+  "- Salin kunci yang diawali sk- lalu tempel di chat agenmu (atau di https://tuya.agentbuff.id, ada panduan bergambar). Semua perangkat langsung muncul.",
+  "- Sesudah tersambung, hapus pesan berisi kunci dari chat.",
+  "",
+  "## Contoh perintah ke agen",
+  '- "Matikan semua lampu kamar"',
+  '- "Nyalakan AC studio 24 derajat mode dingin"',
+  '- "Lampu meja warna biru, terang 80%"',
+  '- "Simpan kondisi sekarang sebagai suasana Kerja"',
+  '- "Matikan AC jam 11 malam tiap hari"',
+  '- "Perangkat apa saja yang masih nyala?"',
+  '- "Kalau pintu depan terbuka malam hari, nyalakan lampu teras dan kabari aku"',
+  '- "Kirim foto dari kamera teras"',
+  "",
+  "## Catatan penting",
+  "- Semua bisa lewat chat: sambung rumah, kendali, suasana, jadwal, otomasi. Website hanya pilihan.",
+  "- Menambah perangkat baru tetap lewat app Smart Life (sesudahnya bilang ke agen: muat ulang perangkat). Kunci pintu dan video CCTV langsung belum dibuka Tuya untuk aplikasi pihak ketiga.",
+  "- Pemanas, kompor, pompa, dan pintu garasi: agen selalu minta izinmu dulu sebelum menyalakan.",
+  "- Tidak berafiliasi dengan Tuya Inc.",
+].join("\n");
+
+const TUTORIAL_EN = [
+  "## Requirements",
+  "- An active AgentBuff account (trial or subscription).",
+  "- Devices already set up in the Smart Life or Tuya Smart app on your phone.",
+  "- A laptop/computer for one QR scan step (once).",
+  "",
+  "## How to connect (3 minutes, once)",
+  "- The connector is installed on your agent automatically 1-2 minutes after purchase. No token to paste.",
+  "- On a laptop, open https://auth.tuya.ai/login?loginSource=web_hey_tuya (Tuya's official sign-in page, same as the Get API Key button on tuya.ai/developer).",
+  "- Choose SmartLife APP (or Tuya APP), scan the QR with the app on your phone (Me tab, scan icon top right), then Confirm on the phone. App account created with Google? You can sign in with Google (the same account).",
+  "- The Hey Tuya page opens: in the left menu tap Toolbox, then API Key. Create a new key (Create or +), any name, for example AgentBuff.",
+  "- Copy the key starting with sk- and paste it in your agent chat (or at https://tuya.agentbuff.id, with an illustrated guide). All devices appear right away.",
+  "- Once connected, delete the chat message that contains the key.",
+  "",
+  "## Example prompts",
+  '- "Turn off all the bedroom lights"',
+  '- "Turn on the studio AC, 24 degrees, cool mode"',
+  '- "Desk lamp blue, 80% brightness"',
+  '- "Save the current state as the Work scene"',
+  '- "Turn off the AC at 11 pm every day"',
+  '- "Which devices are still on?"',
+  '- "If the front door opens at night, turn on the porch light and let me know"',
+  '- "Send me a photo from the porch camera"',
+  "",
+  "## Important",
+  "- Everything works from chat: connecting, control, scenes, schedules, automations. The website is optional.",
+  "- Adding new devices stays in the Smart Life app (then tell your agent to refresh devices). Door locks and live CCTV video aren't opened by Tuya to third-party apps yet.",
+  "- Heaters, stoves, pumps, and garage doors: your agent always asks first before turning them on.",
+  "- Not affiliated with Tuya Inc.",
+].join("\n");
+
+const TUTORIAL_MANUAL = [
+  "1. Buka https://tuya.agentbuff.id, pilih Masuk dengan AgentBuff, lalu sambungkan rumahmu.",
+  "2. Menu Agen > Lanjutan: token manual > Buat token.",
+  "3. Salin token, tempel di sini, klik Sambungkan.",
+].join("\n");
+
+const PRODUK = {
+  title: "Tuya MCP - Smart Home Connector",
+  tagline: "Lampu, AC, colokan & semua perangkat Smart Life/Tuya bisa kamu suruh lewat chat ke agenmu.",
+  description:
+    "Sambungkan rumah pintarmu ke agen AgentBuff dalam 3 menit, tanpa akun developer. Cukup pindai QR di tuya.ai dengan app Smart Life atau Tuya, tempel kuncinya di chat agenmu, dan agen langsung bisa menyalakan lampu, mengatur AC, mematikan semua perangkat sekaligus, menyimpan suasana, membuat jadwal, membuat otomasi (kalau pintu terbuka, lampu menyala dan kamu dikabari), meminta foto dari kamera, sampai memantau listrik colokan pintar. Semua lewat chat; aplikasi web bergaya Apple Home tersedia bila kamu suka layar. Kunci rumah disimpan terenkripsi. Sekali bayar, selama akun AgentBuff-mu aktif.",
+  priceRp: 29_000,
+  billing: "one_time" as const,
+  status: (TERBITKAN ? "available" : "coming_soon") as "available" | "coming_soon",
+  category: "operasional" as const,
+  unlock: "app" as const,
+  source: "mcp" as const,
+  icon: "House",
+  coverEmoji: "🏠",
+  accent: "violet" as const,
+  featured: true,
+  capabilities: [
+    'Nyala/mati perangkat lewat chat: "matikan lampu teras", "nyalakan kipas kamar".',
+    "Atur kecerahan & warna lampu (nama warna Indonesia atau kode), putih hangat sampai sejuk.",
+    "AC & pemanas: suhu, mode dingin/panas/kering/kipas, kecepatan kipas.",
+    'Kendali massal: "matikan semua lampu", "matikan semua di kamar".',
+    'Suasana: simpan kondisi rumah sekarang, aktifkan lagi dengan satu kalimat ("aktifkan suasana Nonton").',
+    'Jadwal & timer: "matikan AC jam 11 malam tiap hari", "matikan lampu 30 menit lagi".',
+    'Otomasi: "kalau ada gerakan di garasi, kabari aku", "kalau kamar di atas 29 derajat, nyalakan AC".',
+    "Foto atau klip singkat dari kamera Tuya, dikirim agen ke chat.",
+    "Pantau listrik colokan pintar, cuaca di rumah, dan perangkat apa yang masih nyala.",
+    "Semua lewat chat, termasuk menyambungkan rumah. Aplikasi web bergaya Apple Home bila suka layar.",
+    "Perangkat berisiko (pemanas, kompor, pintu garasi) selalu minta izinmu dulu; kunci rumah terenkripsi.",
+  ],
+  tutorial: TUTORIAL,
+  titleEn: "Tuya MCP - Smart Home Connector",
+  taglineEn: "Lights, AC, plugs & every Smart Life/Tuya device - just tell your agent.",
+  descriptionEn:
+    "Connect your smart home to your AgentBuff agent in 3 minutes, no developer account needed. Scan a QR at tuya.ai with the Smart Life or Tuya app, paste the key in your agent chat, and your agent can turn on lights, set the AC, switch everything off at once, save scenes, create schedules, build automations (door opens, light turns on and you get notified), grab camera photos, and track smart plug energy. All by chat; an Apple Home-style web app is there if you like screens. Your home key is stored encrypted. One-time payment, for as long as your AgentBuff account is active.",
+  capabilitiesEn: [
+    'Turn devices on/off by chat: "turn off the porch light", "turn on the bedroom fan".',
+    "Set light brightness & color (color names or hex), warm to cool white.",
+    "AC & heaters: temperature, cool/heat/dry/fan mode, fan speed.",
+    'Bulk control: "turn off all lights", "turn off everything in the bedroom".',
+    'Scenes: save your home\'s state, bring it back with one sentence ("activate the Movie scene").',
+    'Schedules & timers: "turn off the AC at 11 pm every day", "light off in 30 minutes".',
+    'Automations: "if there is motion in the garage, tell me", "if the bedroom goes above 29, turn on the AC".',
+    "Photos or short clips from Tuya cameras, sent by your agent in chat.",
+    "Smart plug energy, weather at home, and which devices are still on.",
+    "Everything by chat, including connecting your home. An Apple Home-style web app if you like screens.",
+    "Risky devices (heaters, stoves, garage doors) always ask you first; your home key is encrypted.",
+  ],
+  tutorialEn: TUTORIAL_EN,
+};
+
+async function panggil(kuki: string, metode: string, jalur: string, badan?: unknown): Promise<unknown> {
+  const r = await fetch(`${BASIS}${jalur}`, {
+    method: metode,
+    headers: { cookie: kuki, "content-type": "application/json" },
+    body: badan === undefined ? undefined : JSON.stringify(badan),
+  });
+  const isi = await r.json().catch(() => null);
+  if (!r.ok) throw new Error(`${metode} ${jalur} -> ${r.status} ${JSON.stringify(isi)}`);
+  return isi;
+}
+
+async function main() {
+  const kuki = await headerCookie();
+  await pastikanSesiDiterima(BASIS, kuki);
+
+  const [ada] = await db.select({ key: schema.skillCatalog.key, status: schema.skillCatalog.status }).from(schema.skillCatalog).where(eq(schema.skillCatalog.key, KUNCI)).limit(1);
+  if (!ada) {
+    await panggil(kuki, "POST", "/api/admin/catalog", { key: KUNCI, ...PRODUK });
+    console.log(`✓ katalog ${KUNCI} dibuat - Rp29.000 sekali bayar, status ${PRODUK.status}`);
+  } else {
+    const { status: _s, ...tanpaStatus } = PRODUK;
+    void _s;
+    const naikSaja = ada.status === "available" || !TERBITKAN;
+    await panggil(kuki, "PATCH", `/api/admin/catalog/${KUNCI}`, naikSaja ? tanpaStatus : PRODUK);
+    console.log(`✓ katalog ${KUNCI} diperbarui (status ${naikSaja ? `tetap ${ada.status}` : `${ada.status} -> available`})`);
+  }
+
+  await panggil(kuki, "POST", `/api/admin/catalog/${KUNCI}/mcp`, {
+    name: "tuya",
+    transport: "http",
+    url: "https://tuya.agentbuff.id/mcp",
+    tokenHeader: "Authorization",
+    tokenPrefix: "Bearer ",
+    tokenLabel: "Token Tuya MCP",
+    tutorial: TUTORIAL_MANUAL,
+  });
+  console.log("✓ konektor MCP tuya -> https://tuya.agentbuff.id/mcp");
+
+  const argSkill = process.argv.indexOf("--skill");
+  const kandidat = [
+    argSkill > 0 ? process.argv[argSkill + 1] : null,
+    process.env.TUYA_SKILL_PATH ?? null,
+    "/opt/tuya/app/skill/SKILL.md",
+    path.join(process.cwd(), "../AgentBuff-Tuya/skill/SKILL.md"),
+  ].filter((p): p is string => !!p);
+  const berkas = kandidat.find((p) => existsSync(p));
+  if (!berkas) throw new Error(`SKILL.md Tuya tidak ditemukan (dicoba: ${kandidat.join(", ")})`);
+  const skill = readFileSync(berkas);
+  const hashBaru = createHash("sha256").update(skill).digest("hex");
+  const [paketLama] = await db
+    .select({ files: schema.skillPackages.files })
+    .from(schema.skillPackages)
+    .where(and(eq(schema.skillPackages.catalogKey, KUNCI), eq(schema.skillPackages.slug, "tuya-mcp")))
+    .orderBy(desc(schema.skillPackages.createdAt))
+    .limit(1);
+  const hashLama = paketLama?.files?.[0]?.contentB64 ? createHash("sha256").update(Buffer.from(paketLama.files[0].contentB64, "base64")).digest("hex") : null;
+  const [katalog] = await db.select({ packageId: schema.skillCatalog.packageId }).from(schema.skillCatalog).where(eq(schema.skillCatalog.key, KUNCI)).limit(1);
+  if (hashLama === hashBaru && katalog?.packageId) {
+    console.log(`✓ SKILL.md pendamping sudah terbaru (${berkas})`);
+  } else {
+    await panggil(kuki, "POST", `/api/admin/catalog/${KUNCI}/package`, {
+      slug: "tuya-mcp",
+      version: `tuya-${hashBaru.slice(0, 8)}`,
+      files: [{ path: "SKILL.md", contentB64: skill.toString("base64") }],
+    });
+    console.log(`✓ SKILL.md pendamping diunggah (${berkas}, tuya-${hashBaru.slice(0, 8)})`);
+  }
+  process.exit(0);
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

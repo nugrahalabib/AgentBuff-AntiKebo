@@ -1,0 +1,96 @@
+import { randomBytes } from "node:crypto";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import * as schema from "@/lib/db/schema";
+import { hashRahasiaMasuk } from "@/lib/masuk/rahasia";
+
+// Daftarkan / perbarui aplikasi mitra "Masuk dengan AgentBuff".
+//
+//   pnpm tsx --env-file=.env.local scripts/masuk-daftar-aplikasi.ts \
+//     --client-id kostcloud --nama "KostCloud" --produk kostcloud \
+//     --beranda https://kos.agentbuff.id \
+//     --redirect https://kos.agentbuff.id/auth/agentbuff/callback \
+//     --simpan-rahasia /root/masuk-rahasia/kostcloud.env [--putar-rahasia]
+//
+// Rahasia klien dibuat di sini, disimpan sebagai HASH di DB, dan nilai
+// mentahnya hanya ditulis ke berkas --simpan-rahasia (mode 600) — TIDAK
+// pernah dicetak ke layar/log. Aplikasi yang sudah terdaftar tidak mendapat
+// rahasia baru kecuali --putar-rahasia (memutar = login aplikasi itu putus
+// sampai rahasia barunya dipasang).
+
+function arg(nama: string): string | null {
+  const i = process.argv.indexOf(`--${nama}`);
+  return i >= 0 ? process.argv[i + 1] ?? null : null;
+}
+function argBanyak(nama: string): string[] {
+  const hasil: string[] = [];
+  process.argv.forEach((v, i) => {
+    if (v === `--${nama}` && process.argv[i + 1]) hasil.push(process.argv[i + 1]);
+  });
+  return hasil;
+}
+
+async function main() {
+  const clientId = arg("client-id");
+  const nama = arg("nama");
+  const produk = arg("produk");
+  const beranda = arg("beranda");
+  const redirect = argBanyak("redirect");
+  const simpan = arg("simpan-rahasia");
+  const putar = process.argv.includes("--putar-rahasia");
+  if (!clientId || !/^[a-z0-9-]{3,40}$/.test(clientId) || !nama || !produk || !beranda || redirect.length === 0 || !simpan) {
+    console.error("Argumen kurang/tidak sah. Lihat kepala berkas.");
+    process.exit(1);
+  }
+  for (const r of [beranda, ...redirect]) {
+    const u = new URL(r);
+    if (u.protocol !== "https:" && !(u.protocol === "http:" && ["localhost", "127.0.0.1"].includes(u.hostname))) {
+      throw new Error(`Alamat wajib https: ${r}`);
+    }
+  }
+  const [produkAda] = await db.select({ key: schema.skillCatalog.key }).from(schema.skillCatalog).where(eq(schema.skillCatalog.key, produk)).limit(1);
+  if (!produkAda) throw new Error(`Produk ${produk} tidak ada di skill_catalog`);
+
+  const [ada] = await db.select().from(schema.masukAplikasi).where(eq(schema.masukAplikasi.clientId, clientId)).limit(1);
+  let rahasia: string | null = null;
+  if (!ada || putar) rahasia = `abms_${randomBytes(32).toString("base64url")}`;
+
+  if (ada) {
+    await db
+      .update(schema.masukAplikasi)
+      .set({
+        nama,
+        productKey: produk,
+        homepageUrl: beranda,
+        redirectUris: redirect,
+        disabledAt: null,
+        ...(rahasia ? { secretHash: hashRahasiaMasuk(rahasia) } : {}),
+      })
+      .where(eq(schema.masukAplikasi.id, ada.id));
+  } else {
+    await db.insert(schema.masukAplikasi).values({
+      clientId,
+      nama,
+      productKey: produk,
+      homepageUrl: beranda,
+      redirectUris: redirect,
+      secretHash: hashRahasiaMasuk(rahasia!),
+    });
+  }
+
+  if (rahasia) {
+    mkdirSync(dirname(simpan), { recursive: true, mode: 0o700 });
+    writeFileSync(simpan, `AGENTBUFF_MASUK_CLIENT_ID=${clientId}\nAGENTBUFF_MASUK_CLIENT_SECRET=${rahasia}\n`, { mode: 0o600 });
+    console.log(`${ada ? "diperbarui + rahasia DIPUTAR" : "terdaftar"}: ${clientId} → rahasia ditulis ke ${simpan} (600)`);
+  } else {
+    console.log(`diperbarui: ${clientId} (rahasia lama tetap berlaku)`);
+  }
+  process.exit(0);
+}
+
+main().catch((e) => {
+  console.error(e instanceof Error ? e.message : e);
+  process.exit(1);
+});

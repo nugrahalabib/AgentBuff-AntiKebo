@@ -1,0 +1,76 @@
+# Tuya MCP di VPS (/opt/tuya) - pola BYM (/opt/bym): jaringan internal sendiri,
+# web ikut npm_default supaya Nginx Proxy Manager bisa meneruskan trafik.
+# TIDAK menyentuh kontainer/jaringan proyek lain. Tidak ada port dipublikasikan.
+# Variabel dari /opt/tuya/.env (600) lewat `docker compose --env-file`.
+name: tuya
+
+services:
+  tuya-db:
+    image: postgres:16-alpine
+    container_name: tuya-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tuya_super
+      POSTGRES_PASSWORD: ${TUYA_SUPER_PASSWORD:?}
+      POSTGRES_DB: tuya
+      TUYA_MIGRASI_PASSWORD: ${TUYA_MIGRASI_PASSWORD:?}
+      TUYA_APP_PASSWORD: ${TUYA_APP_PASSWORD:?}
+      TUYA_WORKER_PASSWORD: ${TUYA_WORKER_PASSWORD:?}
+    volumes:
+      - /opt/tuya/data/pg:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    networks: [tuya_internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tuya_super -d tuya"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  tuya-web:
+    image: tuya:${TUYA_TAG:-terbaru}
+    container_name: tuya-web
+    restart: unless-stopped
+    environment: &env-aplikasi
+      NODE_ENV: production
+      APP_ORIGIN: ${APP_ORIGIN:?}
+      SESSION_SECRET: ${SESSION_SECRET:?}
+      ENCRYPTION_KEK: ${ENCRYPTION_KEK:?}
+      AGENTBUFF_ISSUER: ${AGENTBUFF_ISSUER:?}
+      AGENTBUFF_ORIGIN: ${AGENTBUFF_ORIGIN:?}
+      AGENTBUFF_PRODUCT_KEY: ${AGENTBUFF_PRODUCT_KEY:?}
+      AGENTBUFF_MASUK_CLIENT_ID: ${AGENTBUFF_MASUK_CLIENT_ID:?}
+      AGENTBUFF_MASUK_CLIENT_SECRET: ${AGENTBUFF_MASUK_CLIENT_SECRET:?}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://tuya_app:${TUYA_APP_PASSWORD}@tuya-db:5432/tuya
+      TUYA_HAK_LAJU_PER_DTK: "4"
+    depends_on:
+      tuya-db:
+        condition: service_healthy
+    networks: [tuya_internal, npm]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health | grep -q '\"ok\":true'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # Worker butuh internet (API & WebSocket Tuya) tapi tidak perlu dijangkau dari luar.
+  tuya-worker:
+    image: tuya:${TUYA_TAG:-terbaru}
+    container_name: tuya-worker
+    restart: unless-stopped
+    command: ["node", "dist/worker.mjs"]
+    environment:
+      <<: *env-aplikasi
+      DATABASE_URL: postgres://tuya_worker:${TUYA_WORKER_PASSWORD}@tuya-db:5432/tuya
+      TUYA_HAK_LAJU_PER_DTK: "2"
+    depends_on:
+      tuya-db:
+        condition: service_healthy
+    networks: [tuya_internal]
+
+networks:
+  tuya_internal:
+    driver: bridge
+  npm:
+    external: true
+    name: npm_default
