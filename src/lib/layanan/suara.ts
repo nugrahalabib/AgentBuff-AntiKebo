@@ -163,6 +163,23 @@ export async function antreUlangSesudahIzin(penggunaId: string): Promise<number>
 }
 
 /**
+ * Buat ulang suara omelan (MCP `regenerate_voice`, mis. sesudah agen di AgentBuff diperbaiki): naskah
+ * yang gagal dicoba lagi dan kalimat alarm aktif yang belum punya naskah direncanakan.
+ */
+export async function buatUlangSuara(penggunaId: string): Promise<number> {
+  return denganPengguna(penggunaId, async (tx) => {
+    const k = await konteksPengguna(tx, penggunaId);
+    const r = await tx
+      .update(schema.naskahSuara)
+      .set({ status: "menunggu", alasan: null, percobaan: 0, cobaLagiSetelah: new Date(), diubah: new Date() })
+      .where(and(eq(schema.naskahSuara.penggunaId, penggunaId), eq(schema.naskahSuara.status, "gagal")))
+      .returning({ id: schema.naskahSuara.id });
+    await rencanakanSemua(tx, k);
+    return r.length;
+  });
+}
+
+/**
  * Bersih-bersih (worker): naskah dan klip yang tidak dibutuhkan alarm mana pun dan tidak dipakai
  * 30 hari dihapus (docs/03-ARSITEKTUR.md §2).
  */

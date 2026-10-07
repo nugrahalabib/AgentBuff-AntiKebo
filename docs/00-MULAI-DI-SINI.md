@@ -2,7 +2,7 @@
 
 ## Status terkini
 
-- **2026-10-07:** **P0 sampai P11 selesai**: kerangka + server tiruan (P0), rancangan semua layar
+- **2026-10-07:** **P0 sampai P12 selesai**: kerangka + server tiruan (P0), rancangan semua layar
   (P1), data alarm, pengulangan, libur, Komitmen (P2), penjadwal tepat detik, SSE, perangkat
   siaga, sambung PC (P3), soal, tunda, Masih bangun, Misi QR, anti curang (P4), 8 bunyi buatan
   sendiri, naskah 5 karakter, antrean suara lewat AgentBuff, pemutar web (P5), spam kanal, pesan
@@ -11,8 +11,9 @@
   simpanan suara dan cadangan saat koneksi putus (P9), aplikasi PC Tauri dengan jendela alarm
   terkunci, soal luring, penjaga, halaman unduh, dan CI Windows yang membangun pemasang (P10),
   perkenalan 6 langkah, tab Siaga, Riwayat + rincian + CSV, Pengaturan lengkap, template, kode QR,
-  dan hapus semua data (P11).
-  Paket cloud berikutnya: **P12** (paritas MCP penuh, `paritas.ts` + penjaga, SKILL.md, halaman Agen).
+  dan hapus semua data (P11), 48 alat MCP dengan penjaga paritas, idempotensi, halaman Agen, dan
+  `skill/SKILL.md` (P12).
+  Paket cloud berikutnya: **P13** (mutu, keamanan, aksesibilitas, Inggris, legal).
   Paket laptop L1 (pintu AgentBuff) bisa jalan paralel; acuannya
   `tests/integrasi/tiruan-kontrak.test.ts`. Uji PC Windows asli menunggu L2 (`09-APLIKASI-PC.md` §9).
 - Menunggu Chief: K-07 (`KEPUTUSAN.md`).

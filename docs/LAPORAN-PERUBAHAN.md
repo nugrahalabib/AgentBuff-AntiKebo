@@ -3,6 +3,40 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P12): Semua bisa lewat chat agen
+
+**Baru**
+- **Agen AgentBuff-mu kini bisa mengurus semua alarm lewat chat:** pasang alarm dari satu kalimat
+  ("bangunin aku besok jam 5 buat kuliah"), ubah, lewati tanggal, gandakan, uji 1 menit lagi,
+  hapus, kalimat omelan pribadi, template, kode QR Misi, kanal spam, perangkat siaga, rumah pintar,
+  riwayat dan skor bangun, unduh riwayat CSV, dan pengaturan (nama, zona, jam tidur, bawaan alarm
+  baru). Agen selalu menyebut ulang jam, tanggal, dan zona alarm yang dipasang.
+- **Tetap tidak bisa dimatikan lewat chat.** Agen bisa melihat alarm yang sedang berbunyi, tapi
+  mematikan, menunda, atau menjawab soalnya hanya di layar alarm; agen mengirim tautannya. Mode
+  Komitmen juga berlaku untuk agen (agen menjelaskan sampai jam berapa terkunci).
+- Kalau agen mengulang perintah karena koneksi putus, alarm tidak terbuat dobel.
+- **Halaman Agen** (Pengaturan > Agen): status sambungan agen, contoh kalimat untuk dicoba,
+  aktivitas terbaru (termasuk yang diubah agen), dan token manual untuk aplikasi MCP lain (bisa
+  dicabut kapan saja).
+- **Panduan agen** (`skill/SKILL.md`) untuk listing Marketplace: kata kunci bahasa Indonesia
+  (bangunin, alarm, jam meja, omelin), cara membuat alarm dari satu kalimat, dan larangan mematikan
+  alarm.
+
+**Diubah**
+- Jawaban agen soal rumah pintar dan status akun kini ikut bahasa pilihanmu.
+
+**Keputusan**
+- K-103 sampai K-108 (isian alat bahasa Inggris, idempotensi, penjaga paritas, tautan unduh CSV,
+  halaman Agen, alat tambahan). Lihat `KEPUTUSAN.md`.
+
+**Masih butuh Chief**
+- Tidak ada keputusan baru. K-07 (hak berakhir) masih menunggu.
+
+**Untuk teknisi**
+- Migrasi `0009_idempotensi_mcp.sql` (RLS + uji RLS 55/55). Alat di `src/lib/mcp/alat/*`, peta isian
+  `src/lib/mcp/peta.ts`, daftar paritas `src/lib/mcp/paritas.ts` + penjaga `paritas` di `jaga`.
+- Rute baru: `/api/app/agen`, `/api/app/token` (+ `/[id]`), `/unduh/riwayat`; halaman `/app/agen`.
+
 ## 2026-10-07 (P11): Perkenalan, Siaga, Riwayat, Pengaturan lengkap, Template
 
 **Baru**

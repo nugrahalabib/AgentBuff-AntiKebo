@@ -12,7 +12,7 @@ AntiKebo baru boleh diterbitkan bila semua butir hijau dan buktinya tercatat. Ac
 | 5 | **Suara:** klip dibuat lewat pintu AgentBuff asli untuk pengguna tanpa kunci (suara gratis) dan dengan kunci penyedia; cadangan suara perangkat jalan saat pintu gagal | Skrip bukti + rekaman | Belum |
 | 6 | **Spam kanal:** pesan sampai di Telegram dan WhatsApp asli lewat bot agen, jeda dipatuhi, berhenti saat bangun | Bukti kanal asli | Belum |
 | 7 | **Anti curang:** tidak ada jalur mematikan/menunda/menjawab tanpa sesi atau token perangkat; jawaban tidak bocor; Komitmen ditegakkan di web, PC, MCP | Guard `jaga` + tes + tinjauan | Belum |
-| 8 | **MCP:** paritas penuh (guard), 401 token salah/dicabut, `access_frozen`, `commitment_locked`, idempotensi | Skrip bukti MCP | Belum |
+| 8 | **MCP:** paritas penuh (guard), 401 token salah/dicabut, `access_frozen`, `commitment_locked`, idempotensi | Skrip bukti MCP | Cloud: lulus (penjaga `paritas`, `tests/integrasi/mcp*.test.ts`, `tests/e2e/agen.spec.ts`); di produksi wajib diuji (L3) |
 | 9 | **Aksesibilitas:** 0 kegagalan kontras dan axe semua halaman kedua tema, 320 px, teks 200%, keyboard, pembaca layar 5 alur | Laporan audit | Belum |
 | 10 | **Contoh emas:** pengulangan, soal (TS dan Rust), skor, urutan putar suara | Tes hijau di CI | Belum |
 | 11 | **Deploy aman:** cadangan + hitung baris + gerbang RLS + tes pulih | Log deploy | Belum |

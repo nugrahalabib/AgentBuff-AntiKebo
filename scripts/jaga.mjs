@@ -435,6 +435,96 @@ PENJAGA.push({
   },
 });
 
+// ------------------------------------------------------------ paritas web dan MCP
+// docs/11-ALAT-MCP.md §1: setiap rute web yang mengubah data punya alat MCP atau pengecualian di
+// src/lib/mcp/paritas.ts; alat yang dirujuk harus ada; tidak ada alat yang mengaku bisa mematikan,
+// menunda, atau menjawab alarm berbunyi (nama ditangkap jalur-alarm, deskripsi di sini).
+const METODE_UBAH = ["POST", "PATCH", "PUT", "DELETE"];
+const LINGKUP_WEB = [/^\/api\/app\//, /^\/api\/kejadian\//, /^\/api\/keluar$/];
+function aksiRute(berkasRute) {
+  const aksi = [];
+  for (const { jalur, isi } of berkasRute) {
+    const rute = jalur.replace(/^src\/app/, "").replace(/\/route\.tsx?$/, "");
+    if (!LINGKUP_WEB.some((r) => r.test(rute))) continue;
+    for (const m of METODE_UBAH) if (new RegExp(`export\\s+(?:async\\s+)?function\\s+${m}\\b|export\\s+const\\s+${m}\\b`).test(isi)) aksi.push(`${m} ${rute}`);
+  }
+  return aksi;
+}
+function entriParitas(sumber) {
+  const e = [];
+  for (const m of sumber.matchAll(/\{\s*rute:\s*"([^"]+)",\s*metode:\s*"([A-Z]+)",\s*(?:alat:\s*\[([^\]]*)\]|pengecualian:\s*"((?:[^"\\]|\\.)+)")\s*\}/g)) {
+    e.push({ kunci: `${m[2]} ${m[1]}`, alat: m[3] !== undefined ? [...m[3].matchAll(/"([^"]+)"/g)].map((x) => x[1]) : null, alasan: m[4] ?? null });
+  }
+  return e;
+}
+const KLAIM_HENTI = /\b(stop|dismiss|silence|snooze|answer|solve|turn off|matikan|tunda|jawab)\s+(?:the\s+|a\s+|this\s+|an\s+)?(?:ringing\s+)?(alarm|challenge|soal)\b/i;
+const PENYANGKAL = /\b(never|cannot|can't|no tool|only|not|tidak|hanya)\b/i;
+function deskripsiAlat(sumber) {
+  // Potongan teks sesudah `nama: "x"` sampai alat berikutnya; cukup untuk memeriksa deskripsinya.
+  const hasil = [];
+  const posisi = [...sumber.matchAll(/\bnama:\s*"([^"]+)"/g)];
+  posisi.forEach((m, i) => hasil.push({ nama: m[1], teks: sumber.slice(m.index, posisi[i + 1]?.index ?? sumber.length) }));
+  return hasil;
+}
+function periksaParitas(aksiWeb, entri, alatAda, deskripsi) {
+  const t = [];
+  const kunciEntri = new Set(entri.map((x) => x.kunci));
+  for (const a of aksiWeb) if (!kunciEntri.has(a)) t.push(`${a}: aksi web tanpa alat MCP atau pengecualian di src/lib/mcp/paritas.ts`);
+  const kunciRute = new Set(aksiWeb);
+  for (const x of entri) {
+    if (!kunciRute.has(x.kunci)) t.push(`${x.kunci}: entri paritas tanpa rute (rute dihapus atau salah tulis)`);
+    if (x.alat) {
+      if (!x.alat.length) t.push(`${x.kunci}: daftar alat kosong`);
+      for (const n of x.alat) if (!alatAda.has(n)) t.push(`${x.kunci}: alat "${n}" tidak ada di src/lib/mcp/alat`);
+    } else if (!x.alasan || x.alasan.length < 15) t.push(`${x.kunci}: pengecualian tanpa alasan yang jelas`);
+  }
+  for (const d of deskripsi) {
+    for (const kalimat of d.teks.split(/(?<=[.!?])\s+/)) {
+      if (KLAIM_HENTI.test(kalimat) && !PENYANGKAL.test(kalimat))
+        t.push(`alat ${d.nama}: deskripsi mengaku bisa mematikan/menunda/menjawab alarm: "${kalimat.trim().slice(0, 80)}"`);
+    }
+  }
+  return t;
+}
+PENJAGA.push({
+  nama: "paritas",
+  ujiDiri: () => {
+    const aksi = aksiRute([
+      { jalur: "src/app/api/app/alarm/route.ts", isi: "export async function GET() {}\nexport async function POST() {}" },
+      { jalur: "src/app/api/app/x/[id]/route.ts", isi: "export async function DELETE() {}" },
+      { jalur: "src/app/api/perangkat/detak/route.ts", isi: "export async function POST() {}" },
+    ]);
+    const entri = entriParitas(
+      '{ rute: "/api/app/alarm", metode: "POST", alat: ["create_alarm"] },\n{ rute: "/api/app/hilang", metode: "PATCH", pengecualian: "Alasan yang cukup panjang di sini." },',
+    );
+    const ada = new Set(["create_alarm"]);
+    const t = periksaParitas(aksi, entri, ada, [
+      { nama: "x", teks: 'nama: "x", deskripsi: "Stop the ringing alarm for the user."' },
+      { nama: "y", teks: 'nama: "y", deskripsi: "You can never stop the alarm. Status only."' },
+    ]);
+    return (
+      aksi.join("|") === "POST /api/app/alarm|DELETE /api/app/x/[id]" &&
+      t.length === 3 &&
+      periksaParitas(aksi, [...entri, ...entriParitas('{ rute: "/api/app/x/[id]", metode: "DELETE", alat: ["tidak_ada"] },')], ada, []).length === 2 &&
+      periksaParitas(["POST /api/app/alarm"], entriParitas('{ rute: "/api/app/alarm", metode: "POST", alat: ["create_alarm"] },'), ada, []).length === 0
+    );
+  },
+  jalankan: () => {
+    const rute = semuaBerkas(path.join(AKAR, "src/app/api"), (p) => /route\.tsx?$/.test(p)).map((p) => ({ jalur: rel(p), isi: baca(p) }));
+    const aksi = aksiRute(rute);
+    const fParitas = path.join(AKAR, "src/lib/mcp/paritas.ts");
+    if (!existsSync(fParitas)) return ["src/lib/mcp/paritas.ts tidak ada"];
+    const entri = entriParitas(baca(fParitas));
+    const berkasAlat = semuaBerkas(path.join(AKAR, "src/lib/mcp"), (p) => /\.ts$/.test(p) && !p.endsWith("paritas.ts"));
+    const deskripsi = berkasAlat.flatMap((p) => deskripsiAlat(baca(p)));
+    const alatAda = new Set(deskripsi.map((d) => d.nama));
+    const t = periksaParitas(aksi, entri, alatAda, deskripsi);
+    // Pengurai harus melihat cukup banyak; kalau tidak, penjaga ini buta.
+    if (aksi.length < 20 || entri.length < 20 || alatAda.size < 30) t.push(`pengurai paritas buta? ${aksi.length} aksi, ${entri.length} entri, ${alatAda.size} alat`);
+    return t;
+  },
+});
+
 let gagal = 0;
 for (const p of PENJAGA) {
   if (!p.ujiDiri()) {

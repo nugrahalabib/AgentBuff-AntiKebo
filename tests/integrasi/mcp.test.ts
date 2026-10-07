@@ -102,7 +102,7 @@ describe("/mcp", () => {
     }
   });
 
-  it("initialize + tools/list: server antikebo, petunjuk, alat setup + rumah pintar (P7)", async () => {
+  it("initialize + tools/list: server antikebo, petunjuk, semua alat docs/11-ALAT-MCP.md", async () => {
     const token = await tokenOtomatis();
     const init = await rpc(token, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "uji", version: "1" } });
     expect(init.status).toBe(200);
@@ -110,9 +110,65 @@ describe("/mcp", () => {
     expect(init.json.result.instructions).toContain("NEVER stop, snooze, or answer a ringing alarm");
     const daftar = await rpc(token, "tools/list", {}, 2);
     const nama = daftar.json.result.tools.map((x: { name: string }) => x.name);
-    expect(nama).toEqual(["get_setup_status", "connect_home", "list_home_devices", "disconnect_home"]);
+    // Daftar wajib docs/11-ALAT-MCP.md §2 (+ alat tambahan untuk aksi web yang ada).
+    for (const wajib of [
+      "get_setup_status",
+      "list_alarms",
+      "get_alarm",
+      "get_next_alarm",
+      "create_alarm",
+      "update_alarm",
+      "delete_alarm",
+      "set_alarm_enabled",
+      "skip_next_alarm",
+      "skip_alarm_date",
+      "unskip_alarm",
+      "duplicate_alarm",
+      "test_alarm",
+      "list_templates",
+      "create_template",
+      "update_template",
+      "delete_template",
+      "list_characters",
+      "list_voices",
+      "preview_voice",
+      "set_custom_lines",
+      "get_voice_status",
+      "regenerate_voice",
+      "create_wake_code",
+      "list_wake_codes",
+      "rename_wake_code",
+      "delete_wake_code",
+      "list_channels",
+      "test_channel",
+      "list_standby_devices",
+      "get_device_setup_links",
+      "rename_standby_device",
+      "remove_standby_device",
+      "get_home_status",
+      "connect_home",
+      "disconnect_home",
+      "list_home_devices",
+      "test_home_device",
+      "get_history",
+      "get_wake_stats",
+      "export_history",
+      "get_preferences",
+      "update_preferences",
+      "get_active_alarm",
+    ])
+      expect(nama).toContain(wajib);
+    expect(new Set(nama).size).toBe(nama.length);
+    // Alat pembuat menerima client_ref; alat merusak minta confirm:true.
+    const alat = daftar.json.result.tools as Array<{
+      name: string;
+      inputSchema: { properties: Record<string, unknown>; required?: string[] };
+      annotations: { destructiveHint: boolean };
+    }>;
+    expect(alat.find((x) => x.name === "create_alarm")!.inputSchema.properties).toHaveProperty("client_ref");
+    for (const x of alat.filter((a) => a.annotations.destructiveHint)) expect(x.inputSchema.required, x.name).toContain("confirm");
     // Tidak ada alat yang bisa mematikan, menunda, atau menjawab alarm.
-    expect(nama.join(" ")).not.toMatch(/stop|snooze|dismiss|answer|solve/i);
+    expect(nama.join(" ")).not.toMatch(/stop|snooze|dismiss|answer|solve|silence/i);
   });
 
   it("get_setup_status: izin yang kurang + tautan beri izin; tetap jalan saat beku", async () => {

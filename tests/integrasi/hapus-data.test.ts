@@ -40,6 +40,7 @@ const TABEL = [
   "perangkat_tuya",
   "potret_tuya",
   "token_mcp",
+  "idempotensi_mcp",
 ] as const;
 
 beforeAll(async () => {
@@ -99,6 +100,7 @@ async function isiSemua(A: string): Promise<{ perangkatId: string }> {
   await u.superuser.insert(schema.perangkatTuya).values({ penggunaId: A, deviceId: "lampu1", nama: "Lampu", kategori: "dj" });
   await u.superuser.insert(schema.potretTuya).values({ penggunaId: A, kejadianId: k.id, deviceId: "lampu1", properti: {} });
   await u.superuser.insert(schema.tokenMcp).values({ penggunaId: A, label: "Agen", hash: randomBytes(32).toString("hex"), awalan: "antikebo_abcd", sumber: "manual" });
+  await u.superuser.insert(schema.idempotensiMcp).values({ penggunaId: A, alat: "create_alarm", rujukan: "ref-1", hasil: { data: {}, teks: "ok" } });
   await u.superuser.insert(schema.sesi).values({ idHash: randomBytes(32).toString("hex"), penggunaId: A, kedaluwarsaDiam: MALAM, kedaluwarsaMutlak: MALAM });
   await u.superuser.update(schema.pengguna).set({ namaPanggilan: "Nugi", orientasiSelesai: SIANG, email: "a@contoh.id", nama: "Nugi A" }).where(eq(schema.pengguna.id, A));
   return { perangkatId: p.id };

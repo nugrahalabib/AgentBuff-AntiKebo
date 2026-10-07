@@ -3,6 +3,7 @@ import { z } from "zod";
 import { denganPengguna, schema } from "@/lib/db";
 import type { Kamus } from "@/lib/i18n";
 import { tambahHari } from "@/lib/jadwal/tanggal";
+import { bukaSegel, segel } from "@/lib/kripto";
 import { hariBeruntun, menitSampaiBangun, skorHarian, skorKejadian } from "@/lib/skor";
 import { GalatLayanan } from "./dasar";
 import { kirimanKejadian, type KirimanTampil } from "./kanal";
@@ -295,4 +296,23 @@ export async function csvRiwayat(penggunaId: string): Promise<string> {
   });
   // BOM supaya Excel membaca huruf UTF-8 dengan benar.
   return `﻿${[kepala, ...isiBaris].map((r) => r.map(selCsv).join(",")).join("\r\n")}\r\n`;
+}
+
+// ------------------------------------------------------------------ tautan unduh (MCP export_history)
+
+const INFO_UNDUH = "antikebo-unduh-riwayat";
+export const MENIT_UNDUH = 15;
+
+/** Token unduh CSV berumur pendek (alat MCP `export_history`): tersegel, berisi pemilik + kedaluwarsa. */
+export function tokenUnduhRiwayat(penggunaId: string, sekarang = new Date()): { token: string; kedaluwarsa: Date } {
+  const kedaluwarsa = new Date(sekarang.getTime() + MENIT_UNDUH * 60_000);
+  return { token: segel({ p: penggunaId, e: kedaluwarsa.getTime() }, INFO_UNDUH), kedaluwarsa };
+}
+
+/** Pemilik token unduh, atau null bila palsu atau kedaluwarsa. */
+export function pemilikTokenUnduh(token: string, sekarang = new Date()): string | null {
+  if (!token || token.length > 400) return null;
+  const isi = bukaSegel<{ p?: unknown; e?: unknown }>(token, INFO_UNDUH);
+  if (!isi || typeof isi.p !== "string" || typeof isi.e !== "number" || isi.e <= sekarang.getTime()) return null;
+  return z.uuid().safeParse(isi.p).success ? isi.p : null;
 }
