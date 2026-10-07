@@ -117,3 +117,70 @@ export function Spanduk({ nada = "waspada", judul, isi, aksi }: { nada?: "waspad
     </div>
   );
 }
+
+/** Penghitung (stepper) gaya iOS: kurang, nilai, tambah. */
+export function Penghitung({
+  nilai,
+  ubah,
+  min,
+  maks,
+  label,
+  labelKurang,
+  labelTambah,
+  satuan,
+}: {
+  nilai: number;
+  ubah: (v: number) => void;
+  min: number;
+  maks: number;
+  label: string;
+  labelKurang: string;
+  labelTambah: string;
+  satuan?: string;
+}) {
+  return (
+    <div role="group" aria-label={label} className="flex items-center gap-1 rounded-full bg-kaca-isi p-1">
+      <button
+        type="button"
+        aria-label={labelKurang}
+        disabled={nilai <= min}
+        onClick={() => ubah(nilai - 1)}
+        className="tekan grid size-9 place-items-center rounded-full text-[20px] font-semibold disabled:opacity-35"
+      >
+        −
+      </button>
+      <output aria-live="polite" className="t-angka min-w-[3ch] text-center text-[17px] font-semibold">
+        {satuan ?? nilai}
+      </output>
+      <button
+        type="button"
+        aria-label={labelTambah}
+        disabled={nilai >= maks}
+        onClick={() => ubah(nilai + 1)}
+        className="tekan grid size-9 place-items-center rounded-full text-[20px] font-semibold disabled:opacity-35"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
+/** Cip pilihan (hari, kanal): pil yang bisa dinyalakan; nyala = toska karena "aktif". */
+export function Cip({ nyala, ubah, children, label, nonaktif }: { nyala: boolean; ubah: (v: boolean) => void; children: ReactNode; label?: string; nonaktif?: boolean }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={nyala}
+      aria-label={label}
+      disabled={nonaktif}
+      onClick={() => ubah(!nyala)}
+      className={cn(
+        "tekan h-11 min-w-11 rounded-full px-3.5 text-[15px] font-semibold disabled:opacity-40",
+        nyala ? "bg-toska-isi text-[#04211f]" : "bg-kaca-isi text-label-2 hover:text-label",
+      )}
+    >
+      {children}
+    </button>
+  );
+}

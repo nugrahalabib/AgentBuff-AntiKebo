@@ -85,3 +85,15 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
 - **K-29 (2026-10-07, P0) Suara tiruan dibuat skrip, dikode MP3 murni JS** (`@breezystack/lamejs`,
   hanya devDependency): deterministik (isi sama = berkas sama) dan durasinya mengikuti panjang teks,
   jadi P5 bisa menguji pakai ulang klip dan urutan putar tanpa layanan suara sungguhan.
+- **K-30 (2026-10-07, P1) Prototipe = layar asli.** Setiap layar dibuat sebagai komponen
+  presentasional di `src/components/layar/*` yang menerima data lewat props; galeri `/prototipe`
+  hanya merender komponen itu dengan data contoh. Galeri 404 di produksi kecuali
+  `AGENTBUFF_TIRUAN=1` dan selalu `noindex`. Alasan: masukan Chief langsung berlaku di aplikasi
+  tanpa menulis ulang layar di P8/P11, dan tangkapan layar tidak butuh masuk.
+- **K-31 (2026-10-07, P1) Warna grafik Riwayat satu seri indigo** (`--grafik`: #5b5bd6 terang,
+  #7577ef gelap), diperiksa dengan validator palet (kontras dan lightness di kedua permukaan).
+  Alasan: toska sudah berarti "aktif/nyala" dan hijau/merah dipakai status bangun/tidak; grafik
+  tidak boleh meminjam warna status.
+- **K-32 (2026-10-07, P1) Navigasi final 4 tab: Alarm, Siaga, Riwayat, Pengaturan.** HP: bilah tab
+  kaca di bawah; laptop: bilah samping kaca dengan tombol "Alarm baru". Tab untuk halaman yang belum
+  ada tidak ditampilkan (bukan tab mati).
