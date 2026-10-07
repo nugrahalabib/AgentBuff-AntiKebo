@@ -12,6 +12,7 @@ coverage/
 next-env.d.ts
 /target/
 /pc/target/
+/pc/src-tauri/gen/
 
 # Rahasia dan data lokal
 .env
@@ -37,3 +38,5 @@ __pycache__/
 
 # Tangkapan layar Playwright untuk PR (dilampirkan lewat commit khusus, tidak masuk main)
 /docs/tangkapan/
+# Pemasang aplikasi PC lokal (UNDUH_DIR), diunggah saat rilis, tidak pernah di-commit
+/unduh/

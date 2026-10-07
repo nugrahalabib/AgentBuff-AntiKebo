@@ -320,3 +320,46 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
 - **K-85 (2026-10-07, P9) Keluar dari Jam Meja:** geser ke atas atau tombol saat layar terang;
   konfirmasi bila alarm tinggal kurang dari 8 jam. Peringatan amber berurutan: koneksi putus, tidak
   dicas, layar tidak bisa ditahan menyala.
+- **K-86 (2026-10-07, P10) Jendela alarm PC = tampilan bawaan aplikasi (`pc/ui`), bukan halaman web
+  yang dimuat dengan token.** Menyimpang dari docs/09 §3 butir 2 yang semula memuat halaman web.
+  Alasan: satu tampilan yang sama untuk daring dan luring (tidak perlu dua jalur), token perangkat
+  tidak pernah masuk WebView (hanya proses utama Rust yang memegangnya), dan jendela tetap muncul
+  walau server sedang tidak terjangkau. Jendela hanya boleh meminta jalur soal kejadian lewat
+  proses utama (`jalur_jendela_sah`: lihat soal, jawab, tunda, ganti soal, Masih bangun).
+- **K-87 (2026-10-07, P10) Pembaruan PC:** kunci publik ed25519 tertanam di aplikasi
+  (`pc/src-tauri/tauri.conf.json`, kosong sampai L3), bukan env server; env `PC_UPDATE_PUBKEY`
+  diganti `UNDUH_DIR` (folder pemasang yang disajikan `/unduh/pc/*`). Selama kunci publik kosong,
+  aplikasi tidak memeriksa pembaruan. CI Windows memakai kunci sekali pakai bila rahasia repo
+  `TAURI_SIGNING_PRIVATE_KEY` belum ada, supaya jalur tanda tangan terbukti; tag `pc-v*` menolak
+  jalan tanpa kunci asli. Kunci privat hanya di mesin rilis Chief (L3).
+- **K-88 (2026-10-07, P10) Penjaga = exe yang sama dengan argumen `--penjaga <pid> <folder>`**, proses
+  terpisah tanpa jendela (bukan berkas `antikebo-penjaga.exe` tersendiri, supaya pemasang dan
+  pembaruan tetap satu berkas). Hidup hanya selama siaga; saling menyalakan ulang dalam ±1 detik
+  (paling banyak 5 kali per menit). Keluar sah menulis `keluar-sah`, akhir siaga menulis
+  `penjaga-henti`. Terbukti di Linux: proses utama dibunuh paksa, menyala lagi sendiri.
+- **K-89 (2026-10-07, P10) Misi QR di PC:** PC tidak memindai kode QR; jendela alarm menyarankan
+  pindai lewat HP atau "Ganti soal hitungan" (aturan kamera tidak tersedia PRD D6: hitungan Berat
+  3 kali benar). Soal luring PC selalu hitungan (K-47).
+- **K-90 (2026-10-07, P10) Mesin alarm PC murni di `pc/inti` (`alarm.rs`)**: server lebih dulu atau
+  jadwal lokal sesudah tenggang 5 detik (sama dengan Jam Meja), ditandai `kunci@saat` sehingga
+  tidak dobel dan tunda berbunyi lagi; jadwal yang diminta sebelum peristiwa terakhir diabaikan
+  (tidak membunyikan lagi alarm yang baru berhenti); aplikasi dinyalakan ulang saat server masih
+  berbunyi = berbunyi lagi. Tombol Keluar dan Putuskan dikunci selama alarm hidup (berbunyi,
+  ditunda, Masih bangun) dan selama jendela Komitmen (`kunciMulai` dari server).
+- **K-91 (2026-10-07, P10) Jadwal perangkat membawa `komitmen`, `kunciMulai`, `siagaMulai` (jam tidur
+  atau 8 jam sebelum alarm, mana yang lebih awal), `cekPada`/`cekBatas`, serta `nama` sapaan dan
+  `bahasa` pengguna** (layar Selamat pagi di PC). Bentuknya dijaga contoh emas
+  `tests/emas/jadwal-perangkat.json` yang dibaca tes TypeScript dan Rust.
+- **K-92 (2026-10-07, P10) Klien PC dipisah ke crate `pc/klien` tanpa Tauri** dan diuji ujung ke ujung
+  oleh `uji-pc` melawan server + worker sungguhan (sambung lewat kode, SSE, soal server, soal
+  luring). Bagian khusus Windows (jendela terkunci, suara, volume, daya, kredensial) dicek tipe
+  untuk target Windows dan dibangun penuh di CI Windows; perilakunya di PC asli diuji di L2.
+- **K-93 (2026-10-07, P10) Token PC di Windows Credential Manager lewat crate `windows`**
+  (`CredWriteW`, generik, per pengguna), bukan crate `keyring` (API-nya sedang berubah besar). Di
+  luar Windows (pengembangan) disimpan berkas izin 600.
+- **K-94 (2026-10-07, P10) Kamus PC = potongan kamus web** (`src/lib/i18n/kamus-pc.ts` ke
+  `pc/ui/kamus.js` + `kamus.json`), dijaga tes supaya tidak basi. Bahasa sebelum tersambung:
+  Indonesia bila Windows berbahasa atau berwilayah Indonesia; sesudahnya mengikuti pilihan pengguna.
+- **K-95 (2026-10-07, P10) Catatan diagnosa PC:** `antikebo.log` (paling besar 1 MB, diputar) di folder
+  data aplikasi berisi kejadian penting (mulai, SSE, berbunyi, berhenti, omelan) tanpa token,
+  rahasia, atau isi soal; dipakai menelusuri uji manual L2.

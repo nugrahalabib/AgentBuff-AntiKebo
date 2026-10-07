@@ -1,0 +1,110 @@
+# AntiKebo untuk PC (docs/09-APLIKASI-PC.md §8, §9). Linux: format, clippy, tes logika murni
+# (contoh emas yang sama dengan TypeScript). Windows: clippy + tes seluruh workspace (termasuk
+# kode khusus Windows), lalu pemasang NSIS + tanda tangan pembaruan ed25519 + metadata SHA-256.
+# Tanpa rahasia pembaruan (PR, sebelum L3) dipakai kunci sekali pakai: membuktikan jalur tanda
+# tangan bekerja, hasilnya TIDAK untuk dirilis. Rilis (tag pc-v*) wajib memakai kunci asli.
+name: PC
+
+on:
+  pull_request:
+    paths:
+      - "pc/**"
+      - "tests/emas/**"
+      - "public/bunyi/**"
+      - "scripts/rilis-pc.mjs"
+      - ".github/workflows/pc.yml"
+  push:
+    tags: ["pc-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  inti:
+    name: pc-linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: pc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: pc
+      - name: Format (rustfmt)
+        run: cargo fmt --all --check
+      - name: Clippy logika murni + klien
+        run: cargo clippy -p antikebo-inti -p antikebo-klien --all-targets -- -D warnings
+      - name: Tes logika murni + klien (contoh emas)
+        run: cargo test -p antikebo-inti -p antikebo-klien
+
+  windows:
+    name: pc-windows
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: pc
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: pc
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Clippy seluruh workspace (termasuk kode Windows)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tes seluruh workspace
+        run: cargo test --workspace
+
+      - name: Kunci tanda tangan pembaruan
+        env:
+          KUNCI_ASLI: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -n "$KUNCI_ASLI" ]; then
+            echo "Memakai kunci pembaruan asli (rahasia repo)."
+            echo "TAMBAHAN={}" >> "$GITHUB_ENV"
+          else
+            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then echo "Rilis wajib memakai kunci asli (TAURI_SIGNING_PRIVATE_KEY)."; exit 1; fi
+            npx --yes @tauri-apps/cli@2 signer generate -w "$RUNNER_TEMP/uji.key" -p "" --ci -f
+            echo "TAURI_SIGNING_PRIVATE_KEY_PATH=$RUNNER_TEMP/uji.key" >> "$GITHUB_ENV"
+            echo "TAMBAHAN={\"plugins\":{\"updater\":{\"pubkey\":\"$(cat "$RUNNER_TEMP/uji.key.pub")\"}}}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Bangun pemasang NSIS + tanda tangan pembaruan
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then export TAURI_SIGNING_PRIVATE_KEY="$(cat "$TAURI_SIGNING_PRIVATE_KEY_PATH")"; fi
+          cd src-tauri
+          npx --yes @tauri-apps/cli@2 build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":true}}' --config "$TAMBAHAN"
+
+      - name: Berkas rilis (metadata, SHA-256, manifest pembaruan)
+        run: |
+          node ../scripts/rilis-pc.mjs target/release/bundle/nsis rilis/pc
+          test -f rilis/pc/pembaruan.json
+          ls -la rilis/pc
+
+      - name: Unggah hasil
+        uses: actions/upload-artifact@v4
+        with:
+          name: antikebo-pc-${{ github.sha }}
+          path: pc/rilis/pc/
+          retention-days: ${{ github.ref_type == 'tag' && 90 || 7 }}

@@ -65,8 +65,11 @@ export function LayarSiaga({ perangkat, hrefUnduh, hrefJamMeja, putus }: { peran
   );
 }
 
-/** Halaman unduh PC: tombol unduh, panduan layar biru Windows bergambar 3 langkah, sidik SHA-256. */
-export function LayarUnduhPc({ hrefUnduh, ukuranMb, sha256 }: { hrefUnduh: string; ukuranMb: number; sha256: string }) {
+/**
+ * Halaman unduh PC: tombol unduh, panduan layar biru Windows bergambar 3 langkah, sidik SHA-256.
+ * Tanpa `hrefUnduh` (belum ada rilis PC) = keterangan "sedang disiapkan", tanpa tautan palsu.
+ */
+export function LayarUnduhPc({ hrefUnduh, ukuranMb, sha256, versi }: { hrefUnduh?: string; ukuranMb?: number; sha256?: string; versi?: string }) {
   const { t } = useKamus();
   const U = t.unduh;
   const W = t.layarBiru;
@@ -76,11 +79,22 @@ export function LayarUnduhPc({ hrefUnduh, ukuranMb, sha256 }: { hrefUnduh: strin
         <Logo ukuran={72} />
         <h1 className="t-judul-1 mt-5">{U.judul}</h1>
         <p className="t-isi mt-2 max-w-[44ch] text-label-2">{U.sub}</p>
-        <a href={hrefUnduh} className="tekan mt-7 inline-flex h-[52px] items-center gap-2 rounded-full bg-grafit px-7 text-[17px] font-semibold text-grafit-label">
-          <Download size={19} />
-          {U.tombol}
-        </a>
-        <p className="t-keterangan mt-3 text-label-2">{isi(U.ukuran, { mb: ukuranMb })}</p>
+        {hrefUnduh ? (
+          <>
+            <a href={hrefUnduh} download className="tekan mt-7 inline-flex h-[52px] items-center gap-2 rounded-full bg-grafit px-7 text-[17px] font-semibold text-grafit-label">
+              <Download size={19} />
+              {U.tombol}
+            </a>
+            <p className="t-keterangan mt-3 text-label-2">
+              {isi(U.ukuran, { mb: ukuranMb ?? 0 })}
+              {versi ? ` · ${isi(t.pc.versi, { v: versi })}` : null}
+            </p>
+          </>
+        ) : (
+          <p role="status" className="t-subjudul mt-7 max-w-[40ch] rounded-[18px] bg-kaca-isi px-5 py-3 text-label-2">
+            {U.belum}
+          </p>
+        )}
       </section>
 
       <section aria-labelledby="judul-panduan" className="flex flex-col gap-3">
@@ -93,7 +107,7 @@ export function LayarUnduhPc({ hrefUnduh, ukuranMb, sha256 }: { hrefUnduh: strin
         <ol className="grid gap-3 md:grid-cols-3">
           {U.langkah.map((l, i) => (
             <li key={l} className="kaca flex flex-col gap-3 rounded-[22px] p-4">
-              <div aria-hidden className="relative aspect-[4/3] overflow-hidden rounded-[14px] bg-[#0b5cad] p-3 text-left text-white">
+              <div aria-hidden className="flex min-h-[156px] flex-col overflow-hidden rounded-[14px] bg-[#0b5cad] p-3 text-left text-white">
                 <ShieldAlert size={22} className="opacity-90" />
                 <p className="mt-2 text-[14px] leading-tight font-semibold">{W.judul}</p>
                 {i === 0 ? (
@@ -104,11 +118,16 @@ export function LayarUnduhPc({ hrefUnduh, ukuranMb, sha256 }: { hrefUnduh: strin
                   <p className="mt-1.5 text-[12px] opacity-80">{W.aplikasi}</p>
                 )}
                 {i >= 1 ? (
-                  <div className="absolute right-3 bottom-3 flex gap-1.5">
-                    <span className={cn("rounded-[4px] border border-white/70 px-2 py-1 text-[12px]", i === 1 && "ring-2 ring-amber-300 ring-offset-2 ring-offset-[#0b5cad]")}>
+                  <div className="mt-auto flex flex-wrap justify-end gap-1.5 pt-3">
+                    <span
+                      className={cn(
+                        "rounded-[4px] border border-white/70 px-2 py-1 text-[12px] whitespace-nowrap",
+                        i === 1 && "ring-2 ring-amber-300 ring-offset-2 ring-offset-[#0b5cad]",
+                      )}
+                    >
                       {W.jalankan}
                     </span>
-                    <span className="rounded-[4px] bg-white/20 px-2 py-1 text-[12px]">{W.jangan}</span>
+                    <span className="rounded-[4px] bg-white/20 px-2 py-1 text-[12px] whitespace-nowrap">{W.jangan}</span>
                   </div>
                 ) : null}
               </div>
@@ -121,10 +140,13 @@ export function LayarUnduhPc({ hrefUnduh, ukuranMb, sha256 }: { hrefUnduh: strin
         </ol>
       </section>
 
-      <section className="kaca rounded-[22px] p-4">
-        <h2 className="t-subjudul font-semibold text-label-2">{U.sidik}</h2>
-        <p className="mt-1 font-mono text-[13px] break-all">{sha256}</p>
-      </section>
+      {sha256 ? (
+        <section className="kaca rounded-[22px] p-4">
+          <h2 className="t-subjudul font-semibold text-label-2">{U.sidik}</h2>
+          <p className="mt-1 font-mono text-[13px] break-all">{sha256}</p>
+          <p className="t-keterangan mt-2 text-label-2">{U.sidikKet}</p>
+        </section>
+      ) : null}
     </div>
   );
 }

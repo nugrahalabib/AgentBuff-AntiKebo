@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { bearer, dariGalat, galat } from "@/lib/api";
 import { sesiSaatIni } from "@/lib/auth/sesi";
-import { jadwalPerangkat, perangkatDariToken } from "@/lib/layanan/perangkat";
+import { perangkatDariToken, salinanJadwal } from "@/lib/layanan/perangkat";
 
 // Salinan jadwal 24 jam untuk pengatur waktu lokal perangkat siaga (arsitektur §4, "perangkat juga
 // memegang jadwal"). Ditarik ulang saat peristiwa `jadwal` dan tiap 5 menit.
@@ -21,7 +21,7 @@ export async function GET(req: Request) {
       penggunaId = s.pengguna.id;
     }
     const sekarang = new Date();
-    return NextResponse.json({ waktuServer: sekarang.toISOString(), kejadian: await jadwalPerangkat(penggunaId, sekarang) }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ waktuServer: sekarang.toISOString(), ...(await salinanJadwal(penggunaId, sekarang)) }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     return dariGalat(e);
   }

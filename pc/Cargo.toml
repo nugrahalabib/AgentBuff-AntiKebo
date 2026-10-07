@@ -1,0 +1,19 @@
+# Aplikasi AntiKebo untuk PC (docs/09-APLIKASI-PC.md). `inti` = logika murni tanpa Tauri (dites di
+# Linux: `cargo test -p antikebo-inti`); `src-tauri` = aplikasi Windows (dibangun CI Windows).
+[workspace]
+members = ["inti", "klien", "src-tauri"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "UNLICENSED"
+publish = false
+rust-version = "1.85"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

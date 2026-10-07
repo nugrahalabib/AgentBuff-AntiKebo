@@ -29,7 +29,7 @@ export function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     {
-      source: "/((?!api/|mcp$|_next/static|_next/image|favicon.ico|ikon/|vendor/|bunyi/|manifest.webmanifest|robots.txt|sw.js).*)",
+      source: "/((?!api/|mcp$|_next/static|_next/image|favicon.ico|ikon/|vendor/|bunyi/|unduh/|manifest.webmanifest|robots.txt|sw.js).*)",
       missing: [
         { type: "header", key: "next-router-prefetch" },
         { type: "header", key: "purpose", value: "prefetch" },

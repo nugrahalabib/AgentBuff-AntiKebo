@@ -349,6 +349,11 @@ function periksaReferensi(isi) {
   if (!/["']referensi\/\*\*["']/.test(isi.eslint ?? "")) t.push('eslint.config.mjs: "referensi/**" tidak diabaikan');
   if (!/["']referensi\/\*\*["']/.test(isi.vitest ?? "")) t.push('vitest.config.mts: "referensi/**" tidak dikecualikan');
   if (!/^referensi\/?\s*$/m.test(isi.prettier ?? "")) t.push(".prettierignore: referensi/ tidak diabaikan");
+  // Cargo (aplikasi PC, P10): workspace dengan anggota eksplisit, tanpa jalur ke referensi/.
+  if (isi.cargo != null) {
+    if (!/^\[workspace\]/m.test(isi.cargo) || /members\s*=\s*\[[^\]]*\*/.test(isi.cargo)) t.push("pc/Cargo.toml: workspace wajib dengan anggota eksplisit (tanpa pola *)");
+    if (/referensi/.test(isi.cargo)) t.push("pc/**/Cargo.toml: tidak boleh menyentuh referensi/");
+  }
   return t;
 }
 PENJAGA.push({
@@ -360,14 +365,24 @@ PENJAGA.push({
       eslint: 'globalIgnores(["referensi/**"])',
       vitest: 'exclude: ["referensi/**"]',
       prettier: "referensi/\n",
-    }).length === 0,
+    }).length === 0 &&
+    periksaReferensi({
+      tsconfig: '"exclude": ["referensi"]',
+      eslint: '"referensi/**"',
+      vitest: '"referensi/**"',
+      prettier: "referensi/",
+      cargo: '[workspace]\nmembers = ["*"]\n[dependencies]\nx = { path = "../referensi/x" }',
+    }).length === 2,
   jalankan: () => {
     const bacaAman = (n) => (existsSync(path.join(AKAR, n)) ? baca(path.join(AKAR, n)) : null);
+    const cargo = bacaAman("pc/Cargo.toml");
+    const anggota = cargo == null ? [] : ["inti", "klien", "src-tauri"].map((a) => bacaAman(`pc/${a}/Cargo.toml`) ?? "");
     return periksaReferensi({
       tsconfig: bacaAman("tsconfig.json"),
       eslint: bacaAman("eslint.config.mjs"),
       vitest: bacaAman("vitest.config.mts"),
       prettier: bacaAman(".prettierignore"),
+      cargo: cargo == null ? null : [cargo, ...anggota].join("\n"),
     });
   },
 });

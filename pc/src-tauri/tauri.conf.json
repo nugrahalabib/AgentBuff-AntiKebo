@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AntiKebo",
+  "mainBinaryName": "AntiKebo",
+  "identifier": "id.agentbuff.antikebo",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "publisher": "AgentBuff",
+    "shortDescription": "Alarm anti kesiangan",
+    "longDescription": "AntiKebo untuk PC: alarm yang tidak berhenti sampai soal terjawab.",
+    "copyright": "AgentBuff",
+    "category": "Utility",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico",
+      "icons/icon.png"
+    ],
+    "resources": {
+      "../../public/bunyi/klasik.wav": "bunyi/klasik.wav",
+      "../../public/bunyi/digital.wav": "bunyi/digital.wav",
+      "../../public/bunyi/sirene.wav": "bunyi/sirene.wav",
+      "../../public/bunyi/lonceng.wav": "bunyi/lonceng.wav",
+      "../../public/bunyi/kebakaran.wav": "bunyi/kebakaran.wav",
+      "../../public/bunyi/ayam.wav": "bunyi/ayam.wav",
+      "../../public/bunyi/nuklir.wav": "bunyi/nuklir.wav",
+      "../../public/bunyi/naik.wav": "bunyi/naik.wav"
+    },
+    "createUpdaterArtifacts": false,
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "languages": [
+          "Indonesian",
+          "English"
+        ],
+        "displayLanguageSelector": false,
+        "customLanguageFiles": {
+          "Indonesian": "nsis/Indonesian.nsh"
+        }
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [
+        "https://antikebo.agentbuff.id/unduh/pc/pembaruan.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

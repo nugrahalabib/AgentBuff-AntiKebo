@@ -20,7 +20,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P7 | Rumah pintar Tuya | Cloud | Selesai |
 | P8 | Layar inti tersambung API | Cloud | Selesai |
 | P9 | Mode Jam Meja dan PWA | Cloud | Selesai |
-| P10 | Aplikasi PC (Tauri) | Cloud | Belum |
+| P10 | Aplikasi PC (Tauri) | Cloud | Selesai |
 | P11 | Orientasi, Siaga, Riwayat, Pengaturan, Template | Cloud | Belum |
 | P12 | MCP paritas penuh + SKILL.md | Cloud | Belum |
 | P13 | Mutu, keamanan, aksesibilitas, Inggris, legal | Cloud | Belum |
@@ -436,16 +436,42 @@ Catatan untuk paket berikutnya:
 
 ## P10 Aplikasi PC (Tauri)
 
+**Status: selesai 2026-10-07.** Bukti di cloud: 29 tes Rust `cargo test --workspace` (contoh emas
+soal, benih luring, urutan omelan, jadwal perangkat, mesin alarm, SSE, klip, penjaga), clippy dan
+rustfmt bersih, CI Windows hijau (clippy + tes seluruh workspace + pemasang NSIS + tanda tangan
+pembaruan + metadata SHA-256), uji ujung ke ujung `uji-pc` melawan server + worker sungguhan, uji
+tampilan jendela PC (613 tes vitest dan 99 uji Playwright mode produksi seluruhnya hijau), dan
+aplikasi Tauri asli dijalankan di Linux (layar virtual): tersambung, alarm berbunyi dengan soal
+server, dijawab di web lalu PC berhenti, penjaga menyalakan ulang proses yang dibunuh. Di PC Windows
+asli **wajib diuji** (L2, `09-APLIKASI-PC.md` §9): layar terkunci, volume dan bisu, semua speaker,
+Alt+F4, dua monitor, laptop ditutup, satu instans, suara bawaan Windows, pembaruan.
+
 Rujukan: `09-APLIKASI-PC.md` seluruhnya.
 
-- [ ] `pc/` Tauri v2: baki, sambung (kode), jadwal lokal, SSE, unduh klip, pemutar rodio ke semua
+- [x] `pc/` Tauri v2: baki, sambung (kode), jadwal lokal, SSE, unduh klip, pemutar rodio ke semua
       keluaran, volume Core Audio, `SetThreadExecutionState`, jendela alarm terkunci, penjaga,
       autostart, single-instance, updater ed25519, soal luring (Rust) dengan contoh emas yang sama.
-- [ ] Halaman unduh + panduan layar biru + sidik SHA-256.
-- [ ] CI Windows (`.github/workflows/pc.yml`): cargo test + tauri build pada tag `pc-v*`.
+      (Workspace `pc/`: `inti` logika murni + tes di `pc/inti/tests`, `klien` HTTP + SSE + `uji-pc`,
+      `src-tauri` aplikasi, `ui` jendela; mesin alarm K-90, jendela bawaan K-86, penjaga K-88, token
+      di Credential Manager K-93, kamus dari kamus web K-94, catatan diagnosa K-95.)
+- [x] Halaman unduh + panduan layar biru + sidik SHA-256. (`/app/unduh-pc`, rute `/unduh/pc/*` dari
+      `UNDUH_DIR`, keadaan "sedang disiapkan" bila belum ada rilis; tautan dari Pengaturan.)
+- [x] CI Windows (`.github/workflows/pc.yml`): cargo test + tauri build pada tag `pc-v*` (juga setiap
+      PR yang menyentuh `pc/`, dengan kunci pembaruan sekali pakai sampai kunci asli ada, K-87).
 
 Selesai bila: cargo test hijau di Linux dan Windows CI, pemasang terbentuk, daftar uji manual
 §9 siap untuk L2.
+
+Catatan untuk paket berikutnya:
+- P11: tab Siaga memakai `/app/unduh-pc` untuk "Pasang di PC ini" dan menampilkan perangkat PC dari
+  detak (`kemampuan.dicas`, `baterai`, `suara`, `siapSampai`); nama perangkat bawaan "PC <nama komputer>".
+- P12: tidak ada alat MCP untuk mematikan/menjawab dari PC; sambung PC tetap lewat peramban
+  (catat di `paritas.ts` sebagai pengecualian bila perlu).
+- L2: unduh pemasang dari artefak CI `pc-windows` (atau dari server sesudah rilis), jalankan daftar
+  §9, lampirkan `antikebo.log` bila ada yang gagal.
+- L3: buat kunci pembaruan (`tauri signer generate`), simpan rahasia repo
+  `TAURI_SIGNING_PRIVATE_KEY` (+ `_PASSWORD`), tulis kunci publik ke `tauri.conf.json`, tag
+  `pc-v0.1.0`, unggah isi artefak ke `UNDUH_DIR/pc/` di server.
 
 ## P11 Orientasi, Siaga, Riwayat, Pengaturan, Template
 

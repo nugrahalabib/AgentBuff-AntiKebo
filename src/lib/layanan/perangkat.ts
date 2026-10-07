@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import { and, asc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { z } from "zod";
 import { isiDariBaris } from "@/lib/alarm/baris";
+import { jendelaKunci } from "@/lib/alarm/komitmen";
 import { db, denganHashToken, denganPengguna, schema, type Tx } from "@/lib/db";
 import type { KemampuanPerangkat } from "@/lib/db/schema";
 import { kejadianDalamRentang } from "@/lib/jadwal/pengulangan";
@@ -288,16 +289,37 @@ export type ItemJadwal = {
   soal: { jenis: string; tingkat: string; benar: number };
   tunda: { jatah: number; menit: number; terpakai: number };
   tundaSampai: string | null;
+  /** "Masih bangun?" (status cek_bangun): kapan tampil dan batas mengetuk. */
+  cekPada: string | null;
+  cekBatas: string | null;
   uji: boolean;
+  /** Mode Komitmen: aplikasi PC mengunci tombol Keluar mulai `kunciMulai` (jam tidur) sampai alarm selesai. */
+  komitmen: boolean;
+  kunciMulai: string | null;
+  /** Siaga (PC tidak boleh tidur): jam tidur atau 8 jam sebelum alarm, mana yang lebih awal (docs/09 §5). */
+  siagaMulai: string;
   /** Kalimat omelan (teks untuk cadangan suara perangkat) + klip siap (`/api/perangkat/klip/<hash>`). */
   omelan: OmelanPerangkat[];
 };
+
+export const SIAGA_SEBELUM_MS = 8 * 60 * 60_000;
+
+function siagaDanKunci(jadwal: Date, komitmen: boolean, jamTidur: string, zona: string): Pick<ItemJadwal, "komitmen" | "kunciMulai" | "siagaMulai"> {
+  const tidur = jendelaKunci(jadwal, jamTidur, zona).mulai;
+  const siaga = Math.min(tidur.getTime(), jadwal.getTime() - SIAGA_SEBELUM_MS);
+  return { komitmen, kunciMulai: komitmen ? tidur.toISOString() : null, siagaMulai: new Date(siaga).toISOString() };
+}
 
 /**
  * Salinan jadwal untuk perangkat siaga: kejadian yang sedang aktif + semua kejadian 24 jam ke
  * depan (termasuk yang belum dimaterialisasi). Tanpa jawaban soal, tanpa rahasia.
  */
 export async function jadwalPerangkat(penggunaId: string, sekarang = new Date()): Promise<ItemJadwal[]> {
+  return (await salinanJadwal(penggunaId, sekarang)).kejadian;
+}
+
+/** Jawaban `GET /api/perangkat/jadwal`: jadwal + nama sapaan dan bahasa (layar alarm aplikasi PC). */
+export async function salinanJadwal(penggunaId: string, sekarang = new Date()): Promise<{ nama: string; bahasa: "id" | "en"; kejadian: ItemJadwal[] }> {
   return denganPengguna(penggunaId, async (tx) => {
     const k = await konteksPengguna(tx, penggunaId);
     const sampai = new Date(sekarang.getTime() + JENDELA_JADWAL_MS);
@@ -345,7 +367,10 @@ export async function jadwalPerangkat(penggunaId: string, sekarang = new Date())
         soal: { jenis: isi.soal.jenis, tingkat: isi.soal.tingkat, benar: isi.soal.benar },
         tunda: { jatah: isi.tunda.jatah, menit: isi.tunda.menit, terpakai: kej.jumlahTunda },
         tundaSampai: kej.tundaSampai?.toISOString() ?? null,
+        cekPada: kej.cekPada?.toISOString() ?? null,
+        cekBatas: kej.cekBatas?.toISOString() ?? null,
         uji: kej.uji,
+        ...siagaDanKunci(kej.jadwalUtc, isi.komitmen && !kej.uji, k.jamTidur, a?.zona ?? k.zona),
         omelan: await omelanUntuk(tx, k, isi),
       });
     }
@@ -371,11 +396,14 @@ export async function jadwalPerangkat(penggunaId: string, sekarang = new Date())
           soal: { jenis: isi.soal.jenis, tingkat: isi.soal.tingkat, benar: isi.soal.benar },
           tunda: { jatah: isi.tunda.jatah, menit: isi.tunda.menit, terpakai: 0 },
           tundaSampai: null,
+          cekPada: null,
+          cekBatas: null,
           uji: false,
+          ...siagaDanKunci(j.utc, isi.komitmen, k.jamTidur, a.zona),
           omelan: await omelanUntuk(tx, k, isi),
         });
       }
     }
-    return [...hasil.values()].sort((x, y) => x.jadwalUtc.localeCompare(y.jadwalUtc));
+    return { nama: k.namaSapaan, bahasa: k.bahasa, kejadian: [...hasil.values()].sort((x, y) => x.jadwalUtc.localeCompare(y.jadwalUtc)) };
   });
 }

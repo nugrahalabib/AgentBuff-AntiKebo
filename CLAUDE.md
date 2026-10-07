@@ -127,4 +127,7 @@ perlu diulang: `bash scripts/siapkan-lokal.sh` (idempoten, tidak pernah menimpa 
   commit itu (`https://raw.githubusercontent.com/<repo>/<sha>/docs/tangkapan/...`), lalu hapus lagi
   di commit berikutnya. PR digabung dengan squash, jadi gambar tidak masuk `main`.
 - Jangan `pkill -f "next dev"` dari perintah yang teksnya memuat pola itu (ikut membunuh shell sendiri).
-- Aplikasi PC (P10): `cargo test -p antikebo-inti` di `pc/`.
+- Aplikasi PC (P10): `cd pc && cargo test --workspace` (logika + contoh emas). `pc.spec.ts` butuh
+  `cd pc && cargo build -p antikebo-klien --bin uji-pc` (dilewati bila belum dibangun). Membangun
+  `src-tauri` di Linux butuh paket webkit2gtk-4.1/gtk3/appindicator (dev); pemasang Windows hanya
+  dari CI `pc.yml`. Kamus PC: `pnpm exec tsx scripts/kamus-pc.ts` sesudah mengubah kamus `pc`.
