@@ -1,7 +1,9 @@
-/* Service Worker AntiKebo (P6: notifikasi alarm, PRD G5; P9 menambah cache Mode Jam Meja).
+/* Service Worker AntiKebo (P6: notifikasi alarm, PRD G5; P9: simpanan Mode Jam Meja).
  * Isi push dibuat server (src/lib/pesan `IsiNotif`): { jenis, judul, isi, tag, url, ulang, tahan }.
  * Tag sama = notifikasi diganti, bukan ditumpuk; `ulang` = bunyi/getar lagi (renotify);
- * `tahan` = tidak hilang sendiri sampai diketuk. Mengetuk notifikasi membuka layar alarm. */
+ * `tahan` = tidak hilang sendiri sampai diketuk. Mengetuk notifikasi membuka layar alarm.
+ * Jam Meja mengirim pesan `simpan-siaga` berisi bunyi + klip alarm 24 jam ke depan (docs/10-SUARA.md
+ * §6); berkas itu disajikan dari simpanan dulu supaya alarm tetap bersuara saat koneksi putus. */
 "use strict";
 
 const GETAR = [600, 200, 600, 200, 600, 200, 900];
@@ -65,5 +67,68 @@ self.addEventListener("notificationclick", (e) => {
       if (ada && "navigate" in ada) return ada.navigate(tujuan).then((w) => (w ? w.focus() : self.clients.openWindow(tujuan)));
       return self.clients.openWindow(tujuan);
     }),
+  );
+});
+
+// ------------------------------------------------------------------ simpanan Mode Jam Meja
+
+const SIMPANAN_SIAGA = "antikebo-siaga-v1";
+const MAKS_SIMPAN = 300;
+
+/** Hanya bunyi alarm dan klip omelan milik pengguna; jalur lain tidak pernah disimpan. */
+function bolehDisimpan(jalur) {
+  return /^\/bunyi\/[a-z]+\.wav$/.test(jalur) || /^\/api\/perangkat\/klip\/[A-Za-z0-9_-]{8,128}$/.test(jalur);
+}
+
+/** Simpan berkas yang diminta (yang sudah ada dilewati), buang yang tidak diminta lagi. */
+async function simpanSiaga(daftar) {
+  const jalur = [...new Set((Array.isArray(daftar) ? daftar : []).filter((u) => typeof u === "string" && bolehDisimpan(u)))].slice(0, MAKS_SIMPAN);
+  const c = await self.caches.open(SIMPANAN_SIAGA);
+  let tersimpan = 0;
+  for (const u of jalur) {
+    if (await c.match(u)) {
+      tersimpan++;
+      continue;
+    }
+    try {
+      const r = await fetch(u, { credentials: "same-origin" });
+      if (r.ok) {
+        await c.put(u, r);
+        tersimpan++;
+      }
+    } catch {
+      /* jaringan putus: dicoba lagi pada pesan berikutnya */
+    }
+  }
+  for (const req of await c.keys()) {
+    if (!jalur.includes(new URL(req.url).pathname)) await c.delete(req);
+  }
+  return { total: jalur.length, tersimpan };
+}
+
+self.addEventListener("message", (e) => {
+  const d = e.data;
+  if (!d || typeof d !== "object") return;
+  if (d.jenis === "simpan-siaga") {
+    e.waitUntil(
+      simpanSiaga(d.url).then((h) => {
+        if (e.source && typeof e.source.postMessage === "function") e.source.postMessage({ jenis: "siaga-tersimpan", ...h });
+      }),
+    );
+  } else if (d.jenis === "lupakan-siaga") {
+    e.waitUntil(self.caches.delete(SIMPANAN_SIAGA));
+  }
+});
+
+self.addEventListener("fetch", (e) => {
+  const req = e.request;
+  if (req.method !== "GET") return;
+  const u = new URL(req.url);
+  if (u.origin !== self.location.origin || !bolehDisimpan(u.pathname)) return;
+  e.respondWith(
+    self.caches
+      .open(SIMPANAN_SIAGA)
+      .then((c) => c.match(u.pathname))
+      .then((m) => m || fetch(req)),
   );
 });

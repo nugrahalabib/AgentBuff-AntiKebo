@@ -117,3 +117,53 @@ export async function nyalakanWorker(): Promise<() => Promise<void>> {
     await new Promise((r) => setTimeout(r, 500));
   };
 }
+
+// ------------------------------------------------------------------ alarm (P8, P9)
+
+export async function batalkanYangAktif() {
+  await denganDb(
+    (sql) =>
+      sql`update kejadian_alarm set status = 'dibatalkan' where status in ('berbunyi', 'ditunda', 'cek_bangun')
+          and pengguna_id = (select id from pengguna where agentbuff_sub = ${NUGI})`,
+  );
+}
+
+export async function asal(page: Page) {
+  return new URL(page.url()).origin;
+}
+
+/** Mulai bersih: tidak ada alarm berbunyi dan tidak ada alarm tersimpan. */
+export async function bersihkan(page: Page) {
+  await batalkanYangAktif();
+  const o = await asal(page);
+  const r = await page.request.get("/api/app/alarm");
+  for (const a of ((await r.json()) as { alarm: Array<{ id: string }> }).alarm) {
+    expect((await page.request.delete(`/api/app/alarm/${a.id}`, { headers: { Origin: o } })).status()).toBe(200);
+  }
+}
+
+export async function buatLewatApi(page: Page, isi: Record<string, unknown>): Promise<string> {
+  const r = await page.request.post("/api/app/alarm", {
+    data: { jam: "23:58", soal: { jenis: "hitungan", tingkat: "ringan", benar: 1 }, spam: { kanal: [] }, ...isi },
+    headers: { Origin: await asal(page) },
+  });
+  expect(r.status()).toBe(201);
+  return ((await r.json()) as { alarm: { id: string } }).alarm.id;
+}
+
+/** Majukan kejadian `menunggu` alarm-alarm ini supaya berbunyi `detik` lagi (bawaan 2). */
+export async function bunyikanSekarang(...alarmId: string[]) {
+  await bunyikanDalam(2, ...alarmId);
+}
+
+export async function bunyikanDalam(detik: number, ...alarmId: string[]) {
+  await denganDb((sql) => sql`update kejadian_alarm set jadwal_utc = now() + make_interval(secs => ${detik}) where status = 'menunggu' and alarm_id in ${sql(alarmId)}`);
+}
+
+/** Jawab soal hitungan yang tampil lewat papan angka. */
+export async function jawabHitungan(page: Page, salah = false) {
+  const teks = (await page.locator("section[aria-label] p.t-jam").first().innerText()).trim();
+  const jawaban = salah ? String(Number(hitung(teks)) + 1) : hitung(teks);
+  for (const a of jawaban) await page.getByRole("button", { name: a, exact: true }).click();
+  await page.getByRole("button", { name: "Kirim jawaban" }).click();
+}

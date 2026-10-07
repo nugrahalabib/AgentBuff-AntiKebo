@@ -297,3 +297,26 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
   uji). Uji alarm ditunggu 60 detik penuh (jalur asli); alarm lain dimajukan jadwalnya, batas tunda,
   dan waktu "Masih bangun?" langsung di DB pengembangan supaya uji tidak menunggu menit. Uji
   membersihkan alarm akun contoh sesudahnya.
+- **K-80 (2026-10-07, P9) PWA:** manifest dari Next (`src/app/manifest.ts`), mulai di `/app`, tampil
+  `standalone`, pintasan ke Mode Jam Meja. Ikon dibuat skrip dari logo: 192/512 bersudut (any),
+  512 latar penuh dengan zona aman 72% (maskable), ikon iPhone 180 latar penuh tanpa sudut.
+- **K-81 (2026-10-07, P9) Simpanan Jam Meja:** Service Worker hanya menyimpan bunyi alarm
+  (`/bunyi/*.wav`) dan klip omelan pengguna (`/api/perangkat/klip/<hash>`), paling banyak 300 berkas,
+  disamakan dengan jadwal 24 jam ke depan setiap jadwal berubah (yang tidak diminta lagi dibuang),
+  dan disajikan dari simpanan dulu. Halaman lain tidak pernah disimpan. Keluar menghapus simpanan.
+- **K-82 (2026-10-07, P9) Jam Meja membunyikan alarm di halaman yang sama**, memakai satu konteks
+  audio yang dibuka ketukan "Mulai siaga" (dipakai bersama pemutar, tidak ditutup), supaya alarm
+  bersuara tanpa ketukan lagi (iPhone hanya membuka audio di dalam ketukan). Sesudah Selamat pagi
+  kembali siaga.
+- **K-83 (2026-10-07, P9) Cadangan lokal Jam Meja:** server diberi 5 detik sesudah jadwal; bila kabar
+  `berbunyi` tidak datang dan server tidak terjangkau, perangkat berbunyi sendiri dari simpanan.
+  Alarm lokal tidak bisa dimatikan di perangkat (aturan teknis 2, beda dengan soal luring PC K-47):
+  soal muncul begitu koneksi kembali; bila ternyata sudah dimatikan di perangkat lain, berhenti.
+  Jadwal yang lewat lebih dari 30 menit tidak dibunyikan lokal.
+- **K-84 (2026-10-07, P9) Detak Jam Meja** tiap 30 detik dengan kemampuan (dicas, suara jalan, layar
+  ditahan menyala); `siapSampai` hanya dikirim bila semua bunyi + klip sudah tersimpan. Id perangkat
+  disimpan di peramban dan didaftarkan ulang bila perangkat dicabut; nama dari jenis perangkat
+  (iPhone, iPad, HP Android, Tablet Android, Peramban), bisa diganti di tab Siaga (P11).
+- **K-85 (2026-10-07, P9) Keluar dari Jam Meja:** geser ke atas atau tombol saat layar terang;
+  konfirmasi bila alarm tinggal kurang dari 8 jam. Peringatan amber berurutan: koneksi putus, tidak
+  dicas, layar tidak bisa ditahan menyala.

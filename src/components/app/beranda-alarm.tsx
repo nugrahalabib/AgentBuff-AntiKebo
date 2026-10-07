@@ -200,6 +200,7 @@ export function BerandaAlarm({
         lainnya={daftar.filter((a) => a.id !== berikutnya?.id).map((a) => ringkasAlarm(a, b))}
         perangkat={perangkat}
         hrefTambah="/app?alarm=baru"
+        hrefSiaga="/app/jam-meja"
         spanduk={spanduk}
         tambah={() => bukaLembar(null)}
         buka={(id) => bukaLembar(id)}

@@ -13,10 +13,10 @@ const JENIS: ReadonlyArray<JenisPeristiwa | "halo"> = ["halo", "jadwal", "berbun
  * API. EventSource menyambung ulang sendiri (retry 3 dtk); `halo` datang setiap kali tersambung,
  * jadi pemakai bisa memuat ulang keadaan yang mungkin terlewat saat putus.
  */
-export function usePeristiwa(peta: Peta, aktif = true) {
-  const terbaru = useRef(peta);
+export function usePeristiwa(peta: Peta, aktif = true, saatPutus?: () => void) {
+  const terbaru = useRef({ peta, saatPutus });
   useEffect(() => {
-    terbaru.current = peta;
+    terbaru.current = { peta, saatPutus };
   });
   useEffect(() => {
     if (!aktif || typeof EventSource === "undefined") return;
@@ -29,11 +29,13 @@ export function usePeristiwa(peta: Peta, aktif = true) {
         } catch {
           /* muatan rusak: abaikan */
         }
-        terbaru.current[j]?.(d);
+        terbaru.current.peta[j]?.(d);
       };
       es.addEventListener(j, f as EventListener);
       return () => es.removeEventListener(j, f as EventListener);
     });
+    // Putus (server mati, jaringan hilang): EventSource mencoba lagi sendiri; `halo` menandai pulih.
+    es.onerror = () => terbaru.current.saatPutus?.();
     return () => {
       for (const lepas of pasang) lepas();
       es.close();

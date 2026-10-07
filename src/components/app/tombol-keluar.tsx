@@ -32,6 +32,13 @@ export function TombolKeluar() {
           } catch {
             // Tidak didukung: lanjut keluar.
           }
+          // Klip omelan (berisi nama) dan id Jam Meja tidak ditinggal di peramban ini.
+          try {
+            await window.caches?.delete("antikebo-siaga-v1");
+            localStorage.removeItem("antikebo:jam-meja");
+          } catch {
+            // Tidak didukung: lanjut keluar.
+          }
           const res = await fetch("/api/keluar", { method: "POST" });
           if (!res.ok) throw new Error(String(res.status));
           router.replace("/");
