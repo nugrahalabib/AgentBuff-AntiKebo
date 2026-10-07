@@ -14,6 +14,7 @@ import {
   type IsiKejadian,
   type RencanaLangkah,
   type Saluran,
+  type StatusSelesai,
 } from "./saluran";
 
 /**
@@ -50,6 +51,7 @@ export const saluranBatas: Saluran = {
 /** Batas mengetuk "Masih bangun?" lewat: alarm kembali penuh, tanpa tunda, soal baru (PRD E2). */
 export const saluranCekBatas: Saluran = {
   jenis: "cek_batas",
+  fase: "cek",
   saatTunda: "lanjut",
   rencana: () => [],
   async jalankan() {
@@ -66,16 +68,18 @@ const SALURAN_BAWAAN: Saluran[] = [
   saluranBatas,
   saluranCekBatas,
 ];
-/** Saluran milik "Masih bangun?": hanya pantas saat status cek_bangun. */
-const SALURAN_CEK = new Set(["cek_tampil", "cek_batas"]);
 let saluran: Saluran[] = SALURAN_BAWAAN;
 
-/** Ganti daftar saluran (paket P5 sampai P7 memasang implementasi asli; uji memasang pencatat). */
+/** Ganti daftar saluran (worker memasang implementasi asli; uji memasang pencatat). */
 export function pasangSaluran(daftar: Saluran[] | null) {
   saluran = daftar ?? SALURAN_BAWAAN;
 }
 export function cariSaluran(jenis: string): Saluran | undefined {
   return saluran.find((s) => s.jenis === jenis);
+}
+/** Saluran yang berjalan selama berbunyi (bukan cek, terlewat, atau sesudah selesai). */
+function saluranBerbunyi(): Saluran[] {
+  return saluran.filter((s) => (s.fase ?? "berbunyi") === "berbunyi");
 }
 
 // ------------------------------------------------------------------ pembantu
@@ -159,7 +163,7 @@ export async function klaimJatuhTempo(tx: Tx, sekarang: Date, batas = 20): Promi
         .set({ status: "berbunyi", berbunyiPada: sekarang, terlambatDtk: Math.round(terlambatMs / 1000), isi, diubah: sekarang })
         .where(eq(schema.kejadianAlarm.id, id))
         .returning();
-      if (isi) for (const s of saluran) await tulisRencana(tx, baru, s, s.rencana(isi, sekarang, baru), sekarang);
+      if (isi) for (const s of saluranBerbunyi()) await tulisRencana(tx, baru, s, s.rencana(isi, sekarang, baru), sekarang);
       hasil.push({ kejadian: baru, hasil: "berbunyi" });
     }
 
@@ -183,8 +187,17 @@ export async function hentikanKejadian(tx: Tx, kejadianId: string, status: "bang
     .set({ status, bangunPada: status === "bangun" ? sekarang : null, tundaSampai: null, diubah: sekarang })
     .where(and(eq(schema.kejadianAlarm.id, kejadianId), inArray(schema.kejadianAlarm.status, [...STATUS_AKTIF])))
     .returning();
-  if (k) await batalkanLangkah(tx, kejadianId, sekarang);
+  if (k) {
+    await batalkanLangkah(tx, kejadianId, sekarang);
+    await rencanakanSelesai(tx, k, status, sekarang);
+  }
   return k ?? null;
+}
+
+/** Langkah sesudah berhenti: pesan penutup kanal (bangun), notifikasi diganti "sudah mati". */
+async function rencanakanSelesai(tx: Tx, k: BarisKejadian, status: StatusSelesai, sekarang: Date) {
+  const isi = k.isi as IsiKejadian | null;
+  for (const s of saluran) if (s.rencanaSelesai) await tulisRencana(tx, k, s, s.rencanaSelesai(isi, sekarang, k, status), sekarang);
 }
 
 export type Penghenti = { oleh: "sesi" | "perangkat" | "luring"; perangkatId?: string | null };
@@ -235,7 +248,10 @@ export async function konfirmasiBangun(tx: Tx, kejadianId: string, sekarang: Dat
       ),
     )
     .returning();
-  if (k) await batalkanLangkah(tx, kejadianId, sekarang);
+  if (k) {
+    await batalkanLangkah(tx, kejadianId, sekarang);
+    await rencanakanSelesai(tx, k, "bangun", sekarang);
+  }
   return k ?? null;
 }
 
@@ -249,7 +265,7 @@ export async function bunyikanLagiDariCek(tx: Tx, kejadianId: string, sekarang: 
   if (!k) return null;
   await batalkanLangkah(tx, kejadianId, sekarang);
   const isi = k.isi as IsiKejadian | null;
-  if (isi) for (const s of saluran.filter((x) => !SALURAN_CEK.has(x.jenis) && x.jenis !== "kabar_terlewat")) await tulisRencana(tx, k, s, s.rencana(isi, sekarang, k), sekarang);
+  if (isi) for (const s of saluranBerbunyi()) await tulisRencana(tx, k, s, s.rencana(isi, sekarang, k), sekarang);
   return k;
 }
 
@@ -265,7 +281,9 @@ export async function tundaKejadian(tx: Tx, kejadianId: string, sampai: Date, se
       tx,
       kejadianId,
       sekarang,
-      saluran.filter((s) => s.saatTunda === "berhenti").map((s) => s.jenis),
+      saluranBerbunyi()
+        .filter((s) => s.saatTunda === "berhenti")
+        .map((s) => s.jenis),
     );
   return k ?? null;
 }
@@ -281,7 +299,7 @@ export async function bangunkanTundaHabis(tx: Tx, sekarang: Date, batas = 20): P
   for (const { id } of ids) {
     const [k] = await tx.update(schema.kejadianAlarm).set({ status: "berbunyi", tundaSampai: null, diubah: sekarang }).where(eq(schema.kejadianAlarm.id, id)).returning();
     const isi = k.isi as IsiKejadian | null;
-    if (isi) for (const s of saluran.filter((x) => x.saatTunda === "berhenti")) await tulisRencana(tx, k, s, s.rencana(isi, sekarang, k), sekarang);
+    if (isi) for (const s of saluranBerbunyi().filter((x) => x.saatTunda === "berhenti")) await tulisRencana(tx, k, s, s.rencana(isi, sekarang, k), sekarang);
     hasil.push(k);
   }
   return hasil;
@@ -325,10 +343,17 @@ export async function klaimLangkah(tx: Tx, sekarang: Date, batas = 50): Promise<
 export function langkahPantas(jenis: string, statusKejadian: string): boolean {
   const s = cariSaluran(jenis);
   if (!s) return false;
-  if (jenis === "kabar_terlewat") return statusKejadian === "terlewat";
-  if (SALURAN_CEK.has(jenis)) return statusKejadian === "cek_bangun";
-  if (statusKejadian === "berbunyi") return true;
-  return statusKejadian === "ditunda" && s.saatTunda === "lanjut";
+  switch (s.fase ?? "berbunyi") {
+    case "terlewat":
+      return statusKejadian === "terlewat";
+    case "cek":
+      return statusKejadian === "cek_bangun";
+    case "selesai":
+      return statusKejadian === "bangun" || statusKejadian === "tidak_bangun" || statusKejadian === "dibatalkan";
+    default:
+      if (statusKejadian === "berbunyi") return true;
+      return statusKejadian === "ditunda" && s.saatTunda === "lanjut";
+  }
 }
 
 /** Catat hasil satu langkah, jadwalkan ulangannya, dan terapkan permintaan mengakhiri kejadian. */
@@ -358,7 +383,7 @@ export async function catatHasilLangkah(tx: Tx, l: BarisLangkah, h: HasilLangkah
         jenis: l.jenis,
         urutan: await urutanBebas(tx, l.kejadianId, l.jenis, l.urutan),
         jatuhTempoUtc: h.ulangiPada,
-        parameter: l.parameter,
+        parameter: h.parameterBaru ?? l.parameter,
         dibuat: sekarang,
         diubah: sekarang,
       })

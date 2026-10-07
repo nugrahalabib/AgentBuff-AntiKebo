@@ -21,6 +21,17 @@ export function TombolKeluar() {
       onClick={async () => {
         setProses(true);
         try {
+          // Peramban ini berhenti menerima notifikasi alarm akun ini (peramban bisa dipakai orang lain).
+          try {
+            const reg = await navigator.serviceWorker?.getRegistration("/");
+            const sub = await reg?.pushManager.getSubscription();
+            if (sub) {
+              await fetch("/api/app/push", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+              await sub.unsubscribe();
+            }
+          } catch {
+            // Tidak didukung: lanjut keluar.
+          }
           const res = await fetch("/api/keluar", { method: "POST" });
           if (!res.ok) throw new Error(String(res.status));
           router.replace("/");

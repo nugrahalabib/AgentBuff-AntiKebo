@@ -207,3 +207,36 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
   berubah. Klip pengguna lain tidak bisa diunduh (RLS + uji).
 - **K-60 (2026-10-07, P5) Bersih-bersih suara:** naskah dan klip yang tidak dibutuhkan alarm mana
   pun dan tidak dipakai 30 hari dihapus worker.
+- **K-61 (2026-10-07, P6) Isi pesan spam:** pembuka bervariasi (12 kalimat id/en, semua terpakai
+  sebelum ada yang diulang) + satu kalimat omelan karakter/agenda/pribadi (sama dengan naskah suara,
+  sudah berisi nama) + baris agenda + menit sejak berbunyi + tautan `/app/bunyi/<kejadian>`.
+  Deterministik per kejadian, kanal, dan nomor pesan, jadi langkah yang diulang sesudah worker mati
+  mengirim teks yang sama dengan kunci idempoten yang sama. Paling panjang 1000 huruf.
+- **K-62 (2026-10-07, P6) Pesan penutup** hanya ke kanal yang sempat menerima spam, sesudah status
+  benar-benar `bangun` (bila "Masih bangun?" aktif: sesudah "Masih!" diketuk). Bila AgentBuff minta
+  menunggu jeda kanal, penutup dicoba lagi sesudah jeda itu. Tidak ada penutup untuk tidak bangun.
+- **K-63 (2026-10-07, P6) Aturan langkah spam:** platform kanal (untuk jeda) diambil dari daftar
+  kanal AgentBuff sekali per kejadian lalu dibawa ke ulangan; gagal diambil = jeda paling aman 45 dtk.
+  Galat yang menghentikan kanal untuk kejadian itu: kanal tidak siap, belum diizinkan, tidak berhak,
+  tidak dikenal, klien, teks tidak sah, permintaan tidak sah. Galat lain dicoba lagi pada jeda
+  berikutnya. `terlalu_cepat` menggeser sesuai `ulangiSetelahMs` (1 dtk sampai 10 menit) dan dicatat
+  "ditunda". Batas spam dihitung dari mulai berbunyi pertama (masa tunda ikut terhitung). Penghitung
+  pesan berlanjut sesudah tunda.
+- **K-64 (2026-10-07, P6) Notifikasi web:** Web Push standar (aes128gcm + VAPID); pustaka `web-push`
+  hanya untuk enkripsi dan tanda tangan, pengirimannya `fetch` sendiri (batas waktu 10 dtk).
+  Endpoint hanya boleh ke layanan push peramban yang dikenal (Google/Android, Mozilla, Windows, Apple)
+  supaya server tidak bisa disuruh memanggil alamat sembarang; maks 10 peramban per pengguna;
+  dijawab 404/410 = langganan dilepas; keluar = langganan peramban itu dilepas. Selama berbunyi
+  notifikasi diulang tiap 30 dtk dengan tag kejadian (diganti, bergetar lagi, ditahan); sesudah
+  berhenti diganti "Alarm sudah mati" tanpa bunyi, karena Chrome mewajibkan setiap push menampilkan
+  notifikasi (menutup diam-diam tidak bisa diandalkan).
+- **K-65 (2026-10-07, P6) Kunci VAPID wajib di web dan worker** sejak P6. Dibuat otomatis sekali oleh
+  `scripts/siapkan-lokal.sh` (pengembangan, CI) dan `deploy/pasang-pertama.sh` (VPS, dari openssl) dan
+  tidak pernah diganti: mengganti kunci memutus semua langganan notifikasi pengguna.
+- **K-66 (2026-10-07, P6) Pengingat malam:** dikirim ke kanal bawaan di Pengaturan; bila kosong, ke
+  kanal alarm berikutnya; plus notifikasi web. Hanya bila ada alarm dalam 24 jam; satu per malam
+  (`pengguna.pengingat_terkirim`); tidak dikirim bila worker baru menyala lebih dari 2 jam sesudah
+  jam tidur. Perangkat dianggap siaga bila detak < 2 menit (sama dengan P3).
+- **K-67 (2026-10-07, P6) Rute `GET/PATCH /api/app/preferensi`** dibuat sekarang (kanal bawaan dan
+  pengingat malam di Pengaturan), dipakai juga P11. Bagian kanal, notifikasi, dan pengingat malam
+  tampil di halaman Pengaturan yang sekarang; P11 memindahkannya ke rancangan P1.

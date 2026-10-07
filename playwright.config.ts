@@ -11,6 +11,9 @@ const DASAR = process.env.E2E_DASAR ?? "http://localhost:3100";
 // Sesi cloud membawa Chromium sendiri; versi Playwright proyek bisa berbeda, jadi pakai jalurnya langsung.
 const CHROMIUM_CLOUD = "/opt/pw-browsers/chromium";
 const launchOptions = !CI && existsSync(CHROMIUM_CLOUD) ? { executablePath: CHROMIUM_CLOUD } : {};
+// CI: Chromium PENUH (mode headless baru), bukan "headless shell" bawaan Playwright: shell tidak
+// mendukung notifikasi/Service Worker push sama sekali, jadi uji notifikasi alarm (P6) tidak nyata.
+const channel = CI || !existsSync(CHROMIUM_CLOUD) ? { channel: "chromium" } : {};
 
 export default defineConfig({
   testDir: "tests/e2e",
@@ -20,7 +23,7 @@ export default defineConfig({
   workers: 1,
   retries: 0,
   reporter: CI ? [["list"], ["html", { open: "never" }]] : "list",
-  use: { baseURL: DASAR, trace: "retain-on-failure", locale: "id-ID", timezoneId: "Asia/Jakarta", launchOptions },
+  use: { baseURL: DASAR, trace: "retain-on-failure", locale: "id-ID", timezoneId: "Asia/Jakarta", launchOptions, ...channel },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 860 } } },
     { name: "hp", use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 } },

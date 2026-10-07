@@ -32,6 +32,10 @@ INSERT INTO naskah_suara (pengguna_id, hash, teks, bahasa, gaya) VALUES
   ('00000000-0000-4000-8000-0000000000a1', repeat('8', 64), 'Bangun, A!', 'id', 'galak');
 INSERT INTO klip_suara (pengguna_id, hash, audio, mime, durasi_ms, penyedia, suara) VALUES
   ('00000000-0000-4000-8000-0000000000a1', repeat('8', 64), '\x494433'::bytea, 'audio/mpeg', 1000, 'uji', 'v1');
+INSERT INTO kiriman_kanal (pengguna_id, kejadian_id, kanal_id, jenis, status, kunci) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000d4', 'k_uji', 'spam', 'terkirim', 'uji:rls:1');
+INSERT INTO langganan_push (pengguna_id, endpoint_hash, data) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', repeat('6', 64), 'AK1uji');
 
 DO $$
 DECLARE n int;
@@ -51,6 +55,8 @@ BEGIN
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: soal atau kode QR terbaca tanpa konteks'; END IF;
   SELECT (SELECT count(*) FROM naskah_suara) + (SELECT count(*) FROM klip_suara) INTO n;
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: naskah atau klip suara terbaca tanpa konteks'; END IF;
+  SELECT (SELECT count(*) FROM kiriman_kanal) + (SELECT count(*) FROM langganan_push) INTO n;
+  IF n <> 0 THEN RAISE EXCEPTION 'RLS: kiriman kanal atau langganan push terbaca tanpa konteks'; END IF;
 
   -- Konteks B: tidak melihat, mengubah, atau menghapus milik A.
   PERFORM set_config('app.pengguna_id', '00000000-0000-4000-8000-0000000000b2', true);
@@ -82,6 +88,15 @@ BEGIN
     RAISE EXCEPTION 'RLS: B menulis naskah suara atas nama A';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
+  SELECT (SELECT count(*) FROM kiriman_kanal) + (SELECT count(*) FROM langganan_push) INTO n;
+  IF n <> 0 THEN RAISE EXCEPTION 'RLS: B melihat kiriman kanal atau langganan push A'; END IF;
+  DELETE FROM langganan_push;
+  GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B melepas langganan push A'; END IF;
+  BEGIN
+    INSERT INTO langganan_push (pengguna_id, endpoint_hash, data) VALUES ('00000000-0000-4000-8000-0000000000a1', repeat('5', 64), 'palsu');
+    RAISE EXCEPTION 'RLS: B menambah langganan push atas nama A';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
   UPDATE soal_kejadian SET status = 'benar';
   GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B menandai soal A benar'; END IF;
   UPDATE alarm SET aktif = false;
@@ -108,6 +123,8 @@ BEGIN
   IF n <> 2 THEN RAISE EXCEPTION 'RLS: A tidak melihat soal dan kode QR-nya'; END IF;
   SELECT (SELECT count(*) FROM naskah_suara) + (SELECT count(*) FROM klip_suara) INTO n;
   IF n <> 2 THEN RAISE EXCEPTION 'RLS: A tidak melihat naskah dan klip suaranya'; END IF;
+  SELECT (SELECT count(*) FROM kiriman_kanal) + (SELECT count(*) FROM langganan_push) INTO n;
+  IF n <> 2 THEN RAISE EXCEPTION 'RLS: A tidak melihat kiriman dan langganan push-nya'; END IF;
 
   -- Hash token: tepat satu baris terlihat tanpa konteks pemilik; hash lain nol.
   PERFORM set_config('app.pengguna_id', '', true);
@@ -129,6 +146,8 @@ BEGIN
   IF n < 1 THEN RAISE EXCEPTION 'RLS: worker tidak melihat kejadian'; END IF;
   SELECT count(*) INTO n FROM naskah_suara WHERE status = 'menunggu';
   IF n < 1 THEN RAISE EXCEPTION 'RLS: worker tidak melihat antrean suara'; END IF;
+  SELECT count(*) INTO n FROM langganan_push;
+  IF n < 1 THEN RAISE EXCEPTION 'RLS: worker tidak melihat langganan push'; END IF;
   RESET ROLE;
 
   -- Tidak ada peran aplikasi yang superuser atau BYPASSRLS.
@@ -143,7 +162,7 @@ BEGIN
       AND NOT (c.relrowsecurity AND c.relforcerowsecurity);
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: ada tabel milik pemilik tanpa ENABLE+FORCE'; END IF;
 
-  RAISE NOTICE 'uji RLS: 38/38 lulus';
+  RAISE NOTICE 'uji RLS: 44/44 lulus';
 END $$;
 
 ROLLBACK;

@@ -13,7 +13,8 @@ export type KodeGalat =
   | "perlu_izin" // izin AgentBuff (kabar/suara) belum diberi
   | "perlu_perangkat" // aksi harus dilakukan di perangkat itu sendiri
   | "komitmen_terkunci" // Mode Komitmen menolak tindakan (MCP: commitment_locked)
-  | "sedang_berbunyi"; // alarm sedang berbunyi: hanya soal di layar alarm yang bisa (MCP: alarm_ringing)
+  | "sedang_berbunyi" // alarm sedang berbunyi: hanya soal di layar alarm yang bisa (MCP: alarm_ringing)
+  | "kanal_gagal"; // pesan kanal/notifikasi uji tidak terkirim (alasan ramah di pesan)
 
 export class GalatLayanan extends Error {
   readonly kode: KodeGalat;
