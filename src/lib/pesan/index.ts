@@ -94,14 +94,32 @@ export function pesanTerlewat(m: { bahasa: Bahasa; nama: string; jam: string; ag
   return rapikan([isi(m.agenda ? T.terlewatAgenda : T.terlewat, { jam: m.jam, agenda: m.agenda ?? "", nama: m.nama, tautan: m.tautan })]);
 }
 
-export function pesanPengingat(m: { bahasa: Bahasa; nama: string; jam: string; agenda: string | null; perangkatSiap: readonly string[]; tautan: string }): string {
+/** Keadaan beku untuk pengingat malam (K-07): alarm besok ditahan, atau masih dalam tenggang sampai `sampai`. */
+export type BekuPengingat = { ditahan: boolean; sampai: string; tautan: string };
+
+export function pesanPengingat(m: {
+  bahasa: Bahasa;
+  nama: string;
+  jam: string;
+  agenda: string | null;
+  perangkatSiap: readonly string[];
+  tautan: string;
+  beku?: BekuPengingat | null;
+}): string {
   const T = TEKS_PESAN[m.bahasa];
+  if (m.beku?.ditahan) return rapikan([isi(T.pengingatJudul, { nama: m.nama }), isi(T.bekuDitahan, { jam: m.jam, tautan: m.beku.tautan })]);
   return rapikan([
     isi(T.pengingatJudul, { nama: m.nama }),
     isi(m.agenda ? T.pengingatAlarmAgenda : T.pengingatAlarm, { jam: m.jam, agenda: m.agenda ?? "" }),
     m.perangkatSiap.length ? isi(T.pengingatSiap, { perangkat: m.perangkatSiap.join(", ") }) : T.pengingatTanpaSiaga,
+    m.beku ? isi(T.bekuTenggang, { sampai: m.beku.sampai, tautan: m.beku.tautan }) : null,
     isi(T.pengingatTautan, { tautan: m.tautan }),
   ]);
+}
+
+/** Kabar sekali saat akses AgentBuff berakhir (K-07). */
+export function pesanBeku(m: { bahasa: Bahasa; nama: string; sampai: string; tautan: string }): string {
+  return isi(TEKS_PESAN[m.bahasa].bekuKabar, { nama: m.nama, sampai: m.sampai, tautan: m.tautan });
 }
 
 export function pesanUji(m: { bahasa: Bahasa; nama: string }): string {
@@ -110,7 +128,7 @@ export function pesanUji(m: { bahasa: Bahasa; nama: string }): string {
 
 // ------------------------------------------------------------------ notifikasi web (PRD G5)
 
-export type JenisNotif = "bunyi" | "cek" | "selesai" | "terlewat" | "pengingat" | "uji";
+export type JenisNotif = "bunyi" | "cek" | "selesai" | "terlewat" | "pengingat" | "uji" | "beku";
 
 /**
  * Isi notifikasi push (dibaca `public/sw.js`). `tag` sama = notifikasi diganti, bukan ditumpuk;
@@ -138,13 +156,46 @@ export function notifTerlewat(m: { bahasa: Bahasa; nama: string; jam: string; ag
   return { jenis: "terlewat", judul: isi(T.notifJudulTerlewat, { jam: m.jam }), isi: pesanTerlewat({ ...m, tautan: m.url }), tag: m.tag, url: m.url, ulang: true, tahan: false };
 }
 
-export function notifPengingat(m: { bahasa: Bahasa; nama: string; jam: string; agenda: string | null; perangkatSiap: readonly string[]; url: string }): IsiNotif {
+export function notifPengingat(m: {
+  bahasa: Bahasa;
+  nama: string;
+  jam: string;
+  agenda: string | null;
+  perangkatSiap: readonly string[];
+  url: string;
+  beku?: BekuPengingat | null;
+}): IsiNotif {
   const T = TEKS_PESAN[m.bahasa];
-  const baris = [m.agenda ?? null, m.perangkatSiap.length ? isi(T.pengingatSiap, { perangkat: m.perangkatSiap.join(", ") }) : T.pengingatTanpaSiaga];
+  if (m.beku?.ditahan) {
+    return { jenis: "beku", judul: T.notifJudulBeku, isi: isi(T.bekuDitahan, { jam: m.jam, tautan: m.beku.tautan }), tag: "beku", url: m.beku.tautan, ulang: true, tahan: false };
+  }
+  const baris = [
+    m.agenda ?? null,
+    m.perangkatSiap.length ? isi(T.pengingatSiap, { perangkat: m.perangkatSiap.join(", ") }) : T.pengingatTanpaSiaga,
+    m.beku ? isi(T.bekuTenggang, { sampai: m.beku.sampai, tautan: m.beku.tautan }) : null,
+  ];
   return { jenis: "pengingat", judul: isi(T.notifJudulPengingat, { jam: m.jam }), isi: rapikan(baris), tag: "pengingat", url: m.url, ulang: false, tahan: false };
+}
+
+export function notifBeku(m: { bahasa: Bahasa; nama: string; sampai: string; url: string }): IsiNotif {
+  const T = TEKS_PESAN[m.bahasa];
+  return { jenis: "beku", judul: T.notifJudulBeku, isi: pesanBeku({ ...m, tautan: m.url }), tag: "beku", url: m.url, ulang: true, tahan: false };
 }
 
 export function notifUji(m: { bahasa: Bahasa; url: string }): IsiNotif {
   const T = TEKS_PESAN[m.bahasa];
   return { jenis: "uji", judul: T.notifJudulUji, isi: T.notifIsiUji, tag: "uji", url: m.url, ulang: true, tahan: false };
+}
+
+/** "Selasa, 13 Oktober pukul 08.00" / "Tuesday 13 October at 08:00" di zona pengguna (kabar beku). */
+export function waktuPanjang(d: Date, zona: string, bahasa: Bahasa): string {
+  return new Intl.DateTimeFormat(bahasa === "id" ? "id-ID" : "en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: zona,
+  }).format(d);
 }

@@ -15,7 +15,7 @@ import { konteksPengguna, type KonteksPengguna } from "./konteks";
  * AgentBuff pengguna (kebenaran di sana). Setiap pesan tercatat di `kiriman_kanal` tanpa isinya.
  */
 
-export type JenisKiriman = "spam" | "penutup" | "cek" | "terlewat" | "pengingat" | "uji";
+export type JenisKiriman = "spam" | "penutup" | "cek" | "terlewat" | "pengingat" | "uji" | "beku";
 export type StatusKiriman = "terkirim" | "gagal" | "ditunda";
 
 export type BarisKiriman = {

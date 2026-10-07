@@ -42,6 +42,11 @@ export type TeksPesan = {
   /** Penutup cadangan untuk karakter Kustom (tidak punya kalimat penutup). */
   penutupUmum: string;
   cekUmum: string;
+  /** Akses AgentBuff berakhir (K-07): {sampai} = saat alarm berhenti dibunyikan, {tautan} = perpanjang. */
+  bekuKabar: string;
+  bekuDitahan: string;
+  bekuTenggang: string;
+  notifJudulBeku: string;
 };
 
 export const TEKS_PESAN: Record<"id" | "en", TeksPesan> = {
@@ -87,6 +92,11 @@ export const TEKS_PESAN: Record<"id" | "en", TeksPesan> = {
     notifIsiUji: "Saat alarm berbunyi, notifikasi seperti ini muncul terus sampai kamu bangun.",
     penutupUmum: "Mantap, {nama}! Kamu berhasil bangun.",
     cekUmum: "{nama}, masih bangun kan? Jangan tidur lagi!",
+    bekuKabar:
+      "⚠️ {nama}, akses AntiKebo-mu berakhir. Alarm yang sudah terpasang masih berbunyi sampai {sampai}, sesudah itu berhenti sampai aksesmu aktif lagi. Perpanjang: {tautan}",
+    bekuDitahan: "⚠️ Alarm {jam} TIDAK akan berbunyi karena akses AntiKebo-mu berakhir. Perpanjang supaya alarm berbunyi lagi: {tautan}",
+    bekuTenggang: "⚠️ Akses AntiKebo-mu berakhir: alarm berhenti berbunyi mulai {sampai}. Perpanjang: {tautan}",
+    notifJudulBeku: "Akses AntiKebo berakhir",
   },
   en: {
     pembuka: [
@@ -130,5 +140,9 @@ export const TEKS_PESAN: Record<"id" | "en", TeksPesan> = {
     notifIsiUji: "When your alarm rings, a notification like this keeps coming until you're up.",
     penutupUmum: "Nice one, {nama}! You made it out of bed.",
     cekUmum: "{nama}, you're still up, right? Don't go back to sleep!",
+    bekuKabar: "⚠️ {nama}, your AntiKebo access has ended. Alarms you already set still ring until {sampai}, then they stop until your access is active again. Renew: {tautan}",
+    bekuDitahan: "⚠️ Your {jam} alarm will NOT ring because your AntiKebo access has ended. Renew so alarms ring again: {tautan}",
+    bekuTenggang: "⚠️ Your AntiKebo access has ended: alarms stop ringing from {sampai}. Renew: {tautan}",
+    notifJudulBeku: "AntiKebo access ended",
   },
 };

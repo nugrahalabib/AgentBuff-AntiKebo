@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { bacaJson, dariGalat, galat, mutasiPengguna } from "@/lib/api";
-import { sesiSaatIni } from "@/lib/auth/sesi";
+import { bacaJson, dariGalat, mutasiPengguna, sesiBaca } from "@/lib/api";
 import { buatKodeQr, daftarKodeQr } from "@/lib/layanan/kode-qr";
 
 export const dynamic = "force-dynamic";
 
 /** Daftar kode QR Misi QR. */
 export async function GET() {
-  const s = await sesiSaatIni();
-  if (!s) return galat(401, "belum_masuk", "Sesi berakhir. Silakan masuk lagi.");
+  const s = await sesiBaca();
+  if (s instanceof NextResponse) return s;
   try {
     return NextResponse.json({ kodeQr: await daftarKodeQr(s.pengguna.id) }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {

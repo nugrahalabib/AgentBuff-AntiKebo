@@ -31,6 +31,7 @@ export function Lembar({
   aksen?: ReactNode;
 }) {
   const pemicu = useRef<HTMLElement | null>(null);
+  const isiLembar = useRef<HTMLDivElement | null>(null);
   const { t } = useKamus();
   return (
     <Dialog.Root
@@ -43,9 +44,13 @@ export function Lembar({
       <Dialog.Portal>
         <Dialog.Overlay className="muncul-pudar fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px]" />
         <Dialog.Content
+          ref={isiLembar}
           onOpenAutoFocus={(e) => {
             pemicu.current = (document.activeElement as HTMLElement | null) ?? pemicu.current;
+            // Fokus ke lembar itu sendiri (bukan isian pertama: papan ketik HP tidak langsung
+            // muncul), supaya papan ketik dan pembaca layar langsung berada di dalam lembar.
             e.preventDefault();
+            isiLembar.current?.focus();
           }}
           onCloseAutoFocus={(e) => {
             e.preventDefault();

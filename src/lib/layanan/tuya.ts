@@ -236,8 +236,10 @@ export async function simpanKunci(penggunaId: string, masukan: unknown, sumber: 
 }
 
 /** Putuskan: kunci dan cermin perangkat dihapus; aturan di alarm tetap (berlaku lagi bila disambung ulang). */
-export async function putuskan(penggunaId: string, sumber: Sumber): Promise<void> {
+export async function putuskan(penggunaId: string, sumber: Sumber, sekarang = new Date()): Promise<void> {
   await denganPengguna(penggunaId, async (tx) => {
+    const { tolakSelamaKomitmen } = await import("./komitmen-aktif");
+    await tolakSelamaKomitmen(tx, await konteksPengguna(tx, penggunaId), sekarang, "putus_rumah");
     await tx.delete(schema.perangkatTuya).where(eq(schema.perangkatTuya.penggunaId, penggunaId));
     await tx.delete(schema.sambunganTuya).where(eq(schema.sambunganTuya.penggunaId, penggunaId));
   });
@@ -274,11 +276,17 @@ export async function statusRumah(penggunaId: string): Promise<StatusRumah> {
 const SkemaDarurat = z.strictObject({ aktif: z.boolean(), menit: z.int().min(5).max(60), cara: z.enum(["telepon", "sms"]) });
 
 /** Lapisan darurat tersembunyi (PRD I6): mati bawaannya, hanya untuk rumah yang tersambung. */
-export async function aturDarurat(penggunaId: string, masukan: unknown, sumber: Sumber): Promise<DaruratTuya> {
+export async function aturDarurat(penggunaId: string, masukan: unknown, sumber: Sumber, sekarang = new Date()): Promise<DaruratTuya> {
   return denganPengguna(penggunaId, async (tx) => {
     const k = await konteksPengguna(tx, penggunaId);
     const m = SkemaDarurat.safeParse(masukan ?? {});
     if (!m.success) throw new GalatLayanan("masukan", isi(k.t.galat.masukan, { isian: isi(k.t.galat.isian.umum, { isian: m.error.issues[0]?.path.join(".") || "darurat" }) }));
+    // Mematikan lapisan darurat yang menyala = melemahkan alarm terkunci (K-34).
+    const [lama] = await tx.select({ darurat: schema.sambunganTuya.darurat }).from(schema.sambunganTuya).where(eq(schema.sambunganTuya.penggunaId, penggunaId));
+    if (lama?.darurat.aktif && !m.data.aktif) {
+      const { tolakSelamaKomitmen } = await import("./komitmen-aktif");
+      await tolakSelamaKomitmen(tx, k, sekarang, "darurat_mati");
+    }
     const r = await tx.update(schema.sambunganTuya).set({ darurat: m.data, diubah: new Date() }).where(eq(schema.sambunganTuya.penggunaId, penggunaId)).returning();
     if (!r.length) throw new GalatLayanan("belum_tersambung", k.t.rumah.galat.belum_tersambung);
     await catatAudit(

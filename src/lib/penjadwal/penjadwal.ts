@@ -38,7 +38,7 @@ export type OpsiPenjadwal = {
   maksJalan?: number;
 };
 
-export type RingkasPutaran = { berbunyi: number; terlewat: number; bangunDariTunda: number; pulih: number };
+export type RingkasPutaran = { berbunyi: number; terlewat: number; ditahan: number; bangunDariTunda: number; pulih: number };
 
 function denganBatas<T>(ms: number, p: Promise<T>): Promise<T> {
   let t: ReturnType<typeof setTimeout>;
@@ -103,7 +103,7 @@ export class Penjadwal {
       return this.putaranJalan;
     }
     this.putaranJalan = (async () => {
-      const total: RingkasPutaran = { berbunyi: 0, terlewat: 0, bangunDariTunda: 0, pulih: 0 };
+      const total: RingkasPutaran = { berbunyi: 0, terlewat: 0, ditahan: 0, bangunDariTunda: 0, pulih: 0 };
       try {
         do {
           this.ulangi = false;
@@ -112,6 +112,7 @@ export class Penjadwal {
           const klaim = await this.o.db().transaction((tx) => klaimJatuhTempo(tx, sekarang));
           total.berbunyi += klaim.filter((k) => k.hasil === "berbunyi").length;
           total.terlewat += klaim.filter((k) => k.hasil === "terlewat").length;
+          total.ditahan += klaim.filter((k) => k.hasil === "ditahan").length;
           for (const k of klaim) log.info({ kejadian: k.kejadian.id, hasil: k.hasil, terlambatDtk: k.kejadian.terlambatDtk }, "kejadian diklaim");
           total.bangunDariTunda += (await this.o.db().transaction((tx) => bangunkanTundaHabis(tx, sekarang))).length;
           await this.o.db().transaction((tx) => rencanakanPra(tx, sekarang));

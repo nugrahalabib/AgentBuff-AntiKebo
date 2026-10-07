@@ -82,9 +82,10 @@ export const id = {
   },
   beku: {
     judul: "Akses dibekukan sementara",
-    isi: "Alarm dan pengaturanmu tetap tersimpan. Aktifkan lagi aksesnya untuk melanjutkan.",
+    isi: "Alarm yang sudah terpasang tetap berbunyi selama 3 hari dan berhenti lewat soal seperti biasa. Untuk mengubah alarm atau pengaturan, aktifkan lagi aksesnya.",
     tombol: "Aktifkan lagi",
     periksa: "Periksa ulang",
+    ubahDitolak: "Akses AntiKebo sedang dibekukan, jadi alarm dan pengaturan belum bisa diubah. Alarm yang sudah terpasang tetap berbunyi.",
   },
   izin: {
     judul: "Izin AgentBuff belum lengkap",
@@ -426,6 +427,11 @@ export const id = {
     beruntun: "{n} hari beruntun",
     rata: "Rata-rata sampai bangun",
     totalTunda: "Total tunda",
+    hariBeruntun: "Hari beruntun",
+    lihatTabel: "Lihat tabel",
+    lihatGrafik: "Lihat grafik",
+    kolomHari: "Hari",
+    kolomSkor: "Skor",
     grafik: "Skor bangun",
     hari7: "7 hari",
     hari30: "30 hari",
@@ -455,7 +461,7 @@ export const id = {
     kiriman: "Pesan kanal",
     kirimanKosong: "Tidak ada pesan kanal.",
     kirimanStatus: { terkirim: "terkirim", gagal: "gagal", ditunda: "ditunda" },
-    kirimanJenis: { spam: "Spam", penutup: "Penutup", cek: "Masih bangun", terlewat: "Terlewat", pengingat: "Pengingat", uji: "Uji" },
+    kirimanJenis: { spam: "Spam", penutup: "Penutup", cek: "Masih bangun", terlewat: "Terlewat", pengingat: "Pengingat", uji: "Uji", beku: "Akses berakhir" },
     dihentikan: "Dihentikan lewat",
     oleh: { sesi: "web atau HP", perangkat: "aplikasi PC", luring: "aplikasi PC tanpa internet", batas: "batas waktu habis" },
     csv: {
@@ -485,6 +491,7 @@ export const id = {
     kodeQr: "Kode QR",
     agen: "Agen",
     privasi: "Privasi",
+    privasiKet: "Data apa yang disimpan, ketentuan, dan bukan jaminan",
     hapusData: "Hapus semua data",
     ulangOrientasi: "Ulangi perkenalan",
     tema: "Tema",
@@ -688,6 +695,7 @@ export const id = {
     otomatis: "otomatis",
     berakhir: "berakhir {tanggal}",
     labelWajib: "Beri label token.",
+    tokenPenuh: "Paling banyak 10 token manual. Cabut yang tidak dipakai dulu.",
     tidakAda: "Token tidak ditemukan.",
     barisKet: "Sambungan MCP, aktivitas, token manual",
   },
@@ -773,7 +781,8 @@ export const id = {
     langkahKunci:
       'Cara membuat kunci: buka {url} di laptop/komputer (QR tidak bisa dipindai dari layar HP yang sama); pilih "SmartLife APP" atau "Tuya APP" (atau masuk dengan Google bila akun app-nya dibuat dengan Google, akun yang SAMA); pindai QR dari app di HP (tab Saya/Me, ikon pindai pojok kanan atas, lalu Konfirmasi); di halaman Hey Tuya ketuk "Toolbox" lalu "API Key"; buat kunci baru (nama bebas, misalnya AgentBuff); salin kunci yang diawali "sk-", lalu tempel di chat (connect_home) atau di {rumah}.',
     aksesAktif: "Akses AntiKebo aktif.",
-    aksesBeku: "Akses AntiKebo sedang dibekukan; alarm dan pengaturan tetap aman.",
+    aksesBeku:
+      "Akses AntiKebo sedang dibekukan: alarm dan pengaturan tidak bisa diubah, data tetap aman. Alarm yang sudah terpasang tetap berbunyi selama 3 hari sejak akses berakhir.",
     izinKurang: "Izin AgentBuff yang belum diberi: {isi}. Kirim tautan ini ke pengguna supaya bisa memberi izin: {tautan}",
     izinLengkap: "Izin kirim pesan dan buat suara omelan sudah diberi.",
     izinKabar: "kirim pesan lewat agen",
@@ -785,7 +794,8 @@ export const id = {
     rumahOpsional: "Rumah pintar (opsional) belum disambungkan; bila pengguna ingin lampu atau AC ikut membangunkan:",
     pengecualian: "Itu hanya bisa dilakukan di layar AntiKebo: {tautan}",
     terlaluBanyak: "Terlalu banyak perintah. Coba lagi dalam {n} detik.",
-    aksesDibekukan: "Akses AntiKebo sedang dibekukan karena langganan AgentBuff atau pembelian produk tidak aktif. Alarm dan pengaturanmu tetap aman.",
+    aksesDibekukan:
+      "Akses AntiKebo sedang dibekukan karena langganan AgentBuff atau pembelian produk tidak aktif. Datamu tetap aman, dan alarm yang sudah terpasang tetap berbunyi selama 3 hari sejak akses berakhir.",
     argumenSalah: "Argumen tidak sah: {isi}",
     masihDiproses: "Perintah yang sama masih diproses. Coba lagi sebentar.",
   },
@@ -825,6 +835,9 @@ export const id = {
       komitmen_mati: "Mode Komitmen aktif sampai {jam}. Komitmennya tidak bisa dimatikan sekarang.",
       lemahkan: "Mode Komitmen aktif sampai {jam}. Soal, tunda, dan pengingat tidak bisa dibuat lebih ringan sekarang.",
       jamTidur: "Mode Komitmen sedang aktif sampai {jam}. Jam tidur dan zona waktu bisa diubah sesudah alarm berbunyi.",
+      putusPerangkat: "Mode Komitmen aktif sampai {jam}. Perangkat siaga tidak bisa diputus sebelum alarm berbunyi.",
+      putusRumah: "Mode Komitmen aktif sampai {jam}. Rumah pintar tidak bisa diputus sebelum alarm berbunyi.",
+      daruratMati: "Mode Komitmen aktif sampai {jam}. Lapisan darurat tidak bisa dimatikan sebelum alarm berbunyi.",
     },
   },
   template: {
@@ -1048,6 +1061,171 @@ export const id = {
       pengaturan: "Pengaturan",
       orientasi: "Orientasi",
       pc: "Aplikasi PC",
+    },
+  },
+  legal: {
+    berlaku: "Berlaku sejak 7 Oktober 2026",
+    kembali: "Kembali",
+    privasi: "Privasi",
+    ketentuan: "Ketentuan",
+    kontak: "Pertanyaan: support@agentbuff.id",
+    halamanPrivasi: {
+      judul: "Kebijakan privasi",
+      ringkas:
+        "Singkatnya: AntiKebo hanya menyimpan yang dibutuhkan untuk membangunkanmu. Tanpa iklan, tanpa menjual data, tanpa AI di dalam AntiKebo, dan kamu bisa menghapus semuanya kapan saja.",
+      bagian: [
+        {
+          judul: "Siapa yang memakai datamu",
+          isi: [
+            "AntiKebo adalah aplikasi di Marketplace AgentBuff. Kebijakan ini berlaku untuk situs antikebo.agentbuff.id, aplikasi AntiKebo untuk PC, dan alat AntiKebo yang dipakai agen AgentBuff-mu.",
+            "Pertanyaan atau permintaan soal datamu bisa dikirim ke support@agentbuff.id.",
+          ],
+        },
+        {
+          judul: "Data dari akun AgentBuff",
+          isi: [
+            "Saat kamu masuk dengan AgentBuff, AntiKebo menerima nomor akun AgentBuff, nama, email, dan foto profilmu. Kata sandimu tidak pernah sampai ke AntiKebo.",
+            "AntiKebo juga bertanya ke AgentBuff apakah kamu sudah membeli AntiKebo dan apakah akunmu aktif.",
+          ],
+        },
+        {
+          judul: "Data yang kamu isi",
+          isi: [
+            "Alarm: jam, pengulangan, judul dan catatan agenda, karakter, suara, soal, tunda, kalimat pribadi, kanal pengingat, dan aturan rumah pintar.",
+            "Template, nama kode QR bangun, nama panggilan, zona waktu, bahasa, jam tidur, tema, dan bawaan alarm baru.",
+          ],
+        },
+        {
+          judul: "Yang tercatat saat alarm berjalan",
+          isi: [
+            "Kapan alarm berbunyi dan kapan kamu bangun, berapa kali menunda, skor bangun, jenis dan tingkat soal beserta benar atau salahnya, perangkat yang ikut berbunyi dan yang menghentikan, status pesan pengingat, dan hasil perintah rumah pintar.",
+            "Jawaban soal tidak disimpan dalam bentuk yang bisa dibaca. Yang disimpan hanya sidik acak untuk mencocokkan jawaban.",
+          ],
+        },
+        {
+          judul: "Perangkat, notifikasi, dan agen",
+          isi: [
+            "Untuk perangkat siaga (PC, HP, tablet) tersimpan nama, jenis, dan kapan terakhir terlihat. Token perangkat dan token agen hanya disimpan sebagai sidik acak yang tidak bisa dibalik.",
+            "Alamat notifikasi peramban dan kunci rumah pintar disimpan tersandi.",
+            "Perintah dari agen yang membawa nomor rujukan disimpan 30 hari supaya perintah yang sama tidak dijalankan dua kali.",
+          ],
+        },
+        {
+          judul: "Pihak lain yang ikut terlibat",
+          isi: [
+            "AgentBuff: masuk, cek pembelian, mengirim pesan pengingat ke kanal chat milikmu yang tersambung ke agenmu, dan membuat suara omelan. Teks omelan dikirim ke AgentBuff milikmu untuk diubah jadi suara. AntiKebo tidak pernah memegang kunci API suaramu.",
+            "Agen AI milikmu: bila agen AgentBuff-mu memakai alat AntiKebo, data yang diminta agen (misalnya daftar alarm) dikirim ke agen itu dan diproses penyedia AI yang kamu pilih di AgentBuff.",
+            "Tuya, hanya bila kamu menyambungkan rumah pintar: perintah lampu atau AC dikirim ke layanan Tuya memakai akunmu sendiri.",
+            "Layanan notifikasi bawaan peramban (misalnya milik Google, Apple, atau Mozilla) mengantar notifikasi yang kamu izinkan.",
+          ],
+        },
+        {
+          judul: "Yang tidak kami lakukan",
+          isi: [
+            "Tidak ada iklan dan tidak ada pelacak iklan. Datamu tidak dijual.",
+            "Tidak ada AI di dalam AntiKebo. Naskah, soal, dan pesan pengingat dibuat dengan aturan tetap.",
+            "Catatan sistem tidak memuat kunci, isi pesan pribadi, maupun jawaban soal.",
+          ],
+        },
+        {
+          judul: "Kuki",
+          isi: [
+            "AntiKebo hanya memakai kuki yang perlu: kuki sesi supaya kamu tetap masuk, kuki sementara selama proses masuk dengan AgentBuff, dan kuki pilihan bahasa. Tidak ada kuki iklan atau analitik.",
+          ],
+        },
+        {
+          judul: "Berapa lama disimpan",
+          isi: [
+            "Akun, alarm, dan pengaturan disimpan selama kamu memakai AntiKebo. Riwayat alarm tersimpan sampai kamu menghapusnya; layar Riwayat menampilkan 30 hari terakhir.",
+            "Catatan aktivitas akun disimpan 90 hari. Klip suara yang tidak dipakai lagi dihapus otomatis.",
+            "Bila akses AgentBuff-mu berakhir, datamu tetap tersimpan sampai kamu menghapusnya.",
+            "Salinan cadangan server dibuat berkala dan disimpan paling lama 14 hari.",
+          ],
+        },
+        {
+          judul: "Hakmu atas datamu",
+          isi: [
+            "Melihat dan mengunduh: layar Riwayat, termasuk unduhan CSV.",
+            "Mengubah: semua isian ada di Pengaturan dan lembar alarm.",
+            "Mencabut akses: cabut token agen di halaman Agen, putuskan perangkat di Siaga, putuskan rumah pintar di Rumah pintar.",
+            "Menghapus: Pengaturan, Hapus semua data. Data langsung hilang dari server; salinan cadangan ikut hilang paling lama 14 hari kemudian.",
+          ],
+        },
+        {
+          judul: "Keamanan",
+          isi: [
+            "Data setiap pengguna dipisahkan langsung di basis data, jadi satu akun tidak bisa membaca data akun lain. Kunci dan rahasia disimpan tersandi, dan semua sambungan memakai HTTPS.",
+          ],
+        },
+        {
+          judul: "Perubahan kebijakan",
+          isi: ["Bila kebijakan ini berubah, tanggal berlaku di atas ikut diperbarui."],
+        },
+      ],
+    },
+    halamanKetentuan: {
+      judul: "Ketentuan pemakaian",
+      ringkas: "Singkatnya: AntiKebo berusaha keras membangunkanmu, tetapi tetap bukan jaminan. Pakai dengan wajar, dan untuk hal sangat penting pasang juga alarm cadangan.",
+      bagian: [
+        {
+          judul: "Tentang AntiKebo",
+          isi: [
+            "AntiKebo adalah alarm anti kesiangan dari Marketplace AgentBuff. Dengan memakai AntiKebo, kamu setuju dengan ketentuan ini dan dengan Syarat & Ketentuan AgentBuff.",
+          ],
+        },
+        {
+          judul: "Bukan jaminan",
+          isi: [
+            "AntiKebo membantu kamu bangun, bukan jaminan. Untuk hal sangat penting, pasang juga alarm cadangan.",
+            "Alarm bisa tidak terdengar bila perangkat mati atau kehabisan baterai, volumenya kecil atau dalam mode senyap, PC dimatikan total, atau HP menutup tab peramban di latar belakang.",
+            "Setiap perangkat punya aturan hemat baterai sendiri. Coba dulu dengan alarm uji di perangkatmu sebelum mengandalkannya.",
+            "Suara omelan dan pesan pengingat bergantung pada AgentBuff dan layanan chat. Bila gagal, bunyi alarm tetap diputar.",
+          ],
+        },
+        {
+          judul: "Akses dan pembelian",
+          isi: [
+            "Kamu butuh akun AgentBuff yang aktif dan sudah membeli AntiKebo (Rp29.000 sekali bayar).",
+            "Pembayaran, struk, dan pengembalian dana diurus AgentBuff sesuai Syarat & Ketentuan AgentBuff. Ada kendala pembayaran: support@agentbuff.id.",
+            "Bila akun AgentBuff-mu tidak aktif, pengaturan AntiKebo dibekukan. Alarm yang sudah terpasang tetap berbunyi selama 3 hari dan berhenti lewat soal seperti biasa; sesudah itu alarm berhenti berbunyi sampai aksesmu aktif lagi, dan kamu diberi tahu malam sebelumnya. Datamu tetap tersimpan.",
+          ],
+        },
+        {
+          judul: "Mode Komitmen",
+          isi: [
+            "Bila Mode Komitmen menyala, sejak jam tidur sampai jam alarm, alarm itu tidak bisa dihapus, dimatikan, dilewati, dimundurkan, atau diperlemah, termasuk lewat agenmu. Pikirkan dulu sebelum menyalakannya.",
+          ],
+        },
+        {
+          judul: "Pesan pengingat dan rumah pintar",
+          isi: [
+            "Pesan pengingat hanya dikirim ke kanal chat milikmu sendiri yang tersambung ke agen AgentBuff-mu.",
+            "Perintah rumah pintar menyalakan perangkatmu sendiri. Pastikan perangkat seperti AC, pemanas, atau colokan aman dinyalakan dari jauh.",
+          ],
+        },
+        {
+          judul: "Aplikasi untuk PC",
+          isi: [
+            "Aplikasi PC belum bertanda tangan digital, jadi Windows menampilkan layar biru “Windows melindungi PC Anda” saat pertama dipasang. Unduh hanya dari antikebo.agentbuff.id dan cocokkan sidik SHA-256 di halaman unduh.",
+          ],
+        },
+        {
+          judul: "Pemakaian yang wajar",
+          isi: [
+            "Jangan mencoba membobol, membebani, atau mengakali AntiKebo, termasuk mencari jalan mematikan alarm tanpa menjawab soal, dan jangan memakai AntiKebo untuk mengganggu orang lain.",
+          ],
+        },
+        {
+          judul: "Batas tanggung jawab",
+          isi: [
+            "AntiKebo disediakan apa adanya. Sejauh diizinkan hukum, kami tidak bertanggung jawab atas kerugian karena terlambat bangun atau alarm yang tidak terdengar, termasuk karena kondisi perangkat, jaringan, atau gangguan layanan pihak lain.",
+          ],
+        },
+        {
+          judul: "Perubahan ketentuan",
+          isi: ["Bila ketentuan ini berubah, tanggal berlaku di atas ikut diperbarui."],
+        },
+      ],
     },
   },
 } as const;

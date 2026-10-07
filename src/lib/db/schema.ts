@@ -85,6 +85,10 @@ export const statusHak = pgTable("status_hak", {
   terakhirBaikPada: waktu("terakhir_baik_pada"),
   cobaLagiSetelah: waktu("coba_lagi_setelah"),
   gagalBeruntun: integer("gagal_beruntun").notNull().default(0),
+  /** Pertama kali AgentBuff menjawab "tidak berhak" (tenggang alarm 3 hari dihitung dari sini, K-07). Null = aktif. */
+  bekuSejak: waktu("beku_sejak"),
+  /** Kabar "akses berakhir" sudah dikirim untuk masa beku ini. */
+  bekuDikabari: waktu("beku_dikabari"),
 });
 
 /** `jti` asersi mcp-token yang sudah dipakai (anti putar ulang). */
@@ -482,7 +486,7 @@ export const kirimanKanal = pgTable(
     kejadianId: uuid("kejadian_id").references(() => kejadianAlarm.id, { onDelete: "set null" }),
     kanalId: text("kanal_id").notNull(),
     platform: text("platform"),
-    jenis: text("jenis").notNull(), // spam | penutup | cek | terlewat | pengingat | uji
+    jenis: text("jenis").notNull(), // spam | penutup | cek | terlewat | pengingat | uji | beku
     ke: integer("ke"),
     status: text("status").notNull(), // terkirim | gagal | ditunda
     alasan: text("alasan"),

@@ -157,7 +157,14 @@ semua kejadian ≥ 70, dihitung mundur dari hari terbaru, hari tanpa kejadian te
 ## 11. Keamanan
 
 - CSP nonce + `Cache-Control: no-transform` (pola `proxy.ts` template).
-- Batas laju: API, MCP (120/mnt, tulis 40/mnt), jawab soal, kode sambung, detak.
+- Batas laju (`src/lib/keamanan/laju.ts`, K-112): ubah 300/mnt dan baca 600/mnt per pengguna, SSE 60,
+  jadwal perangkat 120, klip 300, periksa hak 10, jawab soal 120 per pengguna + 30 per kejadian, detak
+  120 per pengguna + 12 per perangkat, kode sambung per IP; MCP per pengguna (bukan per token): 300
+  permintaan, 120 perintah, 40 perubahan per menit; token manual maksimal 10. Id dari klien divalidasi
+  sebelum jadi kunci batas; peta batas tidak pernah dikosongkan sekaligus.
+- Hak AgentBuff (K-07, K-109, K-110): API ubah menolak saat beku kecuali aksi privasi/keamanan;
+  jalur bangun (layar berbunyi, Jam Meja, jawab soal) tidak pernah dibekukan; worker menahan alarm
+  sesudah tenggang 3 hari dan menyaring jadwal perangkat.
 - Rahasia tersandi amplop (`ENCRYPTION_KEK`); token perangkat dan token MCP disimpan hash.
 - Tidak ada endpoint tanpa sesi/token yang bisa mematikan, menunda, atau menjawab.
 - Log tanpa rahasia, isi pesan, jawaban soal, atau teks naskah pribadi.

@@ -1,6 +1,7 @@
+import { and, eq, gt, isNull, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { cabutToken, daftarToken, terbitkanToken } from "@/lib/agen/token";
-import { denganPengguna } from "@/lib/db";
+import { denganPengguna, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { catatAudit, daftarAudit } from "./audit";
 import { GalatLayanan, type Sumber } from "./dasar";
@@ -26,6 +27,8 @@ export async function dataAgen(penggunaId: string): Promise<{ alamatMcp: string;
 
 const SkemaToken = z.strictObject({ label: z.string().trim().min(1).max(60) });
 const BERLAKU_MS = 365 * 24 * 60 * 60 * 1000;
+/** Token manual aktif paling banyak (batas laju MCP per pengguna, tetapi tetap jangan menumpuk). */
+export const MAKS_TOKEN_MANUAL = 10;
 
 /** Token manual untuk klien MCP lain (berlaku 1 tahun). Agen AgentBuff tersambung otomatis tanpa ini. */
 export async function buatTokenManual(penggunaId: string, masukan: unknown, sumber: Sumber): Promise<{ token: string }> {
@@ -33,6 +36,19 @@ export async function buatTokenManual(penggunaId: string, masukan: unknown, sumb
     const k = await konteksPengguna(tx, penggunaId);
     const m = SkemaToken.safeParse(masukan ?? {});
     if (!m.success) throw new GalatLayanan("masukan", k.t.agen.labelWajib);
+    // Dihitung di transaksi yang sama (satu sambungan; tidak menunggu sambungan kedua).
+    const [{ n }] = await tx
+      .select({ n: sql<number>`count(*)::int` })
+      .from(schema.tokenMcp)
+      .where(
+        and(
+          eq(schema.tokenMcp.penggunaId, penggunaId),
+          eq(schema.tokenMcp.sumber, "manual"),
+          isNull(schema.tokenMcp.dicabutPada),
+          or(isNull(schema.tokenMcp.kedaluwarsa), gt(schema.tokenMcp.kedaluwarsa, new Date())),
+        ),
+      );
+    if (n >= MAKS_TOKEN_MANUAL) throw new GalatLayanan("masukan", k.t.agen.tokenPenuh);
     const { token, baris } = await terbitkanToken(tx, { penggunaId, label: m.data.label, sumber: "manual", kedaluwarsa: new Date(Date.now() + BERLAKU_MS) });
     await catatAudit(penggunaId, { sumber, jenis: "token", ringkasan: `Token agen dibuat: ${baris.label}` }, tx);
     return { token };

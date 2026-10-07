@@ -1,5 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { tautanPerpanjang } from "@/lib/agentbuff/tautan-beku";
 import { TautanTombol } from "@/components/ui/dasar";
@@ -23,7 +24,7 @@ export default async function Masuk({ searchParams }: Props) {
 
   return (
     <main className="grid min-h-dvh place-items-center px-4 py-10">
-      <div className="muncul kaca-kuat w-full max-w-[420px] rounded-[36px] px-7 pt-10 pb-8 text-center">
+      <div className="muncul kaca-kuat w-full max-w-[420px] rounded-[36px] px-5 pt-10 pb-8 text-center sm:px-7">
         <div className="mx-auto w-fit">
           <Logo ukuran={72} />
         </div>
@@ -47,13 +48,21 @@ export default async function Masuk({ searchParams }: Props) {
           </div>
         ) : null}
 
-        <TautanTombol href="/auth/agentbuff/start?lanjut=/app" ukuran="besar" className="mt-8 w-full">
+        <TautanTombol href="/auth/agentbuff/start?lanjut=/app" ukuran="besar" className="mt-8 h-auto! min-h-[52px] w-full py-2 leading-tight whitespace-normal!">
           <span className="grid size-6 place-items-center rounded-[7px] bg-grafit-label/15">
             <ShieldCheck size={16} />
           </span>
           {M.tombol}
         </TautanTombol>
         <p className="t-keterangan mt-5 text-label-2">{M.catatan}</p>
+        <p className="t-keterangan mt-3 flex justify-center gap-5">
+          <Link href="/privasi" className="inline-flex min-h-11 items-center font-semibold text-aksen">
+            {t.legal.privasi}
+          </Link>
+          <Link href="/ketentuan" className="inline-flex min-h-11 items-center font-semibold text-aksen">
+            {t.legal.ketentuan}
+          </Link>
+        </p>
       </div>
     </main>
   );

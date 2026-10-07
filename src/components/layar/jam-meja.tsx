@@ -47,7 +47,7 @@ export function LayarJamMejaSebelum({ mulai, tesBunyi, galat, panduan = true }: 
 }
 
 /**
- * Jam Meja saat siaga: hitam pekat, jam besar sangat redup berwarna hangat, pil siaga, ikon dicas.
+ * Jam Meja saat siaga: hitam pekat, jam besar redup berwarna hangat (tetap 3:1, teks bantu 4,5:1; K-111), pil siaga, ikon dicas.
  * Ketuk = terang 5 detik. Geser ke atas (atau tombol Keluar saat terang) = keluar, dengan konfirmasi
  * bila alarm tinggal kurang dari 8 jam. Peringatan amber bila tidak dicas, koneksi putus, atau
  * layar tidak bisa ditahan menyala.
@@ -103,18 +103,18 @@ export function LayarJamMejaSiaga({
         awalY.current = null;
       }}
     >
-      <p className={cn("t-jam text-[min(30vw,300px)] text-[#ff9f6b] transition-opacity duration-700", terang ? "opacity-90" : "opacity-[0.38]")}>{jam}</p>
+      <p className={cn("t-jam text-[min(30vw,300px)] text-[#ff9f6b] transition-opacity duration-700", terang ? "opacity-90" : "opacity-50")}>{jam}</p>
       <p
         className={cn(
           "mt-6 flex h-10 items-center gap-2 rounded-full border px-4 text-[16px] font-semibold transition-opacity",
           alarm ? "border-[#5eead4]/35 text-[#5eead4]" : "border-white/20 text-white/60",
-          terang ? "opacity-100" : "opacity-60",
+          terang ? "opacity-100" : "opacity-85",
         )}
       >
         {alarm ? isi(J.siagaUntuk, { jam: alarm }) : J.tanpaAlarm}
         {alarm ? <Check size={17} strokeWidth={2.6} /> : null}
       </p>
-      <div className={cn("mt-4 flex items-center gap-3 text-[14px] text-white/55 transition-opacity", terang ? "opacity-100" : "opacity-60")}>
+      <div className={cn("mt-4 flex items-center gap-3 text-[14px] text-white/55 transition-opacity", terang ? "opacity-100" : "opacity-85")}>
         {dicas ? (
           <span className="flex items-center gap-1.5">
             <BatteryCharging size={18} strokeWidth={1.75} />
@@ -161,7 +161,7 @@ export function LayarJamMejaSiaga({
               {peringatan.teks}
             </div>
           ) : (
-            <p className="text-[13px] text-white/35">{terang ? J.keluar : J.ketuk}</p>
+            <p className="text-[13px] text-white/55">{terang ? J.keluar : J.ketuk}</p>
           )}
         </div>
       )}

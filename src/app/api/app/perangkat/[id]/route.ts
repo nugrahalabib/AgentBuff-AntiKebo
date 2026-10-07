@@ -17,7 +17,7 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
 
 /** Putuskan perangkat (PRD H4): token tidak berlaku, aliran SSE-nya ditutup. */
 export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const k = await mutasiPengguna(req);
+  const k = await mutasiPengguna(req, { bolehBeku: true });
   if (k instanceof NextResponse) return k;
   try {
     const { id } = await ctx.params;

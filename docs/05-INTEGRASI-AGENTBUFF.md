@@ -31,6 +31,9 @@ Sumber pola: `referensi/template-tuya/` dan `referensi/standar-agentbuff/`
   sampai 72 jam (K-12): alarm tidak boleh gagal hanya karena AgentBuff sedang gangguan.
 - Dicek di: halaman, API, MCP, token perangkat PC, worker (sebelum membunyikan; hasil negatif
   pasti = tidak berbunyi + pemberitahuan malam sebelumnya, lihat K-07).
+  Sejak P13 (K-110): halaman pengaturan dan API ubah menolak saat beku; worker memeriksa ulang hak
+  pemilik yang punya alarm dalam 48 jam, alarm tetap berbunyi selama tenggang 3 hari lalu ditahan
+  (server dan jadwal perangkat siaga), kabar dikirim sekali saat beku dan malam sebelum alarm ditahan.
 
 ## 3. MCP dan sambung otomatis (sudah ada polanya)
 

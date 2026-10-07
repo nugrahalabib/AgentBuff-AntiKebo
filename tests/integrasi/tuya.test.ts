@@ -386,6 +386,41 @@ describe("lapisan darurat tersembunyi (PRD I6)", () => {
   });
 });
 
+describe("Mode Komitmen ikut menjaga rumah pintar dan perangkat siaga (K-34, P13)", () => {
+  it("selama jendela kunci: lapisan darurat tidak bisa dimatikan, rumah dan perangkat siaga tidak bisa diputus; sesudahnya boleh", async () => {
+    const P = await penggunaTersambung();
+    const S = await T();
+    await S.aturDarurat(P, { aktif: true, menit: 5, cara: "telepon" }, "web");
+    await (await L()).buatAlarm(P, { jam: "05:00", pengulangan: { jenis: "harian" }, komitmen: true }, "web", { sekarang: wib("2026-12-10T12:00:00") });
+    const [pr] = await u.superuser.insert(schema.perangkatSiaga).values({ penggunaId: P, jenis: "pc", nama: "PC Kamar" }).returning();
+    const { cabutPerangkat } = await import("@/lib/layanan/perangkat");
+    const tolak = async (janji: Promise<unknown>, alasan: string) => {
+      const g = await janji.then(
+        () => null,
+        (e: unknown) => e,
+      );
+      expect(g).toBeInstanceOf(GalatLayanan);
+      expect((g as GalatLayanan).kode).toBe("komitmen_terkunci");
+      expect((g as GalatLayanan).tambahan).toMatchObject({ alasan });
+    };
+
+    // 23.00: sesudah jam tidur 22.00, sebelum alarm 05.00.
+    const malam = wib("2026-12-10T23:00:00");
+    await tolak(S.aturDarurat(P, { aktif: false, menit: 5, cara: "telepon" }, "web", malam), "darurat_mati");
+    await tolak(S.putuskan(P, "web", malam), "putus_rumah");
+    await tolak(cabutPerangkat(P, pr.id, "web", malam), "putus_perangkat");
+    // Memperkuat tetap boleh.
+    await S.aturDarurat(P, { aktif: true, menit: 5, cara: "sms" }, "web", malam);
+
+    // Siang berikutnya (di luar jendela): semuanya boleh.
+    const siang = wib("2026-12-11T12:00:00");
+    await S.aturDarurat(P, { aktif: false, menit: 5, cara: "telepon" }, "web", siang);
+    await cabutPerangkat(P, pr.id, "web", siang);
+    await S.putuskan(P, "web", siang);
+    expect(await S.statusRumah(P)).toEqual({ tersambung: false });
+  });
+});
+
 describe("alat agen rumah pintar (connect_home, list_home_devices, disconnect_home)", () => {
   it("agen menyambungkan rumah dari kunci yang ditempel di chat, melihat perangkat, lalu memutus", async () => {
     tuya.setelUlang();

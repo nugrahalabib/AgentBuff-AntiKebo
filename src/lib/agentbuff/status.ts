@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { log } from "@/lib/log";
+import { bekuSejakBaru } from "./aturan-beku";
 import { type AlasanBeku, type AlasanHak, jedaCobaLagiMs, melewatiToleransi, singgahanBasi, tafsirJawabanStatus } from "./tafsir";
 
 // Gerbang hak: "pemilik ini masih berhak memakai AntiKebo?" Dipanggil di setiap
@@ -109,7 +110,10 @@ async function cekHakInti(pemilik: PemilikMinimal, ketat: boolean): Promise<Hasi
 
   const kini = new Date(sekarang);
   const dasar = { diperiksaPada: kini, terakhirBaikPada: kini, gagalBeruntun: 0, cobaLagiSetelah: null };
-  const isi = { aktif: t.aktif, alasan: t.alasan, pesan: t.aktif ? null : t.pesan, ...dasar };
+  // Masa beku (K-07): dihitung dari jawaban "tidak berhak" pertama; pulih = kosong lagi.
+  const bekuSejak = bekuSejakBaru(baris, t.aktif, kini);
+  const bekuDikabari = t.aktif ? null : (baris?.bekuDikabari ?? null);
+  const isi = { aktif: t.aktif, alasan: t.alasan, pesan: t.aktif ? null : t.pesan, bekuSejak, bekuDikabari, ...dasar };
   await db()
     .insert(schema.statusHak)
     .values({ penggunaId: pemilik.id, ...isi })

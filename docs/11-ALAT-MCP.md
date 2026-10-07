@@ -41,9 +41,9 @@ alasan). Guard `jaga` gagal bila:
 | | `list_wake_codes`, `rename_wake_code`, `delete_wake_code` | |
 | Kanal | `list_channels`, `test_channel`, `test_notification` | Kanal dari AgentBuff; bawaan lewat `update_preferences` |
 | Perangkat siaga | `list_standby_devices`, `get_device_setup_links` | Tautan unduh PC, Jam Meja, sambung |
-| | `rename_standby_device`, `remove_standby_device` | |
-| Rumah pintar | `get_home_status`, `connect_home`, `disconnect_home` | `connect_home` menerima kunci `sk-` (pola template) |
-| | `list_home_devices` (`refresh`), `test_home_device`, `set_home_emergency` | Aturan perangkat diatur lewat `create_alarm`/`update_alarm` |
+| | `rename_standby_device`, `remove_standby_device` | Putus perangkat tunduk pada Komitmen (K-113) |
+| Rumah pintar | `get_home_status`, `connect_home`, `disconnect_home` | `connect_home` menerima kunci `sk-` (pola template); `disconnect_home` tunduk pada Komitmen |
+| | `list_home_devices` (`refresh`), `test_home_device`, `set_home_emergency` | Aturan perangkat diatur lewat `create_alarm`/`update_alarm`; mematikan lapisan darurat tunduk pada Komitmen |
 | Riwayat | `get_history`, `get_wake_stats`, `get_event_detail`, `export_history` | Ekspor = tautan unduh CSV tersegel, berlaku 15 menit (`/unduh/riwayat`) |
 | Pengaturan | `get_preferences`, `update_preferences` | Nama panggilan, zona, bahasa, jam tidur, bawaan, pengingat malam |
 | Alarm aktif | `get_active_alarm` | **Hanya status** + tautan layar alarm |
@@ -64,7 +64,7 @@ alasan). Guard `jaga` gagal bila:
 ## 4. Kode galat
 
 `access_frozen` (hak tidak aktif), `commitment_locked` (dengan jam buka), `validation`,
-`not_found`, `rate_limited`, `permission_needed` (izin AgentBuff belum diberi),
+`not_found`, `rate_limited` (per pengguna lintas token, K-112), `permission_needed` (izin AgentBuff belum diberi),
 `device_required` (aksi harus di perangkat; disertai tautan), `alarm_ringing` (alarm sedang
 berbunyi: ubah, hapus, matikan, lewati ditolak; agen mengirim tautan layar alarm, K-37),
 `in_progress` (panggilan dengan `client_ref` sama masih berjalan), plus kode rumah pintar

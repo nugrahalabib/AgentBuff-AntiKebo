@@ -76,6 +76,14 @@ export default async function HalamanDepan() {
 
       <footer className="t-keterangan mx-auto max-w-[60ch] pt-14 text-center text-label-2">
         <p>{L.bukanJaminan}</p>
+        <p className="mt-3 flex justify-center gap-5">
+          <Link href="/privasi" className="inline-flex min-h-11 items-center font-semibold text-aksen">
+            {t.legal.privasi}
+          </Link>
+          <Link href="/ketentuan" className="inline-flex min-h-11 items-center font-semibold text-aksen">
+            {t.legal.ketentuan}
+          </Link>
+        </p>
       </footer>
     </div>
   );

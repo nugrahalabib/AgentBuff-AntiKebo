@@ -36,6 +36,7 @@ import { isi } from "@/lib/i18n";
 import { useKamus } from "@/lib/i18n/klien";
 import { useDengarContoh } from "@/lib/klien/dengar";
 import { DAFTAR_KARAKTER, WARNA_KARAKTER, type IdKarakter } from "@/lib/tampilan/jenis";
+import { gerakRadio } from "@/lib/klien/radio";
 
 /** Pengaturan lengkap (docs/04-DESAIN.md §4.10): daftar bergrup gaya iOS. */
 export function LayarPengaturan({
@@ -197,7 +198,7 @@ export function LayarOrientasi({
         ) : langkah === 1 ? (
           <>
             <h1 className="t-judul-1">{O.karakterJudul}</h1>
-            <ul role="radiogroup" aria-label={O.karakterJudul} className="mt-6 grid w-full grid-cols-2 gap-2.5">
+            <ul role="radiogroup" onKeyDown={gerakRadio} aria-label={O.karakterJudul} className="mt-6 grid w-full grid-cols-2 gap-2.5">
               {DAFTAR_KARAKTER.filter((k) => k !== "kustom").map((id) => {
                 const contoh = isi(t.karakter[id].contoh, { nama: nama.trim() || O.kamu });
                 return (
