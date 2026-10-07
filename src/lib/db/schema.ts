@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { bigserial, boolean, char, customType, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigserial, boolean, char, customType, date, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { AturanTuya, Bawaan, IsiTemplate, MasihBangun, Soal, Spam, Tunda } from "@/lib/alarm/isi";
 import type { Pengulangan } from "@/lib/jadwal/pengulangan";
 
@@ -581,4 +581,25 @@ export const potretTuya = pgTable(
     dibuat: dibuat(),
   },
   (t) => [uniqueIndex("potret_tuya_unik").on(t.kejadianId, t.deviceId)],
+);
+
+// ------------------------------------------------------------ MCP (P12)
+
+/**
+ * Idempotensi alat MCP yang membuat sesuatu (docs/11-ALAT-MCP.md): satu `client_ref` per panggilan.
+ * Agen yang mengulang panggilan (jaringan putus) mendapat hasil yang sama, bukan alarm dobel.
+ * `hasil` kosong = panggilan pertama masih berjalan. Dihapus worker sesudah 30 hari.
+ */
+export const idempotensiMcp = pgTable(
+  "idempotensi_mcp",
+  {
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    alat: text("alat").notNull(),
+    rujukan: text("rujukan").notNull(),
+    hasil: jsonb("hasil").$type<{ data: Record<string, unknown>; teks: string }>(),
+    dibuat: dibuat(),
+  },
+  (t) => [primaryKey({ columns: [t.penggunaId, t.alat, t.rujukan] }), index("idempotensi_mcp_dibuat_idx").on(t.dibuat)],
 );

@@ -393,7 +393,8 @@ describe("alat agen rumah pintar (connect_home, list_home_devices, disconnect_ho
     const [p] = await u.superuser.select().from(schema.pengguna).where(eq(schema.pengguna.id, P));
     ab.atur(p.agentbuffSub, { hak: "ok", izin: { kabar: true, suara: true } });
     const { cariAlat } = await import("@/lib/mcp/alat");
-    const k = { penggunaId: P, agentbuffSub: p.agentbuffSub, token: {} as never, zona: "Asia/Jakarta", asal: "http://localhost:3100" };
+    const { kamusUntuk } = await import("@/lib/i18n/kamus-server");
+    const k = { penggunaId: P, agentbuffSub: p.agentbuffSub, token: {} as never, zona: "Asia/Jakarta", asal: "http://localhost:3100", bahasa: "id" as const, t: kamusUntuk("id") };
 
     const s0 = await cariAlat("get_setup_status")!.jalankan(k, {});
     expect(s0.data.smart_home).toEqual({ connected: false, connect_url: "http://localhost:3100/app/rumah" });

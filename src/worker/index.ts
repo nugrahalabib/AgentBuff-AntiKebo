@@ -65,7 +65,12 @@ async function bersihBersih(): Promise<string> {
     .delete(schema.sesi)
     .where(lt(schema.sesi.kedaluwarsaMutlak, new Date(Date.now() - 24 * 60 * 60 * 1000)));
   const s = await db().transaction((tx) => bersihkanSuara(tx, new Date()));
-  return `${d.length} audit lama, ${s} klip tak terpakai dihapus`;
+  // Idempotensi alat MCP disimpan 30 hari (docs/11-ALAT-MCP.md).
+  const i = await db()
+    .delete(schema.idempotensiMcp)
+    .where(lt(schema.idempotensiMcp.dibuat, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)))
+    .returning({ alat: schema.idempotensiMcp.alat });
+  return `${d.length} audit lama, ${s} klip tak terpakai, ${i.length} idempotensi MCP dihapus`;
 }
 
 // Saluran asli: pesan kanal lewat pintu AgentBuff pengguna dan Web Push (tiruan hanya untuk uji mesin).

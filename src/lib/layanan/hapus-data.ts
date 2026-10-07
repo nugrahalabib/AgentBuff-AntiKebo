@@ -64,6 +64,7 @@ export async function hapusSemuaData(penggunaId: string, masukan: unknown, sumbe
     await tx.delete(schema.perangkatTuya).where(eq(schema.perangkatTuya.penggunaId, penggunaId));
     await tx.delete(schema.sambunganTuya).where(eq(schema.sambunganTuya.penggunaId, penggunaId));
     await tx.delete(schema.tokenMcp).where(eq(schema.tokenMcp.penggunaId, penggunaId));
+    await tx.delete(schema.idempotensiMcp).where(eq(schema.idempotensiMcp.penggunaId, penggunaId));
     await tx.delete(schema.audit).where(eq(schema.audit.penggunaId, penggunaId));
 
     await tx

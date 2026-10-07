@@ -400,3 +400,27 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
 - **K-102 (2026-10-07, P11) Akun tiruan keempat "Sari Pengguna Baru" (aktif)** untuk uji yang harus mulai
   dari nol (perkenalan, pengaturan, hapus data, Siaga, Riwayat) supaya data Nugi untuk uji lain tidak
   tersentuh.
+- **K-103 (2026-10-07, P12) Isian alat MCP bahasa Inggris snake_case** (`time`, `repeat`, `agenda_title`,
+  `challenge.level`, `snooze.count`, `smart_home[].when`, ...), mengikuti pola template Tuya; satu modul
+  murni (`src/lib/mcp/peta.ts`, dites bolak-balik) menerjemahkan ke isian layanan. Id karakter dan bunyi
+  tetap id internal (`bos_killer`, `sirene`), dijelaskan `list_characters`. Teks jawaban alat lewat
+  kamus `mcp` (bahasa pengguna), tambahan galat bernama Inggris (`locked_until`, `reason`).
+- **K-104 (2026-10-07, P12) Idempotensi alat pembuat lewat `client_ref`** (opsional, unik per niat):
+  diklaim dulu sebelum alat jalan, hasil disimpan di `idempotensi_mcp` (RLS) 30 hari, panggilan
+  ulang mendapat hasil pertama dengan `replayed: true`; panggilan yang gagal melepas rujukannya; yang
+  masih berjalan dijawab `in_progress`. Alat merusak wajib `confirm: true`.
+- **K-105 (2026-10-07, P12) Penjaga `paritas` membaca `src/lib/mcp/paritas.ts` sebagai teks** (satu entri
+  per baris): setiap `POST/PATCH/PUT/DELETE` di `/api/app/*`, `/api/kejadian/*`, `/api/keluar` wajib
+  punya alat atau pengecualian beralasan; entri tanpa rute dan alat yang tidak ada = gagal; kalimat
+  deskripsi alat yang memuat "stop/snooze/answer/... the alarm" tanpa penyangkal = gagal. Rute
+  protokol perangkat (`/api/perangkat/*`) dan server AgentBuff (`/api/agentbuff/*`) di luar lingkup.
+- **K-106 (2026-10-07, P12) Ekspor riwayat lewat agen = tautan tersegel berlaku 15 menit**
+  (`/unduh/riwayat?t=`, AES-GCM dengan kunci turunan `SESSION_SECRET`), supaya pengguna bisa membuka
+  dari HP tanpa sesi; token palsu atau kedaluwarsa = 404.
+- **K-107 (2026-10-07, P12) Halaman Agen** (`/app/agen`, dari Pengaturan > Lainnya): status sambung
+  otomatis AgentBuff, contoh kalimat, aktivitas = catatan audit 40 terakhir (siapa: kamu, agen,
+  perangkat, sistem), token manual 1 tahun untuk klien MCP lain (tampil sekali), cabut lewat lembar
+  konfirmasi. Membuat dan mencabut token adalah pengecualian paritas (keputusan pemilik di web).
+- **K-108 (2026-10-07, P12) Alat tambahan di luar daftar awal** karena ada aksi webnya:
+  `save_alarm_as_template`, `test_notification`, `set_home_emergency`, `get_event_detail`;
+  `regenerate_voice` mengantre ulang naskah suara yang gagal (layanan `buatUlangSuara`).

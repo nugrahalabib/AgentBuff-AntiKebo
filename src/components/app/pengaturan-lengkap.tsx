@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Globe, Languages, Moon, Palette, Printer, QrCode, RotateCcw, SlidersHorizontal, Trash2, User } from "lucide-react";
+import { Bookmark, Bot, Globe, Languages, Moon, Palette, Printer, QrCode, RotateCcw, SlidersHorizontal, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Bagian, Baris, PilihBunyi, PilihKarakter, PilihKodeQr, PilihSuara, PilihanPil, type DataSuara } from "@/components/layar/ubah-alarm";
@@ -733,6 +733,7 @@ export function GrupLainnya() {
   return (
     <>
       <Grup judul={P.lainnya} id="g-lainnya">
+        <BarisGrup ikon={Bot} warnaIkon="#0f766e" label={P.agen} sub={t.agen.barisKet} href="/app/agen" />
         <BarisGrup ikon={RotateCcw} warnaIkon="#64748b" label={P.ulangOrientasi} sub={P.ulangOrientasiKet} href="/app/orientasi?ulang=1" />
         <BarisGrup
           ikon={Trash2}

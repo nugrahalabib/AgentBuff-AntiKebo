@@ -42,6 +42,8 @@ INSERT INTO perangkat_tuya (pengguna_id, device_id, nama, kategori) VALUES
   ('00000000-0000-4000-8000-0000000000a1', 'lampu-uji', 'Lampu A', 'dj');
 INSERT INTO potret_tuya (pengguna_id, kejadian_id, device_id, properti) VALUES
   ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000d4', 'lampu-uji', '{"switch_led":false}');
+INSERT INTO idempotensi_mcp (pengguna_id, alat, rujukan, hasil) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', 'create_alarm', 'ref-uji', '{"data":{},"teks":"ok"}');
 
 DO $$
 DECLARE n int;
@@ -65,6 +67,7 @@ BEGIN
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: kiriman kanal atau langganan push terbaca tanpa konteks'; END IF;
   SELECT (SELECT count(*) FROM sambungan_tuya) + (SELECT count(*) FROM perangkat_tuya) + (SELECT count(*) FROM potret_tuya) INTO n;
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: data rumah pintar terbaca tanpa konteks'; END IF;
+  SELECT count(*) INTO n FROM idempotensi_mcp; IF n <> 0 THEN RAISE EXCEPTION 'RLS: idempotensi MCP terbaca tanpa konteks'; END IF;
 
   -- Konteks B: tidak melihat, mengubah, atau menghapus milik A.
   PERFORM set_config('app.pengguna_id', '00000000-0000-4000-8000-0000000000b2', true);
@@ -129,6 +132,12 @@ BEGIN
     RAISE EXCEPTION 'RLS: B menulis template atas nama A';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
+  SELECT count(*) INTO n FROM idempotensi_mcp; IF n <> 0 THEN RAISE EXCEPTION 'RLS: B melihat idempotensi MCP A'; END IF;
+  BEGIN
+    INSERT INTO idempotensi_mcp (pengguna_id, alat, rujukan) VALUES ('00000000-0000-4000-8000-0000000000a1', 'create_alarm', 'palsu');
+    RAISE EXCEPTION 'RLS: B menulis idempotensi MCP atas nama A';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
 
   -- Konteks A: melihat miliknya.
   PERFORM set_config('app.pengguna_id', '00000000-0000-4000-8000-0000000000a1', true);
@@ -146,6 +155,7 @@ BEGIN
   IF n <> 2 THEN RAISE EXCEPTION 'RLS: A tidak melihat kiriman dan langganan push-nya'; END IF;
   SELECT (SELECT count(*) FROM sambungan_tuya) + (SELECT count(*) FROM perangkat_tuya) + (SELECT count(*) FROM potret_tuya) INTO n;
   IF n <> 3 THEN RAISE EXCEPTION 'RLS: A tidak melihat data rumah pintarnya'; END IF;
+  SELECT count(*) INTO n FROM idempotensi_mcp; IF n <> 1 THEN RAISE EXCEPTION 'RLS: A tidak melihat idempotensi MCP-nya'; END IF;
 
   -- Hash token: tepat satu baris terlihat tanpa konteks pemilik; hash lain nol.
   PERFORM set_config('app.pengguna_id', '', true);
@@ -185,7 +195,7 @@ BEGIN
       AND NOT (c.relrowsecurity AND c.relforcerowsecurity);
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: ada tabel milik pemilik tanpa ENABLE+FORCE'; END IF;
 
-  RAISE NOTICE 'uji RLS: 51/51 lulus';
+  RAISE NOTICE 'uji RLS: 55/55 lulus';
 END $$;
 
 ROLLBACK;

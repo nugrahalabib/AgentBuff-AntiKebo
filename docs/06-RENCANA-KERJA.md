@@ -22,7 +22,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P9 | Mode Jam Meja dan PWA | Cloud | Selesai |
 | P10 | Aplikasi PC (Tauri) | Cloud | Selesai |
 | P11 | Orientasi, Siaga, Riwayat, Pengaturan, Template | Cloud | Selesai |
-| P12 | MCP paritas penuh + SKILL.md | Cloud | Belum |
+| P12 | MCP paritas penuh + SKILL.md | Cloud | Selesai |
 | P13 | Mutu, keamanan, aksesibilitas, Inggris, legal | Cloud | Belum |
 | L1 | Pintu kanal, pesan, suara di AgentBuff | Laptop | Belum |
 | L2 | Rilis uji + uji PC dan HP asli | Laptop | Belum |
@@ -511,10 +511,30 @@ Catatan untuk paket berikutnya:
 
 ## P12 MCP paritas penuh + SKILL.md
 
+**Status: selesai 2026-10-07.** Bukti di cloud: 48 alat MCP; penjaga `paritas` (14 penjaga jaga
+lolos, uji-diri menangkap rute tanpa entri, alat yang tidak ada, dan deskripsi yang mengaku bisa
+mematikan alarm); 646 tes vitest (baru: peta isian MCP bolak-balik, alat lewat server
+sungguhan: idempotensi `client_ref`, Komitmen `commitment_locked` + `locked_until`, `access_frozen`,
+`alarm_ringing`, alat mematikan tidak ada, tautan CSV tersegel, bawaan alarm baru, template, kode QR,
+401 token salah/dicabut); 119 uji Playwright mode produksi (baru: halaman Agen, token manual
+dipakai klien MCP lewat HTTP membuat alarm lalu dicabut = 401); uji RLS 55/55.
+
 Rujukan: `11-ALAT-MCP.md`.
 
-- [ ] Semua alat, `paritas.ts` + guard, sambung otomatis, halaman Agen, `skill/SKILL.md`.
-- [ ] Tes: 401 token salah/dicabut, `access_frozen`, `commitment_locked`, idempotensi.
+- [x] Semua alat, `paritas.ts` + guard, sambung otomatis, halaman Agen, `skill/SKILL.md`.
+      (Alat di `src/lib/mcp/alat/*`, isian Inggris K-103, idempotensi K-104, penjaga K-105, ekspor
+      CSV K-106, halaman Agen K-107, alat tambahan K-108; sambung otomatis sudah dari P0.)
+- [x] Tes: 401 token salah/dicabut, `access_frozen`, `commitment_locked`, idempotensi.
+
+Selesai bila: setiap aksi web punya alat atau pengecualian (penjaga hijau), tes MCP hijau, SKILL.md
+memuat isi wajib `11-ALAT-MCP.md` §5.
+
+Catatan untuk paket berikutnya:
+- P13: tinjau ulang gaya bahasa Inggris teks alat (kamus `mcp`, `agen`); aksesibilitas halaman Agen
+  (lembar cabut, tombol salin); teks P7 lama di kamus sudah dipindah.
+- L1: alat kanal dan suara memakai pintu AgentBuff asli begitu dibangun (tidak ada perubahan alat).
+- L3: skrip bukti MCP di produksi (butir 8 `GERBANG-RILIS.md`) memakai `skill/SKILL.md` + token
+  manual dari halaman Agen; unggah SKILL.md ke listing Marketplace.
 
 ## P13 Mutu, keamanan, aksesibilitas, Inggris, legal
 
