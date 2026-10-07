@@ -1,111 +1,136 @@
-# Integrasi AgentBuff, rilis, dan deploy
+# Integrasi AgentBuff (versi 2)
 
-Sumber: kode `referensi/template-tuya/`, dokumen `referensi/standar-agentbuff/`
-(`PORTAL-MASUK-DENGAN-AGENTBUFF.md`, `PORTAL-ALUR-PEMBAYARAN.md`, `BYM-TEKNIS.md` §6, §8 sampai §10).
-Identitas produk AntiKebo:
+Sumber pola: `referensi/template-tuya/` dan `referensi/standar-agentbuff/`
+(`PORTAL-MASUK-DENGAN-AGENTBUFF.md`, `PORTAL-ALUR-PEMBAYARAN.md`).
 
-| | |
+| Identitas | Nilai |
 |---|---|
-| `product_key` / client id | `antikebo` (produksi), `antikebo-dev` (redirect localhost) |
+| product key / client id | `antikebo` (produksi), `antikebo-dev` (redirect localhost) |
 | Domain | `antikebo.agentbuff.id` |
-| Harga | `priceRp: 29_000`, `billing: "one_time"`, `unlock: "app"`, `source: "mcp"` |
+| Harga | Rp29.000, sekali bayar |
 | Prefiks token MCP | `antikebo_` |
-| Folder VPS | `/opt/antikebo` |
+| Issuer | `https://agentbuff.id/masuk` (env `AGENTBUFF_ISSUER`) |
 
-## 1. Masuk dengan AgentBuff (OIDC)
+## 1. Masuk dengan AgentBuff (sudah ada di AgentBuff)
 
-- Issuer `https://agentbuff.id/masuk` (discovery, authorize, token, userinfo, jwks, `/status`).
-- Kode otorisasi + PKCE S256, `client_secret_basic`, id_token ES256, tanpa refresh token.
-- `sub` berpasangan per (pengguna, aplikasi) dan permanen: jadikan kunci akun (`agentbuff_sub`).
+- OIDC kode otorisasi + PKCE S256, `client_secret_basic`, id_token ES256, tanpa refresh token.
+- `sub` berpasangan per (pengguna, aplikasi), permanen = kunci akun (`agentbuff_sub`).
 - Salin dari template: `src/lib/agentbuff/oidc.ts`, `src/app/auth/agentbuff/{start,callback}`,
-  `src/lib/auth/sesi.ts`. Ganti nama kuki (`__Host-antikebo_oidc`, `__Host-antikebo_s`).
-- Callback: bangun ulang URL publik dari `APP_ORIGIN`, cari pengguna lewat `sub`, cek hak
-  **ketat**, buat sesi, tulis audit.
-- Alasan tolak di `/masuk`: `diblokir`, `belum_aktif`, `akses_berakhir`, `belum_beli`,
-  `dicabut`, `tidak_dikenal`.
+  `src/lib/auth/sesi.ts`. Kuki `__Host-antikebo_oidc`, `__Host-antikebo_s`. Sesi panjang (30 hari
+  bergulir) supaya pengguna tidak dilempar ke login saat setengah sadar.
+- **Scope:** `openid email profile agentbuff:kabar agentbuff:suara`. Dua scope terakhir tampil di
+  layar persetujuan AgentBuff sebagai izin (lihat PRD A3). Bila belum diberi, pintu §4 dan §5
+  menjawab `belum_diizinkan`; tombol "Beri izin" di AntiKebo mengulang login dengan
+  `prompt=consent`.
 
-## 2. Cek hak beli
+## 2. Cek hak (sudah ada)
 
-- Salin `src/lib/agentbuff/{status,tafsir,tautan-beku}.ts`: `POST ${AGENTBUFF_ISSUER}/status`
-  dengan Basic auth, cache 10 menit + jitter, ketat saat login dan token MCP pertama, 72 jam
-  bertahan kalau AgentBuff tidak bisa dihubungi, pemutus sirkuit pembekuan massal, batas laju.
-- Hak = tidak diblokir + akses AgentBuff aktif + punya hak produk `antikebo`.
-- Saat beku: lihat PRD A3 dan `KEPUTUSAN.md` K-07. Worker juga wajib cek hak sebelum
-  membunyikan (dengan aturan masa tenggang yang diputuskan).
+- `POST ${AGENTBUFF_ISSUER}/status` (Basic auth klien, badan `{sub}`). Salin
+  `src/lib/agentbuff/{status,tafsir,tautan-beku}.ts` dari template.
+- Status disimpan 10 menit + jitter. Bila AgentBuff tidak terjangkau, keputusan terakhir dipakai
+  sampai 72 jam (K-12): alarm tidak boleh gagal hanya karena AgentBuff sedang gangguan.
+- Dicek di: halaman, API, MCP, token perangkat PC, worker (sebelum membunyikan; hasil negatif
+  pasti = tidak berbunyi + pemberitahuan malam sebelumnya, lihat K-07).
 
-## 3. MCP dan sambung otomatis
+## 3. MCP dan sambung otomatis (sudah ada polanya)
 
-- `/mcp` stateless, 401 + `WWW-Authenticate` sebelum JSON-RPC diurai, batas laju per token,
-  batas badan 256 KB, `error_code` terstruktur. Pola `src/lib/mcp/{server,dasar,alat}.ts`.
-- `POST /api/agentbuff/mcp-token`: terima asersi ES256 dari portal (`typ=mcp-token+jwt`,
-  `aud=antikebo`, `purpose=mcp_token`, umur ≤ 120 dtk, `jti` sekali pakai), buat pengguna bila
-  baru, cek hak, terbitkan token 90 hari "AgentBuff (otomatis)". Pola `src/lib/agen/otomatis.ts`.
-- `skill/SKILL.md` pendamping dengan frontmatter `name` dan `description` berisi kata kunci
-  Indonesia. Diunggah oleh skrip siapkan di portal.
-- Agen yang sudah berjalan baru melihat alat baru setelah dimuat ulang: `deploy.sh` wajib
-  menjalankan skrip siapkan di VPS (seperti langkah 6 deploy Tuya).
+- `/mcp` stateless, 401 + `WWW-Authenticate` sebelum JSON-RPC diurai, batas laju, badan maks
+  256 KB, `error_code` terstruktur (pola `src/lib/mcp/{server,dasar,alat}.ts`).
+- `POST /api/agentbuff/mcp-token`: asersi ES256 dari AgentBuff (`typ=mcp-token+jwt`,
+  `aud=antikebo`, `purpose=mcp_token`, umur ≤ 120 dtk, `jti` sekali pakai) → token 90 hari
+  "AgentBuff (otomatis)". Pola `src/lib/agen/otomatis.ts`.
+- `skill/SKILL.md` pendamping. Agen yang sudah berjalan baru melihat alat baru setelah dimuat
+  ulang; skrip siapkan di AgentBuff mengurusnya saat deploy.
 
-## 4. Yang harus dikerjakan di repo portal (AgentBuff-Final)
+## 4. Pintu BARU: daftar kanal dan kirim pesan
 
-Dikerjakan dari **laptop Chief** pada paket kerja Rilis, karena butuh repo portal dan VPS.
-Sesi cloud boleh menyiapkan berkasnya di `integrasi-portal/` di repo ini supaya tinggal disalin.
+**Status: rancangan, dibangun di repo AgentBuff (sesi laptop, paket L1).** Selama belum ada,
+AntiKebo memakai server tiruan `tests/tiruan/agentbuff.ts` yang mengikuti kontrak ini persis
+(`AGENTBUFF_TIRUAN=1`). Bila AgentBuff mengubah kontrak, dokumen ini diperbarui lebih dulu.
 
-1. `scripts/siapkan-antikebo.ts`, salinan `siapkan-tuya.ts` (lihat
-   `referensi/standar-agentbuff/portal-siapkan-tuya.ts.txt`): idempoten, status `coming_soon`
-   kecuali `--terbitkan`, tidak pernah menurunkan produk yang sudah dijual. Isi: kategori
-   `produktivitas`, aksen yang cocok (mis. `amber`), ikon, `capabilities` (≤ 12, ≤ 160 huruf),
-   `tagline` (≤ 120), `description` (≤ 2000), versi Inggris `*En`, `tutorial`/`tutorialEn`.
-   Urutan panggilan: katalog, lalu `/mcp` (`url: https://antikebo.agentbuff.id/mcp`,
-   `tokenHeader: Authorization`, `tokenPrefix: "Bearer "`), lalu paket `SKILL.md`.
-2. Ikon: bila memakai ikon baru (mis. `AlarmClock`), tambahkan ke `ICONS` di
-   `src/components/app/tabs/shop-tab.tsx` lalu deploy portal.
-3. Daftarkan klien OIDC di VPS (`/root/agentbuff`), setelah baris katalog ada:
-   ```
-   pnpm tsx --env-file=.env.local scripts/masuk-daftar-aplikasi.ts --client-id antikebo --nama "AntiKebo" --produk antikebo --beranda https://antikebo.agentbuff.id --redirect https://antikebo.agentbuff.id/auth/agentbuff/callback --simpan-rahasia /root/masuk-rahasia/antikebo.env
-   ```
-   Ulangi untuk `antikebo-dev` dengan redirect `http://localhost:<port>/auth/agentbuff/callback`.
-   Jangan pernah mendaftarkan localhost di klien produksi.
-4. Nyalakan sambung otomatis setelah aplikasi hidup dan endpoint token lolos uji:
-   `pnpm tsx --env-file=.env.local scripts/masuk-mcp-otomatis-url.ts antikebo https://antikebo.agentbuff.id/api/agentbuff/mcp-token`
-5. Uji sendiri selama `coming_soon`: `scripts/hibah-produk.ts <email> antikebo <bulan>`
-   (hanya akun admin atau `@uji.internal`).
-6. Skrip bukti `scripts/prove-antikebo-beli.ts` meniru `prove-tuya-beli.ts`: katalog dan halaman
-   publik benar, masuk ditolak sebelum beli, beli lewat sandbox + webhook bertanda tangan, masuk
-   peramban sampai layar orientasi, token MCP otomatis menampilkan alat. Jalankan di VPS
-   (`pnpm tsx ... > /tmp/x.log 2>&1`, jangan dipipa ke `head`/`tail`).
-7. Gambar listing: 3 buah 1600×900 dari tangkapan layar demo asli (pola `gambar-bym.ts`),
-   unggah lewat `/api/admin/media`, lalu PATCH `coverImageUrl` dan `galleryImages`.
-8. Terbitkan dengan `--terbitkan` hanya setelah `docs/GERBANG-RILIS.md` lolos.
-9. Tambah entri di `Docs/LAPORAN-PERUBAHAN.md` portal dan `docs/LAPORAN-PERUBAHAN.md` repo ini.
+Semua pintu: `POST`, autentikasi Basic klien (sama dengan `/status`), badan JSON, jawaban JSON
+kecuali disebut lain. Galat umum:
 
-Catatan Chief: Midtrans masih sandbox untuk semua produk, jadi belum ada uang sungguhan masuk
-sampai kunci produksi dipasang.
+| HTTP | `alasan` | Arti |
+|---|---|---|
+| 401 | `klien` | Kredensial klien salah |
+| 403 | `tidak_berhak` | Hak AntiKebo pengguna tidak aktif |
+| 403 | `belum_diizinkan` | Scope izin belum diberi pengguna |
+| 404 | `tidak_dikenal` | `sub` tidak dikenal |
+| 503 | `agen_tidak_aktif` | Mesin agen pengguna sedang mati; coba lagi nanti |
 
-## 5. Deploy ke VPS
+### 4.1 `POST /masuk/kanal`
 
-Pola persis template Tuya (`referensi/template-tuya/deploy/`):
+Badan `{ "sub": "..." }` → 
 
-- `/opt/antikebo/app` (clone git, kunci deploy baca-saja `~/.ssh/antikebo_deploy`),
-  `/opt/antikebo/.env` (mode 600, dibuat `deploy/pasang-pertama.sh`), `/opt/antikebo/data/pg`.
-- Docker compose: `antikebo-db` (postgres:16-alpine + initdb peran), `antikebo-web` (jaringan
-  internal + `npm_default`, tanpa port terbuka, healthcheck `/api/health`), `antikebo-worker`.
-  `restart: unless-stopped`.
-- Domain: Chief menambah DNS `antikebo` di Cloudflare, proxy lewat Nginx Proxy Manager
-  (`npm-app-1`), sertifikat Let's Encrypt dengan cron perpanjang dari `pasang-pertama.sh`.
-- `bash deploy/deploy.sh` dari laptop **setelah push**: tolak bila HEAD bukan `origin/main`,
-  cadangan DB (gagal = batal), hitung baris, build image ber-tag sha, migrasi dengan peran
-  migrasi, gerbang RLS `deploy/uji-rls.sql`, nyalakan web + worker, tunggu sehat, hitung ulang
-  baris (gagal bila ada tabel menyusut), jalankan `siapkan-antikebo.ts` di VPS.
-- Cadangan tiap 6 jam, simpan 14 hari di `/var/lib/antikebo/backups/harian`.
-- Tes pulih (`uji-pulih.sh` pola BYM).
+```json
+{ "kanal": [
+  { "id": "k_7f3a", "platform": "telegram", "label": "Telegram · bot Buff",
+    "agen": "Buff", "siap": true },
+  { "id": "k_19bc", "platform": "whatsapp", "label": "WhatsApp · Rani",
+    "agen": "Rani", "siap": false, "alasan": "Belum pernah ada chat masuk dari kamu" }
+] }
+```
 
-## 6. Letak rahasia di VPS
+`id` stabil selama kanal itu ada. `platform`: `telegram`, `whatsapp`, `discord`, `slack`,
+`google_chat`. Pesan dikirim ke **chat pribadi pemilik** di kanal itu, bukan ke orang lain.
 
-| Apa | Di mana |
-|---|---|
-| Env aplikasi | `/opt/antikebo/.env` (600) |
-| Rahasia klien OIDC | `/root/masuk-rahasia/antikebo.env` (600) |
-| Env portal | `/root/agentbuff/.env.local` |
-| Cadangan | `/var/lib/antikebo/backups/harian/` |
+### 4.2 `POST /masuk/kabar`
 
-Rahasia tidak pernah dicetak, dicatat, atau masuk repo.
+Badan `{ "sub", "kanal": "k_7f3a", "teks": "...", "kunci": "kej_123:spam:7" }`.
+`teks` ≤ 1000 huruf (teks polos, tautan boleh). `kunci` ≤ 64 huruf untuk idempotensi (kunci sama
+dalam 24 jam = tidak dikirim dua kali).
+
+- 200 `{ "ok": true, "id": "..." }`
+- 409 `{ "alasan": "kanal_tidak_siap", "pesan": "..." }`
+- 429 `{ "alasan": "terlalu_cepat", "ulangiSetelahMs": 4000 }`
+
+Batas minimal antar pesan per kanal ditegakkan AgentBuff: Telegram 5 dtk, Discord/Slack/Google
+Chat 15 dtk, WhatsApp 30 dtk.
+
+## 5. Pintu BARU: suara
+
+### 5.1 `POST /masuk/suara/daftar`
+
+Badan `{ "sub", "bahasa": "id" }` →
+
+```json
+{ "penyedia": "edge", "bawaan": "id-ID-GadisNeural",
+  "suara": [ { "id": "id-ID-GadisNeural", "nama": "Gadis", "gender": "perempuan" },
+             { "id": "id-ID-ArdiNeural", "nama": "Ardi", "gender": "laki-laki" } ] }
+```
+
+`penyedia` mengikuti pengaturan suara pengguna di AgentBuff (sama dengan Telepon Agent).
+
+### 5.2 `POST /masuk/suara`
+
+Badan `{ "sub", "teks": "...", "gaya": "galak", "suara": "id-ID-ArdiNeural", "bahasa": "id" }`.
+`teks` ≤ 300 huruf; `gaya`: `galak` atau `biasa`; `suara` opsional (bawaan pengguna).
+
+- 200: badan = berkas audio (`audio/ogg` atau `audio/mpeg`), header `X-AgentBuff-Penyedia`,
+  `X-AgentBuff-Suara`, `X-AgentBuff-Durasi-Ms`.
+- 422 `{ "alasan": "teks_tidak_sah" }`
+- 429 `{ "alasan": "kuota", "ulangiSetelahMs": ... }` (kuota harian per pengguna, bawaan 300 klip)
+- 502 `{ "alasan": "penyedia_gagal", "pesan": "..." }` (mis. layanan suara menolak)
+
+AntiKebo **tidak pernah** menerima atau menyimpan kunci API suara pengguna. Gaya `galak`
+diterjemahkan AgentBuff ke setelan penyedia (kecepatan, nada, volume, atau instruksi gaya).
+
+## 6. Tugas di repo AgentBuff (bukan sesi cloud)
+
+Dikerjakan sesi laptop di repo AgentBuff (privat). Rinciannya ada di sana. Ringkasnya:
+
+- L1: pintu §4 dan §5 + scope izin + batas laju + uji.
+- Rilis: katalog produk (status `coming_soon` dulu), klien OIDC `antikebo` dan `antikebo-dev`,
+  sambung MCP otomatis, hibah produk ke akun Chief untuk uji, ikon toko bila baru, skrip bukti
+  `prove-antikebo-beli`, gambar listing, terbitkan setelah `GERBANG-RILIS.md` hijau.
+
+Sesi cloud boleh menyiapkan bahannya di `integrasi-portal/` (teks listing id/en, `SKILL.md`,
+draf skrip bukti) supaya tinggal dipakai.
+
+## 7. Deploy
+
+Pola persis template (`referensi/template-tuya/deploy/`): compose `antikebo-db`, `antikebo-web`,
+`antikebo-worker`; `deploy/deploy.sh` dari laptop sesudah push (cadangan, hitung baris, migrasi
+aditif, gerbang RLS, sehat, hitung ulang). Unduhan aplikasi PC dilayani `antikebo-web` dari
+berkas rilis yang diunggah langkah deploy. Detail lokasi di server tidak ditulis di repo publik.

@@ -4,10 +4,10 @@ Bagian 1 sampai 4 untuk Chief (sekali saja). Bagian 5 untuk Claude.
 
 ## 1. Sambungkan GitHub (sekali)
 
-1. Buka `claude.ai/code`, sambungkan GitHub, lalu pasang **Claude GitHub App** di akun
-   **nugrahalabib** dengan akses ke repo `nugrahalabib/AgentBuff-AntiKebo`.
+1. Buka `claude.ai/code`, sambungkan GitHub, pasang **Claude GitHub App** di akun **nugrahalabib**
+   dengan akses ke repo `nugrahalabib/AgentBuff-AntiKebo`.
 2. **Jangan** memakai `/web-setup` dari laptop: GitHub CLI di laptop sedang login sebagai akun
-   lain, jadi tokennya salah orang.
+   lain.
 
 ## 2. Buat environment "AntiKebo" (sekali)
 
@@ -16,7 +16,6 @@ Di pemilih environment (ikon awan di atas kotak pesan):
 **Akses jaringan:** pilih **Custom**, centang opsi tetap memakai daftar bawaan, lalu tambahkan:
 
 ```
-api.telegram.org
 *.tuyacn.com
 *.tuyaus.com
 *.tuyaeu.com
@@ -31,50 +30,52 @@ api.telegram.org
 cdn.playwright.dev
 playwright.download.prss.microsoft.com
 playwright.azureedge.net
+sh.rustup.rs
+static.rust-lang.org
+index.crates.io
+static.crates.io
 agentbuff.id
 ```
 
-**Variabel lingkungan:** tidak ada yang wajib. Pengembangan dan tes memakai server tiruan.
-Kalau ingin Claude menguji dengan perangkat asli, isi variabel uji di bawah. Nilainya bisa
-dibaca Claude di sesi, jadi **pakai kunci khusus uji yang bisa dicabut**, jangan kunci utama:
+**Variabel lingkungan:** tidak ada yang wajib. Pengembangan memakai server tiruan AgentBuff dan
+Tuya. Opsional, untuk uji perangkat Tuya asli (nilainya terbaca Claude, jadi pakai kunci khusus uji
+yang bisa dicabut):
 
 ```
-TUYA_KUNCI_UJI=sk-...        # buat kunci baru bernama "AntiKebo-uji" di Hey Tuya
-TELEGRAM_BOT_TOKEN_UJI=...   # bot uji terpisah dari BotFather
-TELEGRAM_CHAT_ID_UJI=...     # chat id Telegram Chief
+TUYA_KUNCI_UJI=sk-...   # buat kunci baru "AntiKebo-uji" di Hey Tuya
 ```
 
-**Skrip setup:** kosongkan. Node 22, pnpm, Postgres 16, Docker, dan Chromium sudah ada di VM.
-Persiapan proyek dijalankan hook `SessionStart` di repo (`scripts/sesi-cloud.sh`).
+**Skrip setup:** kosongkan. Persiapan dijalankan hook `SessionStart` (`scripts/sesi-cloud.sh`).
 
 ## 3. Memulai sesi
 
-Pilih repo `nugrahalabib/AgentBuff-AntiKebo`, cabang `main`, environment `AntiKebo`, lalu
-kirim pesan ini:
+Pilih repo `nugrahalabib/AgentBuff-AntiKebo`, cabang `main`, environment `AntiKebo`, lalu kirim:
 
-> Baca CLAUDE.md dan docs/00-MULAI-DI-SINI.md. Kerjakan paket kerja berikutnya di
-> docs/06-RENCANA-KERJA.md sampai memenuhi kriteria selesainya. Di akhir, perbarui rencana
-> kerja, laporan perubahan, dan keputusan, lalu buka PR dan gabungkan bila semua pemeriksaan
-> hijau.
+> Baca CLAUDE.md dan docs/00-MULAI-DI-SINI.md. Kerjakan paket kerja cloud berikutnya di
+> docs/06-RENCANA-KERJA.md sampai memenuhi kriteria selesainya. Di akhir, perbarui rencana kerja,
+> laporan perubahan, dan keputusan, lalu buka PR dan gabungkan bila semua pemeriksaan hijau.
 
-Satu paket per sesi sudah cukup. Untuk paket besar, sesi boleh berhenti di tengah selama status
-di rencana kerja diperbarui.
-
-Sesi bisa dipindah ke laptop dengan `claude --teleport` dari folder repo di laptop.
+Satu paket per sesi. Paket besar boleh berhenti di tengah selama status diperbarui. Sesi bisa
+dipindah ke laptop dengan `claude --teleport` dari folder repo di laptop.
 
 ## 4. Kredit
 
-Kredit sesi cloud Chief: **$250, kedaluwarsa 5 November 2026 pukul 14.59 WIB**. Ada 11 paket
-cloud di rencana kerja. Sisakan kredit untuk perbaikan setelah uji di HP asli (P8).
+Kredit cloud Chief: **$250, kedaluwarsa 5 November 2026 pukul 14.59 WIB**. Ada 14 paket cloud
+(P0 sampai P13). Sisakan kredit untuk perbaikan sesudah uji PC dan HP asli (L2).
 
 ## 5. Untuk Claude: batasan di cloud
 
-- Tidak ada SSH ke VPS, tidak ada DB produksi, tidak ada repo portal. Jangan mencoba deploy.
-  Tugas yang butuh itu ada di paket "Laptop".
-- `CLAUDE_CODE_REMOTE=true` menandakan cloud. Hook `SessionStart` menyalakan Postgres dan
-  memasang dependensi.
-- Perintah latar maksimal 30 menit, perintah biasa 2 menit (bisa diminta sampai 10 menit).
-- Plugin dan memori laptop Chief tidak ada di sini. Semua aturan ada di `CLAUDE.md` dan `docs/`.
-- Variabel `*_UJI` hanya untuk uji manual yang dicatat hasilnya; jangan dipakai di tes otomatis,
+- Tidak ada SSH ke VPS, DB produksi, repo AgentBuff, atau PC Windows. **Jangan mencoba deploy.**
+  Pekerjaan itu ada di paket L1 sampai L3.
+- `CLAUDE_CODE_REMOTE=true` menandakan cloud. Hook `SessionStart` menyalakan Postgres dan memasang
+  dependensi (paket P0 melengkapi: DB pengembangan, migrasi, `.env.local` acak, Rust bila ada `pc/`).
+- AgentBuff selalu lewat server tiruan (`AGENTBUFF_TIRUAN=1`), mengikuti kontrak
+  `05-INTEGRASI-AGENTBUFF.md`.
+- Aplikasi PC: VM cloud adalah Linux. Taruh logika di crate `pc/inti` tanpa ketergantungan Tauri
+  supaya `cargo test` jalan di VM tanpa pustaka sistem. Build Windows dan tes khusus Windows
+  dijalankan GitHub Actions (`windows-latest`).
+- Perintah latar maks 30 menit, perintah biasa 2 menit (bisa sampai 10).
+- Memori laptop Chief tidak ada di sini. Semua aturan ada di `CLAUDE.md` dan `docs/`.
+- `TUYA_KUNCI_UJI` hanya untuk uji manual yang dicatat hasilnya; jangan dipakai di tes otomatis,
   jangan dicetak, jangan disimpan.
 - Lampirkan tangkapan layar UI (Playwright) di PR supaya Chief bisa menilai tanpa membuka kode.

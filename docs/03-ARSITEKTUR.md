@@ -1,169 +1,168 @@
-# Arsitektur AntiKebo
+# Arsitektur AntiKebo (versi 2)
 
-Dasar: salin pola `referensi/template-tuya/` (lihat `05-INTEGRASI-AGENTBUFF.md` untuk bagian
-AgentBuff). Dokumen ini menjelaskan apa yang **baru** untuk AntiKebo. Kalau ada konflik antara
-dokumen ini dan kode template, ikuti konvensi template kecuali disebut lain di sini.
+Dasar: pola `referensi/template-tuya/` (Next.js 16, worker terpisah, Postgres 16 ber-RLS, MCP
+stateless, OIDC AgentBuff, deploy compose). Dokumen ini menjelaskan apa yang **baru atau
+berbeda**. Bila bertentangan dengan kode template, ikuti template kecuali disebut lain di sini.
 
 ## 1. Komponen
 
-| Kontainer | Isi |
+| Komponen | Isi |
 |---|---|
-| `antikebo-web` | Next.js 16 (App Router, `output: "standalone"`): halaman, API `/api/app/*`, `/mcp`, `/auth/agentbuff/*`, `/api/agentbuff/mcp-token`, webhook Telegram, SSE `/api/peristiwa` |
-| `antikebo-worker` | Proses Node terpisah (dibundel esbuild): penjadwal, Tangga Bangun, pengirim saluran, sinkron perangkat Tuya, detak jantung, pembersihan |
-| `antikebo-db` | Postgres 16, data di `/opt/antikebo/data/pg` |
+| `antikebo-web` | Next.js 16 standalone: halaman, API `/api/app/*`, `/mcp`, `/auth/agentbuff/*`, `/api/agentbuff/mcp-token`, API perangkat `/api/perangkat/*`, SSE `/api/peristiwa`, unduhan `/unduh/*` |
+| `antikebo-worker` | Proses Node terpisah: penjadwal kejadian, langkah alarm (spam, Tuya, notifikasi), pembuat klip suara (antrean), pengingat malam, pengawas perangkat siaga, sinkron Tuya, detak, pembersihan |
+| `antikebo-db` | Postgres 16 |
+| AntiKebo untuk PC | Aplikasi Tauri v2 di Windows (repo yang sama, folder `pc/`). Spesifikasi `09-APLIKASI-PC.md` |
+| AgentBuff (luar) | Masuk, cek hak, MCP otomatis, **daftar kanal, kirim pesan, buat suara** (kontrak `05-INTEGRASI-AGENTBUFF.md`) |
 
-Stack sama dengan template: TypeScript ketat, Tailwind v4, Radix, Lucide, zustand, zod 4,
-Drizzle 0.45 (`postgres`), `openid-client`, `jose`, `@modelcontextprotocol/server` stateless,
-`pino`, Vitest 4, `@electric-sql/pglite`, `fast-check`. Tambahan: `web-push`, pustaka zona waktu
-yang teruji (`date-fns` v4 + `@date-fns/tz`), pustaka pindai QR/barcode untuk cadangan iPhone.
+Stack sama dengan template, ditambah: `web-push`, `date-fns` v4 + `@date-fns/tz`, pustaka pindai QR
+untuk peramban tanpa `BarcodeDetector` (mis. `jsqr`), `qrcode` untuk membuat kode, Tauri v2 +
+Rust untuk aplikasi PC.
 
-## 2. Model data (ringkas)
+## 2. Model data
 
-Nama tabel/kolom bahasa Indonesia, `snake_case`. Semua tabel yang punya `pengguna_id` wajib RLS
-ENABLE + FORCE dan lolos guard `rls`. Waktu disimpan `timestamptz` (UTC).
+Nama tabel/kolom bahasa Indonesia, `snake_case`, waktu `timestamptz` (UTC). Semua tabel ber-
+`pengguna_id`: RLS ENABLE + FORCE, lolos guard `rls`, peran tanpa BYPASSRLS. Migrasi SQL aditif.
 
 | Tabel | Isi penting |
 |---|---|
-| `pengguna` | `agentbuff_sub` (unik), zona waktu, bahasa, tingkat bawaan, status hak terakhir |
+| `pengguna` | `agentbuff_sub` (unik), `nama_panggilan`, `zona_waktu`, `bahasa`, `jam_tidur`, `bawaan` (JSON alarm baru), `izin_kabar`, `izin_suara` (cermin izin AgentBuff terakhir) |
 | `sesi`, `token_mcp`, `jti_terpakai`, `audit` | Sama dengan template |
-| `sambungan_tuya` | kunci `sk-` tersandi amplop (AAD `tuya:<pengguna_id>`), wilayah, status, nomor telepon tujuan |
-| `perangkat_tuya` | Cermin perangkat: id Tuya, nama, kategori, kemampuan, online, status terakhir |
-| `sambungan_telegram` | `chat_id`, status, kode tautan sekali pakai (hash + kedaluwarsa) |
-| `langganan_push` | endpoint, kunci p256dh/auth tersandi, nama perangkat, terakhir berhasil |
-| `alarm` | label, jam lokal, zona waktu, aturan pengulangan (JSON tervalidasi zod), tingkat, suara, tantangan, tangga (JSON), opsi libur, aktif |
-| `lewati_alarm` | tanggal lokal yang dilewati per alarm |
-| `kejadian_alarm` | satu baris per bunyi: `alarm_id`, `jadwal_utc`, status (`menunggu`, `berbunyi`, `ditunda`, `bangun`, `cek_bangun`, `selesai`, `terlewat`, `dibatalkan`), jumlah tunda, waktu bangun, metode tantangan, terlambat (detik) |
-| `langkah_kejadian` | langkah tangga terjadwal per kejadian: `jatuh_tempo_utc`, jenis, parameter, status, hasil. Unik `(kejadian_id, urutan, ulangan)` |
-| `kiriman_saluran` | jejak tiap kiriman (saluran, id pesan Telegram untuk dihapus, hasil, kode galat) |
-| `tantangan` | per kejadian: jenis, tingkat, soal (tanpa jawaban), hash jawaban, kedaluwarsa, percobaan |
-| `kode_bangun` | benda terdaftar: nama, hash isi kode |
-| `rutinitas`, `jadwal_rutinitas` | aksi berurutan, pengulangan |
-| `pengingat` | judul, waktu, pengulangan, prioritas |
-| `mode_malam` | perangkat yang sedang Mode Malam: id perangkat, detak terakhir, alarm berikutnya yang diketahui |
-| `detak_worker` | detak jantung worker |
+| `perangkat_siaga` | `jenis` (`pc`/`web`), nama, hash token perangkat, versi aplikasi, `terakhir_terlihat`, `kemampuan` (JSON), `siap_sampai`, dicabut |
+| `kode_sambung` | kode sambung PC: hash kode, `kedaluwarsa` (10 menit), status, perangkat hasil |
+| `langganan_push` | endpoint, kunci tersandi, perangkat, terakhir berhasil |
+| `alarm` | jam lokal, zona, `pengulangan` (JSON zod), `agenda_judul`, `agenda_detail`, `karakter`, `suara_id`, `bunyi`, `soal` (JSON), `tunda` (JSON), `spam` (JSON: kanal + jeda + batas waktu), `tuya` (JSON aturan), `komitmen` (bool), `masih_bangun` (JSON), `libur_nasional` (bool), aktif |
+| `lewati_alarm` | tanggal lokal dilewati |
+| `template_alarm` | nama, isi alarm (JSON), bawaan/buatan |
+| `kejadian_alarm` | satu baris per bunyi: `jadwal_utc`, status (`menunggu`, `berbunyi`, `ditunda`, `cek_bangun`, `bangun`, `tidak_bangun`, `terlewat`, `dibatalkan`), jumlah tunda, waktu bangun, soal terakhir, terlambat (dtk), `uji` (bool) |
+| `langkah_kejadian` | langkah terjadwal per kejadian (`jatuh_tempo_utc`, jenis, parameter, status, hasil), unik `(kejadian_id, jenis, urutan)` |
+| `kiriman_kanal` | per pesan spam: kanal, status, alasan, id kiriman AgentBuff |
+| `soal_kejadian` | jenis, tingkat, soal tampil (tanpa jawaban), hash jawaban + garam, percobaan, benar beruntun |
+| `kode_qr` | nama tempat, hash isi kode (isi acak 128 bit), dibuat |
+| `naskah_suara` | sumber (karakter/pribadi/agenda), teks, hash (teks + suara + gaya), status |
+| `klip_suara` | `audio` (bytea), mime, durasi, penyedia, hash, dipakai terakhir |
+| `sambungan_tuya`, `perangkat_tuya` | Salin dari template |
+| `potret_tuya` | keadaan perangkat sebelum alarm per kejadian (untuk dikembalikan) |
+| `detak_worker` | detak worker |
 
-Migrasi: SQL aditif saja (`src/lib/db/migrasi/*.sql`), jangan regenerasi jurnal drizzle,
-jangan `drizzle-kit push`.
+Klip disimpan bytea (pola `foto_kamera` template) supaya ikut cadangan DB. Klip yang tidak
+dipakai alarm mana pun selama 30 hari dihapus.
 
 ## 3. Mesin pengulangan
 
-Modul murni `src/lib/jadwal/pengulangan.ts` tanpa akses DB:
-
-- `kejadianBerikutnya(aturan, zonaWaktu, setelahUtc, opsi)` mengembalikan waktu UTC berikutnya
-  dengan memperhitungkan hari terpilih, tanggal bulanan (31 ke hari terakhir), hari ke-N,
-  tiap N minggu, tanggal dilewati, dan libur nasional.
-- Gunakan pustaka zona waktu, bukan hitung offset sendiri.
-- Tes: contoh emas (minimal 40 kasus tertulis) dan tes properti `fast-check` (hasil selalu
-  setelah `setelahUtc`, tidak pernah jatuh di tanggal dilewati, idempoten).
-- Data libur nasional: `src/lib/jadwal/libur/<tahun>.json` dengan sumber resmi tercatat di berkas.
+Modul murni `src/lib/jadwal/pengulangan.ts` (tanpa DB): `kejadianBerikutnya(aturan, zona,
+setelahUtc, opsi)` memperhitungkan hari terpilih, akhir bulan, hari ke-N, tiap N minggu, lewati,
+libur nasional. Pakai pustaka zona waktu. Tes ≥ 40 contoh emas + tes properti `fast-check`.
+Data libur `src/lib/jadwal/libur/<tahun>.json` dengan sumber resmi di berkas.
 
 ## 4. Penjadwal (bagian terpenting)
 
-Tujuan: berbunyi p95 < 2 detik dari jadwal, tidak pernah dobel, tahan restart.
+Tujuan: berbunyi p95 < 2 dtk, tidak dobel, tahan restart.
 
-1. **Materialisasi.** Setiap alarm aktif selalu punya tepat satu `kejadian_alarm` berstatus
-   `menunggu` untuk jadwal berikutnya. Dibuat/diperbarui dalam transaksi yang sama saat alarm
-   dibuat, diubah, dilewati, atau setelah kejadian sebelumnya selesai.
-2. **Pemicu tepat waktu.** Worker menyimpan jadwal terdekat di memori dan memasang `setTimeout`
-   tepat ke jadwal itu, ditambah ketukan pengaman tiap 1 detik. Perubahan jadwal dikabarkan
-   lewat `LISTEN/NOTIFY` supaya worker menghitung ulang seketika.
-3. **Klaim aman.** Ambil kejadian jatuh tempo dengan
-   `SELECT ... WHERE status='menunggu' AND jadwal_utc <= now() FOR UPDATE SKIP LOCKED`, ubah
-   ke `berbunyi`, lalu buat baris `langkah_kejadian` sesuai tangga. Semua dalam satu transaksi.
-4. **Eksekusi langkah.** Loop yang sama mengambil `langkah_kejadian` jatuh tempo (juga
-   `SKIP LOCKED`), menjalankan kiriman secara paralel dengan batas waktu per saluran, mencatat
-   hasil. Satu saluran lambat tidak boleh menahan alarm lain.
-5. **Berhenti.** Saat tantangan lolos, kejadian jadi `bangun`, semua langkah yang belum jalan
-   dibatalkan, rutinitas "setelah bangun" dijadwalkan, pesan spam Telegram dihapus, lalu
-   langkah Cek Masih Bangun dijadwalkan.
-6. **Tunda.** Kejadian jadi `ditunda`, langkah dibatalkan, kejadian dibangunkan lagi pada waktu
-   tunda dengan tangga diulang dari langkah pertama yang "keras".
-7. **Pulih.** Saat worker mulai: kejadian `menunggu` yang terlewat kurang dari 30 menit langsung
-   dibunyikan dengan tanda terlambat; lebih dari itu ditandai `terlewat` dan pengguna diberi tahu.
-   Kejadian `berbunyi` yang tertinggal dilanjutkan dari langkah yang belum selesai.
-8. **Detak jantung.** Worker menulis `detak_worker` tiap 10 detik. Pemantau (di web) memberi tahu
-   operator lewat Telegram bila detak lebih tua dari 60 detik.
+1. **Materialisasi.** Setiap alarm aktif selalu punya tepat satu `kejadian_alarm` `menunggu`
+   untuk jadwal berikutnya (dibuat dalam transaksi yang sama dengan perubahan alarm).
+2. **Pemicu.** Worker memegang jadwal terdekat di memori + `setTimeout` tepat + ketukan pengaman
+   1 dtk; perubahan dikabarkan lewat `LISTEN/NOTIFY`.
+3. **Klaim.** `SELECT ... WHERE status='menunggu' AND jadwal_utc <= now() FOR UPDATE SKIP
+   LOCKED` → `berbunyi`, buat `langkah_kejadian` (spam per kanal, notifikasi, Tuya, batas waktu),
+   kirim peristiwa `berbunyi` ke perangkat. Satu transaksi.
+4. **Langkah.** Loop yang sama mengeksekusi langkah jatuh tempo (`SKIP LOCKED`), paralel dengan
+   batas waktu per jenis. Langkah berulang (spam, notifikasi, kedip) menjadwalkan ulangan
+   berikutnya sendiri selama kejadian masih `berbunyi`.
+5. **Lolos.** Jawaban benar → `bangun` (atau `cek_bangun` bila Masih bangun aktif), langkah
+   dibatalkan, peristiwa `berhenti` ke semua perangkat, Tuya dikembalikan, pesan penutup.
+6. **Tunda.** → `ditunda`, langkah bunyi/spam dibatalkan (Tuya tetap), kejadian dibunyikan lagi
+   saat tunda habis.
+7. **Masih bangun.** `cek_bangun` → peristiwa `cek` ke perangkat; tidak dikonfirmasi 60 dtk →
+   `berbunyi` lagi tanpa jatah tunda.
+8. **Pulih.** Saat mulai: `menunggu` terlewat < 30 menit dibunyikan (terlambat), sisanya
+   `terlewat` + beri tahu; `berbunyi` dilanjutkan.
+9. **Detak** tiap 10 dtk; pemantau memberi tahu operator bila basi > 60 dtk.
 
-Rutinitas terjadwal dan pengingat memakai mesin yang sama dengan jenis kejadian berbeda.
+**Perangkat juga memegang jadwal.** Perangkat siaga menerima daftar kejadian 24 jam ke depan
+(beserta klip yang perlu diunduh) dan memasang pengatur waktu lokal. Pada jam alarm perangkat
+langsung berbunyi walau peristiwa server terlambat atau internet putus; peristiwa server
+menyusul sebagai konfirmasi. Tiap perubahan alarm mengirim peristiwa `jadwal` sehingga salinan
+perangkat tidak basi; perangkat juga menarik ulang tiap 5 menit.
 
-## 5. Saluran
+## 5. Waktu nyata ke perangkat
 
-| Saluran | Implementasi |
-|---|---|
-| Push PWA | `web-push` + VAPID. Service worker menampilkan notifikasi alarm (tag per kejadian, `renotify`, `requireInteraction`, getar). Status 404/410 menghapus langganan. |
-| Telegram | Bot API lewat webhook `POST /api/telegram/webhook` dengan header `X-Telegram-Bot-Api-Secret-Token`. Tautan `/start <kode>`. Kirim `sendMessage` dengan tombol URL ke tantangan, simpan `message_id`, hapus dengan `deleteMessage` setelah bangun. Hormati batas laju Telegram. |
-| Tuya | Salin `src/lib/tuya/*` dari template: `klien`, `wilayah`, `kemampuan`, `kamus-dp`, `konfirmasi`. Pakai `voice/self-send`, `push/self-send`, `shadow/properties/issue`, cuaca. Penjadwal Tuya template (20 detik) **tidak** dipakai; AntiKebo memakai penjadwal di atas. |
-| Mode Malam | Halaman `/app/malam` membuka SSE `/api/peristiwa` dan mengirim detak tiap 30 detik ke `mode_malam`. Server mengirim peristiwa `berbunyi`. Halaman juga tahu jadwal berikutnya dan punya pengatur waktu lokal sebagai cadangan bila SSE putus. |
+- Satu jalur SSE `/api/peristiwa` untuk web dan PC (PC memakai klien SSE di Rust), peristiwa:
+  `jadwal`, `berbunyi`, `soal`, `tunda`, `berhenti`, `cek`, `klip_siap`.
+- Detak perangkat `POST /api/perangkat/detak` tiap 30 dtk (PC) atau 30 dtk (Jam Meja aktif).
+  Perangkat dianggap siaga bila detak < 2 menit.
+- Autentikasi: web pakai sesi; PC pakai token perangkat (Bearer, hash di `perangkat_siaga`).
 
-## 6. Tantangan
+## 6. Suara
 
-- Soal dibuat di server (`src/lib/tantangan/`), jawaban disimpan sebagai hash, tidak pernah
-  dikirim ke peramban atau dicatat di log.
-- Endpoint jawab hanya menerima sesi pengguna pemilik kejadian, punya batas laju, dan memeriksa
-  bahwa kejadian masih `berbunyi`.
-- Kode Bangun: kamera di peramban membaca isi kode, server membandingkan hash dengan `kode_bangun`.
-- Tingkat soal hitungan, jumlah benar berturut-turut, dan batas waktu ada di satu berkas aturan
-  dengan tes contoh emas.
+Rincian `10-SUARA.md`. Ringkas arsitekturnya:
 
-## 7. Alat MCP
+1. Simpan alarm → hitung naskah yang diperlukan → `naskah_suara` baru untuk yang belum ada klip.
+2. Worker antrean suara memanggil klien AgentBuff `buatSuara(sub, teks, gaya, suara)` (batas
+   paralel per pengguna 1, global 4, ulang dengan jeda bertambah bila gagal sementara).
+3. Hasil masuk `klip_suara`, peristiwa `klip_siap` ke perangkat, perangkat mengunduh lewat
+   `/api/perangkat/klip/:hash` (hanya klip milik pengguna).
+4. Pemutar (web: Web Audio; PC: rodio) mencampur bunyi alarm berulang + klip dengan jeda 3 dtk.
 
-Pola template (`alat()` di `mcp/dasar.ts`, zod, anotasi `readOnlyHint`/`destructiveHint`,
-`error_code` terstruktur, `PETUNJUK`). Nama alat bahasa Inggris:
+## 7. Spam kanal
 
-`get_setup_status`, `connect_home`, `disconnect_home`, `list_devices`, `test_device`,
-`list_alarms`, `get_alarm`, `get_next_alarm`, `create_alarm`, `update_alarm`, `delete_alarm`,
-`set_alarm_enabled`, `skip_next_alarm`, `skip_date`, `unskip_alarm`, `test_alarm`,
-`list_routines`, `create_routine`, `update_routine`, `delete_routine`, `run_routine`,
-`list_reminders`, `create_reminder`, `update_reminder`, `delete_reminder`,
-`get_wake_stats`, `get_history`, `get_preferences`, `update_preferences`, `link_telegram`,
-`list_wake_codes`.
+Klien AgentBuff `daftarKanal(sub)` dan `kirimPesan(sub, kanal, teks, kunciIdempoten)`.
+Langkah spam per kanal dijadwalkan dengan jeda kanal; galat `terlalu_cepat` menggeser jadwal
+sesuai `retryAfterMs`; galat `kanal_tidak_siap`/`belum_diizinkan` menghentikan kanal itu untuk
+kejadian ini (dicatat, ditampilkan). Teks dari `src/lib/pesan/` (kumpulan kalimat id/en, tanpa AI).
 
-**Sengaja tidak ada** alat untuk mematikan atau menunda alarm yang sedang berbunyi.
+## 8. Tuya
 
-## 8. Skor bangun
+Salin `src/lib/tuya/*` dan layanan sambungan/rumah/suasana dari template. Penjadwal Tuya template
+(20 dtk) **tidak** dipakai; aksi Tuya adalah langkah kejadian. Sebelum aksi pertama sebuah
+kejadian, keadaan perangkat yang terlibat dipotret ke `potret_tuya` (pola `potretKeadaan`) supaya
+bisa dikembalikan. Efek kedip = langkah berulang tiap 3 dtk dengan batas laju Tuya.
 
-Per kejadian (tidak termasuk uji coba):
+## 9. Soal
 
-- Mulai 100.
-- Kurangi 10 per tunda.
-- Kurangi 1 per menit dari berbunyi sampai lolos tantangan, setelah 2 menit pertama (maks 40).
-- Kurangi 30 bila gagal Cek Masih Bangun.
-- `terlewat` karena pengguna tidak bangun bernilai 0; `terlewat` karena gangguan server tidak dihitung.
-- Batas bawah 0.
+`src/lib/soal/` murni: pembuat soal per tingkat (aturan PRD §15), pemeriksa, turun tingkat.
+Jawaban hash (HMAC dengan garam per soal). Endpoint jawab: sesi atau token perangkat pemilik,
+kejadian `berbunyi`, batas laju 30/menit. Misi QR: perangkat membaca isi QR, server membandingkan
+hash. PC luring: soal dibuat lokal (modul Rust dengan aturan sama, dites dengan contoh emas yang
+sama), hasil disinkronkan sebagai `selesai_luring` lalu diverifikasi server (kejadian milik
+perangkat itu, waktu masuk akal).
 
-Skor harian = rata-rata kejadian hari itu (zona waktu pengguna). Hari beruntun = hari berturut-turut
-dengan semua kejadian ≥ 70. Rumus ini wajib punya tes contoh emas.
+## 10. Skor bangun
 
-## 9. Keamanan
+Per kejadian (bukan uji): mulai 100; −10 per tunda; −1 per menit dari berbunyi sampai lolos
+sesudah 2 menit pertama (maks −40); −30 bila gagal Masih bangun; `tidak_bangun` = 0; terlewat
+karena server tidak dihitung; minimal 0. Skor harian = rata-rata; hari beruntun = hari dengan
+semua kejadian ≥ 70. Wajib tes contoh emas.
 
-- CSP dengan nonce dan `Cache-Control: no-transform` (aturan Cloudflare di template `proxy.ts`).
-- Batas laju per pengguna untuk API, MCP (120/menit, tulis 40/menit), jawab tantangan, tautan Telegram.
-- Rahasia pengguna tersandi amplop; kunci utama `ENCRYPTION_KEK`.
-- Tidak ada endpoint yang melewati sesi (tidak ada "kunci internal" seperti aplikasi lama).
-- Log tidak memuat rahasia, isi pesan, atau jawaban tantangan.
+## 11. Keamanan
 
-## 10. Variabel lingkungan (nama saja)
+- CSP nonce + `Cache-Control: no-transform` (pola `proxy.ts` template).
+- Batas laju: API, MCP (120/mnt, tulis 40/mnt), jawab soal, kode sambung, detak.
+- Rahasia tersandi amplop (`ENCRYPTION_KEK`); token perangkat dan token MCP disimpan hash.
+- Tidak ada endpoint tanpa sesi/token yang bisa mematikan, menunda, atau menjawab.
+- Log tanpa rahasia, isi pesan, jawaban soal, atau teks naskah pribadi.
+
+## 12. Variabel lingkungan (nama saja)
 
 Dari template: `DATABASE_URL`, `DATABASE_URL_MIGRASI`, `APP_ORIGIN`, `SESSION_SECRET`,
 `ENCRYPTION_KEK`, `AGENTBUFF_ISSUER`, `AGENTBUFF_ORIGIN`, `AGENTBUFF_PRODUCT_KEY` (`antikebo`),
-`AGENTBUFF_MASUK_CLIENT_ID`, `AGENTBUFF_MASUK_CLIENT_SECRET`, `LOG_LEVEL`, kata sandi peran DB
-`ANTIKEBO_SUPER_PASSWORD`, `ANTIKEBO_MIGRASI_PASSWORD`, `ANTIKEBO_APP_PASSWORD`,
-`ANTIKEBO_WORKER_PASSWORD`.
+`AGENTBUFF_MASUK_CLIENT_ID`, `AGENTBUFF_MASUK_CLIENT_SECRET`, `LOG_LEVEL`, kata sandi peran DB.
 
-Baru: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `TELEGRAM_BOT_TOKEN`,
-`TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`, `OPERATOR_TELEGRAM_CHAT_ID`.
+Baru: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `OPERATOR_KABAR` (tujuan
+pemberitahuan operator), `PC_UPDATE_PUBKEY` (kunci publik pembaruan aplikasi PC), `AGENTBUFF_TIRUAN`
+(`1` = pakai server tiruan untuk kanal/suara saat pengembangan).
 
-Khusus uji (opsional, hanya di lingkungan cloud): `TUYA_KUNCI_UJI`, `TELEGRAM_BOT_TOKEN_UJI`,
-`TELEGRAM_CHAT_ID_UJI`.
+Aplikasi menolak mulai bila variabel wajib kosong (pola `env.ts`).
 
-Aplikasi menolak mulai bila variabel wajib kosong (pola `env.ts` template).
+## 13. Pengujian
 
-## 11. Pengujian
-
-- Unit: mesin pengulangan, skor, aturan tantangan, tangga (contoh emas + properti).
-- Integrasi di PGlite memakai migrasi asli dan peran non-bypass (harness template), termasuk:
-  dua worker berebut kejadian yang sama (tidak dobel), restart di tengah tangga, pulih terlewat.
-- Server tiruan untuk Tuya (pola `tuya-tiruan.ts`), Telegram, dan push.
-- Uji peramban Playwright di cloud untuk alur UI utama dan tangkapan layar PR.
-- `scripts/jaga.mjs`: bawa semua guard template, tambah guard "tidak ada alat MCP mematikan alarm".
-- CI GitHub Actions: jaga, tsc, lint, test, build (pola BYM `.github/workflows/ci.yml`).
+- Unit: pengulangan, soal (TS dan Rust dengan berkas contoh emas yang sama), skor, naskah, jeda
+  spam, Komitmen.
+- Integrasi (PGlite + peran non-bypass): dua worker berebut kejadian, restart di tengah alarm,
+  tunda, Masih bangun, berhenti di semua perangkat ≤ 2 dtk.
+- Server tiruan: AgentBuff (kanal, pesan, suara), Tuya (`tuya-tiruan.ts`), push.
+- Playwright: alur utama + Mode Jam Meja dengan audio tiruan; tangkapan layar di PR.
+- Aplikasi PC: tes Rust di Linux untuk logika; build + tes Windows di GitHub Actions; daftar uji
+  manual di laptop Chief (`09-APLIKASI-PC.md` §9).
+- `scripts/jaga.mjs`: guard template + "tidak ada jalur mematikan alarm" + paritas MCP + tanpa
+  tanda pisah panjang.
+- CI: jaga, tsc, lint, test, build web, build PC (Windows).

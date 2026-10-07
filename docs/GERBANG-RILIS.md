@@ -1,19 +1,22 @@
 # Gerbang rilis AntiKebo
 
-AntiKebo baru boleh diterbitkan (`--terbitkan`) bila semua butir di bawah hijau dan buktinya
-tercatat. Acuan: `referensi/standar-agentbuff/BYM-GERBANG-RILIS.md`.
+AntiKebo baru boleh diterbitkan bila semua butir hijau dan buktinya tercatat. Acuan:
+`referensi/standar-agentbuff/BYM-GERBANG-RILIS.md`.
 
-| # | Butir | Bukti yang diminta | Status |
+| # | Butir | Bukti | Status |
 |---|---|---|---|
-| 1 | **Ujung ke ujung di produksi:** beli, masuk, orientasi, buat alarm dari aplikasi dan dari chat agen, berbunyi, tantangan, bangun, cabut hak, beku, perpanjang, pulih | `prove-antikebo-beli` dan skrip bukti alarm di VPS, semua lulus | Belum |
-| 2 | **Ketepatan:** p95 keterlambatan berbunyi < 2 dtk selama 24 jam uji dengan ≥ 200 kejadian, tidak ada dobel, restart worker di tengah tangga pulih benar | Laporan metrik N3 | Belum |
-| 3 | **Bukti perangkat asli:** enam butir "Harus dibuktikan" di `01-KONSEP.md` dicoba di iPhone dan Android, hasil dicatat di `KEPUTUSAN.md`, listing hanya menjanjikan yang terbukti | Catatan + video/tangkapan layar | Belum |
-| 4 | **Anti curang:** tidak ada jalur mematikan/menunda tanpa sesi pengguna; jawaban tidak bocor | Guard `jaga` + tes + tinjauan | Belum |
-| 5 | **Aksesibilitas:** 0 kegagalan kontras dan axe di semua halaman kedua tema, 320 px, teks 200%, keyboard, pembaca layar untuk 5 alur | Laporan audit | Belum |
-| 6 | **Contoh emas:** mesin pengulangan, skor bangun, aturan tantangan | Tes hijau di CI | Belum |
-| 7 | **MCP:** 401 untuk token salah/dicabut di `initialize` dan `tools/list`, `access_frozen` saat beku, idempotensi, tidak ada alat mematikan alarm | Skrip bukti MCP | Belum |
-| 8 | **Deploy aman:** cadangan + hitung baris + gerbang RLS + tes pulih lolos | Log `deploy.sh` dan `uji-pulih.sh` | Belum |
-| 9 | **Legal:** kebijakan privasi, ketentuan, pernyataan "bukan jaminan" | Halaman tayang | Belum |
-| 10 | **Listing:** teks id/en, 3 gambar 1600×900 dari layar asli, tutorial, `SKILL.md` | Halaman Marketplace | Belum |
+| 1 | **Ujung ke ujung di produksi:** beli, masuk, izin, orientasi, buat alarm dari web dan dari chat agen, berbunyi, soal, bangun, Masih bangun, cabut hak, beku, perpanjang | Skrip bukti di VPS, semua lulus | Belum |
+| 2 | **Ketepatan:** p95 keterlambatan < 2 dtk selama 24 jam uji (≥ 200 kejadian), tidak dobel, restart worker di tengah alarm pulih benar, berhenti ≤ 2 dtk di semua perangkat | Laporan metrik | Belum |
+| 3 | **Aplikasi PC:** 8 uji manual `09-APLIKASI-PC.md` §9 lulus di PC Chief | Catatan + video | Belum |
+| 4 | **Jam Meja di HP asli:** iPhone (saklar senyap, layar redup) dan Android (layar redup, tab di latar, baterai) diuji; listing hanya menjanjikan yang terbukti | Catatan di `KEPUTUSAN.md` | Belum |
+| 5 | **Suara:** klip dibuat lewat pintu AgentBuff asli untuk pengguna tanpa kunci (suara gratis) dan dengan kunci penyedia; cadangan suara perangkat jalan saat pintu gagal | Skrip bukti + rekaman | Belum |
+| 6 | **Spam kanal:** pesan sampai di Telegram dan WhatsApp asli lewat bot agen, jeda dipatuhi, berhenti saat bangun | Bukti kanal asli | Belum |
+| 7 | **Anti curang:** tidak ada jalur mematikan/menunda/menjawab tanpa sesi atau token perangkat; jawaban tidak bocor; Komitmen ditegakkan di web, PC, MCP | Guard `jaga` + tes + tinjauan | Belum |
+| 8 | **MCP:** paritas penuh (guard), 401 token salah/dicabut, `access_frozen`, `commitment_locked`, idempotensi | Skrip bukti MCP | Belum |
+| 9 | **Aksesibilitas:** 0 kegagalan kontras dan axe semua halaman kedua tema, 320 px, teks 200%, keyboard, pembaca layar 5 alur | Laporan audit | Belum |
+| 10 | **Contoh emas:** pengulangan, soal (TS dan Rust), skor, urutan putar suara | Tes hijau di CI | Belum |
+| 11 | **Deploy aman:** cadangan + hitung baris + gerbang RLS + tes pulih | Log deploy | Belum |
+| 12 | **Legal:** privasi, ketentuan, "bukan jaminan", panduan layar biru Windows | Halaman tayang | Belum |
+| 13 | **Listing:** teks id/en, 3 gambar dari layar asli, tutorial, `SKILL.md` | Halaman Marketplace | Belum |
 
-Target non-fungsional di `02-PRD.md` §17 juga wajib terpenuhi.
+Target non-fungsional di `02-PRD.md` §18 juga wajib terpenuhi.

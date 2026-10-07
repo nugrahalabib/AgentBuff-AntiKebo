@@ -1,99 +1,109 @@
 # AntiKebo: panduan wajib untuk setiap sesi Claude
 
-Berkas ini dibaca otomatis di setiap sesi, baik di cloud (claude.ai/code) maupun di laptop.
-Sesi cloud TIDAK membawa memori laptop. Semua konteks proyek ada di repo ini. Jangan minta
-pemilik bercerita ulang; baca dokumennya.
+Berkas ini dibaca otomatis di setiap sesi, di cloud (claude.ai/code) maupun di laptop. Sesi cloud
+TIDAK membawa memori laptop. Semua konteks ada di repo ini. Jangan minta pemilik bercerita ulang;
+baca dokumennya.
 
 ## 1. Proyek ini apa
 
-**AntiKebo** ("anti tidur kayak kebo") adalah aplikasi alarm anti kesiangan untuk
-Marketplace AgentBuff. Dijual **Rp29.000 sekali bayar**, tayang di `https://antikebo.agentbuff.id`,
-dan minimal setara standar aplikasi BYM (Buff Your Money) dan Tuya milik AgentBuff.
+**AntiKebo** ("anti tidur kayak kebo"): alarm anti kesiangan untuk Marketplace AgentBuff,
+**Rp29.000 sekali bayar**, di `https://antikebo.agentbuff.id`. Janji: **alarm tidak berhenti sampai
+soal terjawab.** Konsep lengkap (versi 2, disepakati 2026-10-07): `docs/01-KONSEP.md`.
 
-- **Otaknya di server (VPS), bukan di PC atau HP pengguna.** Jadwal, tangga bangun, perangkat
-  Tuya, telepon, Telegram, dan notifikasi semua dijalankan worker di server 24 jam.
-- Aplikasinya berupa web app yang bisa dipasang di HP (PWA). Konsep lengkap: `docs/01-KONSEP.md`.
-- Integrasi AgentBuff: masuk lewat "Masuk dengan AgentBuff" (OIDC), cek hak beli, dan alat MCP
-  supaya agen AgentBuff pengguna bisa mengatur alarm dari chat.
+Empat bagian:
+1. **Server** (web + worker + Postgres) di VPS: otak dan jadwal tepat detik.
+2. **Web app/PWA:** pengaturan, layar berbunyi, **Mode Jam Meja** di HP/tablet.
+3. **AntiKebo untuk PC** (Tauri, Windows): alarm yang tidak bisa ditutup. `docs/09-APLIKASI-PC.md`.
+4. **Agen AgentBuff pengguna lewat MCP:** paritas penuh dengan web. `docs/11-ALAT-MCP.md`.
+
+Integrasi AgentBuff: Masuk dengan AgentBuff (OIDC), cek hak, MCP otomatis, dan **pintu baru**
+untuk daftar kanal, kirim pesan spam, dan membuat suara omelan (kontrak di
+`docs/05-INTEGRASI-AGENTBUFF.md`; selama belum dibangun, pakai server tiruan).
 
 ## 2. Pemilik dan cara kerja yang dia mau
 
 - Pemilik dipanggil **Chief**. Balas selalu dalam **Bahasa Indonesia sehari-hari**.
 - **Jangan pakai tanda pisah panjang** (em dash/en dash) di teks UI, pesan, maupun balasan.
-- Beri **satu rekomendasi**, bukan daftar opsi A/B/C. Kalau ada keputusan yang benar-benar milik
-  Chief, tulis di `docs/KEPUTUSAN.md` bagian "Menunggu Chief" lalu lanjutkan bagian lain.
-- **Tidak ada pola "MVP dulu".** Semua fitur di `docs/02-PRD.md` adalah cakupan rilis. Urutan
-  di `docs/06-RENCANA-KERJA.md` hanya urutan ketergantungan, bukan pemangkasan fitur.
-- Selesai artinya terbukti jalan (tes hijau, tangkapan layar, bukti), bukan "kodenya sudah ditulis".
-- **Wajib** menambah entri di `docs/LAPORAN-PERUBAHAN.md` (paling atas, bahasa sehari-hari dari
-  sisi pengguna) setiap sesi yang mengubah sesuatu.
-- Pelajari kode dan dokumen yang ada sebelum menyimpulkan. Jangan menyimpulkan "tidak ada" hanya
-  dari satu kali grep.
+- Beri **satu rekomendasi**, bukan daftar opsi. Keputusan yang benar-benar milik Chief ditulis di
+  `docs/KEPUTUSAN.md` bagian "Menunggu Chief", lalu lanjutkan bagian lain.
+- **Tidak ada pola "MVP dulu".** Semua di `docs/02-PRD.md` adalah cakupan rilis. Urutan di
+  `docs/06-RENCANA-KERJA.md` hanya urutan ketergantungan.
+- **Jangan halu.** Yang dijanjikan harus benar-benar bisa; yang belum terbukti ditulis "wajib
+  diuji". Selesai = terbukti jalan (tes hijau, tangkapan layar, bukti), bukan "kode sudah ditulis".
+- **Wajib** menambah entri di `docs/LAPORAN-PERUBAHAN.md` (paling atas, bahasa sehari-hari dari sisi
+  pengguna) setiap sesi yang mengubah sesuatu.
+- Pelajari kode dan dokumen sebelum menyimpulkan. Jangan menyimpulkan "tidak ada" dari satu grep.
 - Teks untuk pengguna: pendek, ramah, tanpa istilah teknis. Pesan galat mentah tidak boleh tampil.
+- Repo ini **publik sementara**: jangan pernah commit rahasia, kunci, data pribadi, atau rincian
+  internal AgentBuff (lokasi server, nama RPC internal, desain keamanan rinci).
 
 ## 3. Urutan baca di awal sesi
 
 1. Berkas ini.
-2. `docs/00-MULAI-DI-SINI.md` (peta dokumen dan status terkini).
-3. `docs/06-RENCANA-KERJA.md`: ambil **paket kerja pertama yang belum selesai**.
-4. Dokumen yang dirujuk paket itu (konsep, PRD, arsitektur, desain, integrasi).
-5. Entri teratas `docs/LAPORAN-PERUBAHAN.md` (pekerjaan terakhir).
+2. `docs/00-MULAI-DI-SINI.md` (peta dokumen, status terkini).
+3. `docs/06-RENCANA-KERJA.md`: ambil **paket cloud pertama yang belum selesai**.
+4. Dokumen yang dirujuk paket itu.
+5. Entri teratas `docs/LAPORAN-PERUBAHAN.md`.
 
-## 4. Referensi: apa yang boleh dan tidak boleh ditiru
+## 4. Referensi
 
 | Folder | Isinya | Cara memakai |
 |---|---|---|
-| `referensi/template-tuya/` | Salinan repo AgentBuff-Tuya (commit `937aa8a`), aplikasi Marketplace Rp29.000 yang sudah lolos standar | **Cetakan utama.** Salin kerangkanya (auth OIDC, cek hak, MCP, kripto, worker, deploy, jaga, harness tes, gaya kaca) lalu sesuaikan. |
-| `referensi/standar-agentbuff/` | Dokumen BYM (README, desain, teknis, gerbang rilis) dan dokumen/skrip portal AgentBuff | Acuan standar dan kontrak integrasi. Skrip portal disimpan `.ts.txt`, hanya untuk dibaca. |
-| `referensi/aplikasi-lama/` | Kode AntiKebo lama ("shila-wake"), sudah dibersihkan dari data pribadi | **Sampah.** Hanya untuk melihat fitur apa saja yang dulu ada. Jangan salin kodenya. Ringkasannya di `docs/08-REFERENSI-LAMA.md`. |
+| `referensi/template-tuya/` | Salinan AgentBuff-Tuya (`937aa8a`), aplikasi Marketplace yang sudah lolos standar | **Cetakan utama.** Salin kerangka (auth, cek hak, MCP, kripto, worker, deploy, jaga, harness tes, gaya kaca, modul Tuya) lalu sesuaikan. |
+| `referensi/standar-agentbuff/` | Dokumen BYM dan portal AgentBuff | Acuan standar dan kontrak. Skrip `.ts.txt` hanya dibaca. |
+| `referensi/aplikasi-lama/` | shila-wake (aplikasi lama), sudah dibersihkan | Hanya untuk tahu fitur dan cara lama membunyikan alarm (`docs/08-REFERENSI-LAMA.md`). Jangan salin kodenya. |
 
-- `referensi/` **wajib dikecualikan** dari `tsconfig`, ESLint, Vitest, Prettier, `jaga`, dan build.
-- Jangan pernah mengubah isi `referensi/`.
+`referensi/` wajib dikecualikan dari tsconfig, ESLint, Vitest, Prettier, `jaga`, build, dan cargo.
+Jangan pernah mengubah isi `referensi/`.
 
 ## 5. Aturan teknis yang tidak boleh dilanggar
 
-1. **Tidak ada LLM di dalam aplikasi.** Semua kecerdasan datang dari agen AgentBuff pengguna yang
-   memanggil alat MCP AntiKebo. Pesan spam, kata penyemangat, dan tantangan dibuat tanpa LLM.
-2. **Agen tidak boleh mematikan atau menunda alarm yang sedang berbunyi.** Hanya manusia lewat
-   tantangan di aplikasi. Ini inti anti kesiangan; jangan sediakan alat MCP atau API tanpa sesi
-   untuk itu.
-3. **Alarm harus berbunyi tepat waktu tanpa bergantung pada perangkat pengguna.** Penjadwal di
-   worker server, akurasi target 2 detik, tahan restart (lihat `docs/03-ARSITEKTUR.md`).
-4. Ikuti konvensi template: Next.js 16 App Router, TypeScript ketat, Drizzle + Postgres 16,
-   SQL migrasi aditif saja, **RLS ENABLE + FORCE** di setiap tabel milik pengguna, peran DB tanpa
-   BYPASSRLS, rahasia pengguna disandikan amplop (`kripto.ts`), nama tabel/kolom bahasa Indonesia.
+1. **Tidak ada AI di dalam AntiKebo.** Naskah, pesan spam, soal dibuat tanpa AI. Suara omelan
+   dibuat oleh **AgentBuff milik pengguna** lewat pintu suara, bukan oleh AntiKebo; AntiKebo tidak
+   pernah memegang kunci API suara pengguna. Platform tidak menanggung biaya suara.
+2. **Tidak ada jalan mematikan, menunda, atau menjawab alarm berbunyi** selain soal di layar
+   alarm (sesi pengguna atau token perangkat miliknya). Tidak ada alat MCP atau API kunci-internal
+   untuk itu. Mode Komitmen ditegakkan di web, PC, dan MCP.
+3. **Alarm harus berbunyi tepat waktu tanpa bergantung pada satu titik.** Penjadwal server (p95 < 2
+   dtk, tahan restart) + jadwal lokal di perangkat siaga. Bunyi alarm tidak pernah bergantung pada
+   klip suara (selalu ada cadangan).
+4. Konvensi template: Next.js 16 App Router, TypeScript ketat, Drizzle + Postgres 16, migrasi SQL
+   aditif, **RLS ENABLE + FORCE** di setiap tabel pengguna, peran DB tanpa BYPASSRLS, rahasia
+   tersandi amplop (`kripto.ts`), nama tabel/kolom bahasa Indonesia.
 5. Next.js 16 berbeda dari versi lama. Baca `node_modules/next/dist/docs/` sebelum memakai pola Next.
-6. zod: pakai `z.strictObject` untuk masukan; `z.object` diam-diam membuang kolom baru.
-7. Rahasia (kunci Tuya, token Telegram, langganan push) tidak pernah dikirim ke peramban, tidak
-   pernah dicatat di log, tidak pernah di-commit.
-8. Teks UI hanya lewat kamus i18n; tidak ada string keras di komponen (ikuti guard template).
-9. Setiap rumus dan aturan jadwal punya tes contoh emas (golden test).
+6. zod: `z.strictObject` untuk masukan.
+7. Rahasia (kunci Tuya, token perangkat, langganan push) tidak pernah dikirim ke peramban, dicatat
+   di log, atau di-commit.
+8. Teks UI hanya lewat kamus i18n (id dan en).
+9. Setiap aturan jadwal, soal, skor, dan urutan putar suara punya tes contoh emas. Aturan soal yang
+   sama dipakai TypeScript dan Rust lewat satu berkas contoh emas.
+10. Setiap aksi web punya alat MCP atau tercatat sebagai pengecualian di `src/lib/mcp/paritas.ts`.
 
 ## 6. Cloud atau laptop
 
-Cek `CLAUDE_CODE_REMOTE`. Kalau `true`, kamu di cloud:
+Cek `CLAUDE_CODE_REMOTE`. Bila `true`, kamu di cloud:
 
-- Tidak ada SSH ke VPS dan tidak ada akses ke database produksi. **Jangan mencoba deploy.**
-- Postgres 16 tersedia di VM (`service postgresql start`, sudah dijalankan hook SessionStart).
-- Kerjakan di cabang sendiri, buka PR, lalu **gabungkan sendiri ke `main`** bila `jaga`, `tsc`,
-  lint, tes, dan build semuanya hijau. Cantumkan tangkapan layar UI di PR untuk dicek Chief.
-- API luar (Tuya, Telegram, push) diuji dengan server tiruan. Uji dengan kunci asli hanya bila
-  variabel lingkungan uji tersedia (lihat `docs/07-SESI-CLOUD.md`).
+- Tidak ada SSH ke VPS, DB produksi, repo AgentBuff, atau PC Windows. **Jangan mencoba deploy.**
+- Postgres 16 tersedia (`service postgresql start`, dijalankan hook SessionStart).
+- AgentBuff lewat server tiruan (`AGENTBUFF_TIRUAN=1`). Tuya lewat server tiruan.
+- Aplikasi PC: logika di crate `pc/inti` (tanpa Tauri) supaya `cargo test` jalan di VM Linux; build
+  Windows lewat GitHub Actions.
+- Kerjakan di cabang sendiri, buka PR, **gabungkan sendiri ke `main`** bila jaga, tsc, lint, tes,
+  build hijau. Lampirkan tangkapan layar UI di PR.
 
-Kalau di laptop Chief: rilis ke VPS, pendaftaran produk di portal, dan uji produksi dikerjakan dari
-sini (paket kerja Rilis). Chief ingin langsung push dan deploy tanpa ditanya, kecuali tindakan yang
-merusak data atau memutar kunci.
+Di laptop Chief: paket L1 sampai L3 (pintu AgentBuff, rilis, uji PC dan HP asli). Chief ingin
+langsung push dan deploy tanpa ditanya, kecuali tindakan yang merusak data atau memutar kunci.
 
 ## 7. Akhir setiap sesi
 
 1. Centang dan perbarui status paket di `docs/06-RENCANA-KERJA.md`.
 2. Tambah entri paling atas di `docs/LAPORAN-PERUBAHAN.md`.
 3. Catat keputusan baru di `docs/KEPUTUSAN.md`.
-4. Perbarui bagian "Status terkini" di `docs/00-MULAI-DI-SINI.md`.
+4. Perbarui "Status terkini" di `docs/00-MULAI-DI-SINI.md`.
 5. Commit, push, PR, gabungkan bila semua hijau.
 
 ## 8. Perintah
 
-Belum ada kode aplikasi. Paket kerja P0 membuat kerangka dari template Tuya. Sesudah itu, isi
-bagian ini dengan perintah yang benar-benar dipakai (mis. `pnpm dev`, `pnpm test`,
-`node scripts/jaga.mjs`, `pnpm exec tsc --noEmit`, `pnpm build`).
+Belum ada kode aplikasi. Paket P0 membuat kerangka dari template Tuya, lalu mengisi bagian ini
+dengan perintah yang benar-benar dipakai (mis. `pnpm dev`, `pnpm test`, `node scripts/jaga.mjs`,
+`pnpm exec tsc --noEmit`, `pnpm build`, `cargo test -p antikebo-inti`).

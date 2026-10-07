@@ -1,179 +1,203 @@
-# Rencana kerja AntiKebo
+# Rencana kerja AntiKebo (versi 2)
 
-Urutan ini urutan ketergantungan, bukan pemangkasan fitur: semua paket wajib selesai sebelum
-dijual. Ambil **paket pertama yang belum selesai**. Satu sesi cloud sebaiknya satu paket (atau
-sebagian paket besar) supaya konteks tetap segar. Perbarui status dan centang di akhir sesi.
+Urutan = urutan ketergantungan, **bukan** pemangkasan fitur: semua paket wajib selesai sebelum
+dijual. Ambil **paket cloud pertama yang belum selesai**. Satu sesi = satu paket (paket besar boleh
+dibagi, status diperbarui). Centang butir dan perbarui status di akhir sesi.
 
-Tempat kerja: **Cloud** = sesi claude.ai/code. **Laptop** = sesi Claude di laptop Chief (punya
-SSH ke VPS dan repo portal).
+**Cloud** = sesi claude.ai/code di repo ini. **Laptop** = sesi Claude di laptop Chief (punya VPS,
+repo AgentBuff, PC Windows asli). Paket laptop tidak menghalangi paket cloud karena AgentBuff
+ditiru (`AGENTBUFF_TIRUAN=1`).
 
 | Paket | Isi | Tempat | Status |
 |---|---|---|---|
-| P0 | Kerangka dari template Tuya | Cloud | Belum |
-| P1 | Data dan mesin pengulangan | Cloud | Belum |
-| P2 | Penjadwal dan Tangga Bangun | Cloud | Belum |
-| P3 | Saluran: push, Telegram, Tuya | Cloud | Belum |
-| P4 | Tantangan, tunda, Cek Masih Bangun | Cloud | Belum |
-| P5 | Sistem desain dan prototipe layar | Cloud | Belum |
-| P6 | Layar inti alarm | Cloud | Belum |
-| P7 | Mode Malam dan PWA | Cloud | Belum |
-| P8 | Rilis uji pertama dan bukti di HP asli | Laptop | Belum |
-| P9 | Rutinitas, pengingat, perangkat, riwayat, pengaturan, orientasi | Cloud | Belum |
-| P10 | MCP dan agen | Cloud | Belum |
-| P11 | Mutu, keamanan, aksesibilitas, bahasa Inggris, legal | Cloud | Belum |
-| P12 | Gerbang rilis dan terbitkan | Laptop | Belum |
+| P0 | Kerangka dari template Tuya + server tiruan AgentBuff | Cloud | Belum |
+| P1 | Prototipe desain semua layar (untuk dinilai Chief) | Cloud | Belum |
+| P2 | Data, pengulangan, layanan alarm, template, Komitmen | Cloud | Belum |
+| P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Belum |
+| P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Belum |
+| P5 | Suara dan bunyi | Cloud | Belum |
+| P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Belum |
+| P7 | Rumah pintar Tuya | Cloud | Belum |
+| P8 | Layar inti tersambung API | Cloud | Belum |
+| P9 | Mode Jam Meja dan PWA | Cloud | Belum |
+| P10 | Aplikasi PC (Tauri) | Cloud | Belum |
+| P11 | Orientasi, Siaga, Riwayat, Pengaturan, Template | Cloud | Belum |
+| P12 | MCP paritas penuh + SKILL.md | Cloud | Belum |
+| P13 | Mutu, keamanan, aksesibilitas, Inggris, legal | Cloud | Belum |
+| L1 | Pintu kanal, pesan, suara di AgentBuff | Laptop | Belum |
+| L2 | Rilis uji + uji PC dan HP asli | Laptop | Belum |
+| L3 | Gerbang rilis dan terbitkan | Laptop | Belum |
 
 ---
 
 ## P0 Kerangka dari template Tuya
 
-Tujuan: repo berisi aplikasi kosong yang sudah lolos standar (masuk, cek hak, MCP kosong,
-worker, DB, deploy, guard, tes, CI) dengan nama AntiKebo.
+Tujuan: aplikasi kosong yang sudah lolos standar (masuk, cek hak, MCP kosong, worker, DB, deploy,
+guard, tes, CI) dengan nama AntiKebo.
 
-- [ ] Salin kerangka dari `referensi/template-tuya/`: konfigurasi (package.json, tsconfig,
-      eslint, vitest, next.config, postcss), `src/lib/{env,kripto,log}.ts`,
+- [ ] Salin kerangka `referensi/template-tuya/`: konfigurasi, `src/lib/{env,kripto,log}.ts`,
       `src/lib/agentbuff/*`, `src/lib/auth/*`, `src/lib/agen/*`, `src/lib/mcp/{server,dasar}.ts`,
-      `src/lib/db/*` (skema kosong + tabel dasar: pengguna, sesi, token_mcp, jti_terpakai, audit),
-      `src/proxy.ts`, `src/app/{layout,masuk,auth,mcp,api/health,api/agentbuff,api/hak,api/keluar}`,
-      `src/worker/index.ts` (kosong tapi hidup, detak jantung), `scripts/{jaga.mjs,migrasi.ts}`,
-      `tests/integrasi/harness.ts`, `deploy/*`, `globals.css`, komponen UI dasar, i18n.
-- [ ] Ganti semua nama `tuya` jadi `antikebo` (kuki, prefiks token, peran DB, kontainer, folder
-      VPS, product key). Buang kode khusus Tuya yang belum dipakai (modul `src/lib/tuya/` akan
-      disalin lagi di P3).
-- [ ] Kecualikan `referensi/` dari tsconfig, ESLint, Vitest, Prettier, `jaga`, dan build.
-- [ ] `.github/workflows/ci.yml` (pola BYM): jaga, tsc, lint, test, build.
-- [ ] Lengkapi `scripts/sesi-cloud.sh`: buat peran dan database pengembangan di Postgres VM,
-      jalankan migrasi, isi `.env.local` pengembangan dengan nilai acak (bukan rahasia asli).
-- [ ] Isi bagian "Perintah" di `CLAUDE.md`.
-- [ ] `.env.example` lengkap (nama variabel di `03-ARSITEKTUR.md` §10).
+      `src/lib/db/*` (tabel dasar: pengguna, sesi, token_mcp, jti_terpakai, audit), `src/proxy.ts`,
+      halaman masuk, auth, mcp, health, hak, keluar, `src/worker/index.ts` (detak), `scripts/{jaga.mjs,
+      migrasi.ts}`, `tests/integrasi/harness.ts`, `deploy/*`, `globals.css`, komponen UI dasar, i18n.
+- [ ] Ganti semua `tuya` → `antikebo` (kuki, prefiks token, peran DB, kontainer, product key).
+      Modul Tuya disalin lagi di P7.
+- [ ] Scope OIDC tambahan `agentbuff:kabar agentbuff:suara` (diabaikan server tiruan bila belum ada).
+- [ ] `tests/tiruan/agentbuff.ts`: server tiruan pintu `/masuk/kanal`, `/masuk/kabar`,
+      `/masuk/suara`, `/masuk/suara/daftar` persis kontrak `05-INTEGRASI-AGENTBUFF.md` (suara tiruan =
+      berkas audio pendek buatan skrip), plus `/status`. Dipakai dev (`AGENTBUFF_TIRUAN=1`) dan tes.
+- [ ] Kecualikan `referensi/` dari tsconfig, ESLint, Vitest, Prettier, `jaga`, build.
+- [ ] CI `.github/workflows/ci.yml`: jaga, tsc, lint, test, build.
+- [ ] Lengkapi `scripts/sesi-cloud.sh`: peran + DB pengembangan, migrasi, `.env.local` acak.
+- [ ] Isi bagian "Perintah" di `CLAUDE.md`; `.env.example` lengkap (`03-ARSITEKTUR.md` §12).
 
-Selesai bila: `pnpm install`, `node scripts/jaga.mjs`, `pnpm exec tsc --noEmit`, `pnpm lint`,
-`pnpm test`, `pnpm build` hijau di cloud dan di CI; `/api/health` menjawab `ok`; halaman
-`/masuk` tampil; tes integrasi harness jalan dengan peran non-bypass.
+Selesai bila: install, jaga, tsc, lint, test, build hijau di cloud dan CI; `/api/health` = `ok`;
+`/masuk` tampil; tes harness jalan dengan peran non-bypass; server tiruan menjawab sesuai kontrak.
 
-## P1 Data dan mesin pengulangan
-
-Rujukan: PRD B1 sampai B5, B12; arsitektur §2, §3.
-
-- [ ] Migrasi tabel alarm, lewati_alarm, kejadian_alarm, langkah_kejadian, kiriman_saluran,
-      preferensi pengguna, dengan RLS dan uji RLS (`deploy/uji-rls.sql` diperbarui).
-- [ ] `src/lib/jadwal/pengulangan.ts` + tes contoh emas (≥ 40 kasus) + tes properti.
-- [ ] Data libur nasional Indonesia (tahun berjalan dan berikutnya) dengan sumber resmi.
-- [ ] Layanan alarm (buat, ubah dengan ID tetap, hapus, aktif/nonaktif, lewati) yang selalu
-      menjaga satu kejadian `menunggu` per alarm aktif.
-
-Selesai bila: semua tes hijau, guard `rls` hijau, tidak ada pengulangan yang "cuma sekali jalan".
-
-## P2 Penjadwal dan Tangga Bangun
-
-Rujukan: konsep "Tangga Bangun"; PRD C1 sampai C6, N1, N4; arsitektur §4.
-
-- [ ] Worker: pemicu tepat waktu (timer + ketukan 1 detik + LISTEN/NOTIFY), klaim
-      `FOR UPDATE SKIP LOCKED`, eksekusi langkah paralel dengan batas waktu per saluran.
-- [ ] Preset tangga per tingkat dan tangga kustom tervalidasi zod.
-- [ ] Pulih setelah restart (terlambat < 30 mnt dibunyikan, selebihnya `terlewat`).
-- [ ] Detak jantung dan pemberitahuan operator.
-- [ ] Saluran masih tiruan di paket ini (antarmuka `Saluran` dengan implementasi palsu).
-
-Selesai bila: tes integrasi membuktikan tepat waktu (selisih tercatat), tidak dobel saat dua
-worker berebut, restart di tengah tangga melanjutkan dengan benar, alarm bersamaan tidak saling
-menimpa.
-
-## P3 Saluran: push, Telegram, Tuya
-
-Rujukan: konsep "Bagaimana HP ikut berbunyi"; PRD D1 sampai D4, E1 sampai E7; arsitektur §5.
-
-- [ ] Web Push (VAPID) + service worker notifikasi alarm.
-- [ ] Bot Telegram: webhook bertanda rahasia, tautan `/start`, spam bervariasi tanpa LLM,
-      hapus pesan setelah bangun, putus tautan.
-- [ ] Salin modul Tuya dari template (`klien`, `wilayah`, `kemampuan`, `kamus-dp`,
-      `konfirmasi`, `sambungan`), sinkron perangkat, aksi per jenis, matahari terbit,
-      telepon `voice/self-send`, push `push/self-send`, cuaca.
-- [ ] Server tiruan untuk ketiganya dan tes integrasi.
-- [ ] Bila `TUYA_KUNCI_UJI` tersedia: uji telepon ke nomor Chief dan catat hasilnya (berdering
-      atau tidak, jeda, nomor penelepon) di `KEPUTUSAN.md`. Ini butir 1 "Harus dibuktikan".
-
-Selesai bila: semua saluran lolos tes tiruan, batas laju (C5) dipatuhi, kegagalan satu saluran
-tidak menghentikan saluran lain.
-
-## P4 Tantangan, tunda, Cek Masih Bangun
-
-Rujukan: PRD F1 sampai F8, G1; arsitektur §6.
-
-- [ ] Hitungan 3 tingkat (aturan + tes contoh emas), Kode Bangun (daftar dan pindai), ketik
-      kalimat, goyang HP, gabungan Nuklir, jalan keluar aman.
-- [ ] Tunda dengan batas per tingkat.
-- [ ] Cek Masih Bangun.
-- [ ] Guard `jaga`: tidak ada alat MCP atau rute tanpa sesi yang bisa mematikan/menunda alarm.
-
-Selesai bila: jawaban tidak pernah keluar ke peramban/log (tes), tantangan terikat ke kejadian,
-semua tes hijau.
-
-## P5 Sistem desain dan prototipe layar
+## P1 Prototipe desain semua layar
 
 Rujukan: `04-DESAIN.md` seluruhnya.
 
-- [ ] Token, kelas kaca, latar ambient per waktu, gradasi Fajar, skala huruf, komponen dasar
-      (tombol, kartu, lembar, sakelar, kontrol tersegmen, roda jam, daftar bergrup, toast).
-- [ ] Prototipe statis: Beranda, Ubah alarm, Berbunyi, Tantangan, Mode Malam, Orientasi.
-- [ ] Tangkapan layar desktop dan 390 px, terang dan gelap, dilampirkan di PR untuk Chief.
+- [ ] Token, kaca, latar ambient, Bara, Fajar, skala huruf, komponen dasar (tombol, kartu, lembar,
+      sakelar, segmen, roda jam, papan angka, daftar bergrup, toast, spanduk), maskot Kebo (SVG).
+- [ ] Layar statis dengan data contoh: Beranda, Ubah alarm, Berbunyi (hitungan dan QR), Selamat
+      pagi, Masih bangun, Jam Meja (sebelum dan saat siaga), tab Siaga + halaman unduh PC,
+      Riwayat, Pengaturan, Orientasi, jendela pengaturan aplikasi PC.
+- [ ] Tangkapan layar desktop dan 390 px, terang dan gelap, dilampirkan di PR.
 
-Selesai bila: Chief menyetujui arah lewat PR (catat di `KEPUTUSAN.md`). Kalau Chief belum
-menjawab, lanjut ke paket backend yang tersisa dan kembali ke sini.
+Selesai bila: PR berisi semua tangkapan layar. Lanjut ke P2 tanpa menunggu; masukan Chief
+dikerjakan di P8/P11 (catat di `KEPUTUSAN.md`).
 
-## P6 Layar inti alarm
+## P2 Data, pengulangan, layanan alarm, template, Komitmen
 
-- [ ] Beranda, Ubah alarm, Tangga Bangun, Berbunyi, Tantangan, Kode Bangun, Bangun berhasil,
-      Masih bangun?, semua tersambung ke API nyata dengan keadaan proses, galat, selesai.
-- [ ] Uji Playwright alur: buat alarm, uji coba 1 menit, berbunyi, jawab tantangan, bangun.
+Rujukan: PRD B1 sampai B11, E3; arsitektur §2, §3.
 
-## P7 Mode Malam dan PWA
+- [ ] Migrasi tabel alarm, lewati_alarm, template_alarm, kejadian_alarm, langkah_kejadian,
+      preferensi pengguna, RLS + `deploy/uji-rls.sql`.
+- [ ] `src/lib/jadwal/pengulangan.ts` + ≥ 40 contoh emas + tes properti; data libur nasional.
+- [ ] Layanan alarm (buat, ubah dengan ID tetap, hapus, aktif, lewati, gandakan) menjaga satu
+      kejadian `menunggu` per alarm aktif. Aturan Komitmen di satu modul murni + tes.
+- [ ] Template bawaan.
 
-Rujukan: PRD D5, D6, L1 sampai L4.
+Selesai bila: tes hijau, guard rls hijau, semua pengulangan benar-benar berulang.
 
-- [ ] Manifest, ikon, service worker, kerangka luring, panduan pasang per platform.
-- [ ] Mode Malam: Wake Lock, `<audio>` + audio session playback, SSE + detak, pengatur waktu
-      cadangan lokal, peringatan baterai.
-- [ ] Suara ucapan di layar berbunyi.
-- [ ] Pustaka suara berlisensi jelas + `public/suara/LISENSI.md`.
+## P3 Penjadwal, kejadian, SSE, perangkat siaga
 
-## P8 Rilis uji pertama dan bukti di HP asli (Laptop)
+Rujukan: PRD C1, C5, C6, H1, H4, H5; arsitektur §4, §5.
 
-Rujukan: `05-INTEGRASI-AGENTBUFF.md` §4, §5; konsep "Harus dibuktikan".
+- [ ] Worker: pemicu tepat waktu, klaim `SKIP LOCKED`, langkah berulang, pulih, detak, operator.
+- [ ] SSE `/api/peristiwa` (sesi web dan token perangkat), peristiwa `jadwal`, `berbunyi`,
+      `berhenti`, `tunda`, `cek`, `klip_siap`.
+- [ ] Tabel `perangkat_siaga`, `kode_sambung`; API kode sambung, halaman `/sambung-pc`, detak,
+      jadwal 24 jam untuk perangkat, cabut perangkat.
+- [ ] Jenis langkah memakai antarmuka `Saluran` dengan implementasi tiruan (diisi P5 sampai P7).
 
-- [ ] Chief: buat bot Telegram lewat BotFather, tambah DNS `antikebo` di Cloudflare.
-- [ ] Portal: `siapkan-antikebo.ts` (status `coming_soon`), klien OIDC `antikebo` dan
-      `antikebo-dev`, hibah produk ke akun Chief.
-- [ ] VPS: `pasang-pertama.sh`, deploy, sertifikat, webhook Telegram.
-- [ ] Bersama Chief di iPhone dan Android: jalankan keenam butir "Harus dibuktikan" dan catat
-      hasilnya di `KEPUTUSAN.md`. Sesuaikan konsep bila ada yang gagal.
+Selesai bila: tes integrasi membuktikan tepat waktu (selisih tercatat), tidak dobel saat dua worker
+berebut, restart di tengah alarm melanjutkan, berhenti terkirim ke semua perangkat ≤ 2 dtk.
 
-## P9 Rutinitas, pengingat, perangkat, riwayat, pengaturan, orientasi
+## P4 Soal, tunda, Masih bangun, Misi QR, anti curang
 
-Rujukan: PRD A4, A5, H, I, J, M, E2, E6.
+Rujukan: PRD D1 sampai D8, E1, E2; arsitektur §9.
 
-- [ ] Semua layar dan API, dengan skor bangun sesuai rumus arsitektur §8 (tes contoh emas).
-- [ ] Ekspor CSV riwayat.
+- [ ] `src/lib/soal/`: hitungan 3 tingkat (aturan PRD §15), ingat angka, ketik kalimat, gabungan,
+      turun tingkat, berkas contoh emas `tests/emas/soal.json` (dipakai juga oleh Rust di P10).
+- [ ] Tunda dengan jatah, Masih bangun, kode QR (buat, halaman cetak, pindai, hash).
+- [ ] Endpoint jawab ber-batas laju; jawaban tidak pernah keluar ke peramban/log (tes).
+- [ ] Guard `jaga`: tidak ada rute tanpa sesi/token atau alat MCP yang mematikan/menunda/menjawab.
 
-## P10 MCP dan agen
+## P5 Suara dan bunyi
 
-Rujukan: PRD K1 sampai K4; arsitektur §7.
+Rujukan: `10-SUARA.md`; PRD F1 sampai F7.
 
-- [ ] Semua alat MCP + `PETUNJUK`, sambung otomatis, halaman Agen, `skill/SKILL.md`.
-- [ ] Tes perilaku MCP: 401 untuk token salah/dicabut, `access_frozen` saat beku, idempotensi.
+- [ ] `scripts/bangun-bunyi.ts` + 8 bunyi + normalisasi + `public/bunyi/LISENSI.md` ("dibuat sendiri").
+- [ ] Naskah 5 karakter id/en + penyaring kata.
+- [ ] Tabel `naskah_suara`, `klip_suara`; antrean worker; klien `/masuk/suara` dan `/masuk/suara/daftar`;
+      status suara per alarm; unduh klip untuk perangkat.
+- [ ] Pemutar web (Web Audio): lapisan bunyi + omelan, jeda 3 dtk, peredaman, acak tanpa ulang,
+      kalimat waktu, cadangan `speechSynthesis`.
 
-## P11 Mutu, keamanan, aksesibilitas, bahasa Inggris, legal
+Selesai bila: tes antrean (ulang, galat tetap, pakai ulang klip), tes urutan putar (contoh emas),
+uji Playwright layar berbunyi dengan suara tiruan.
 
-- [ ] Audit kontras dan axe semua halaman di kedua tema, 320 px, teks 200%, keyboard, pembaca
-      layar untuk 5 alur utama.
-- [ ] Anggaran performa (PRD §17), batas laju, CSP, tinjauan keamanan.
-- [ ] Kamus bahasa Inggris lengkap.
-- [ ] Kebijakan privasi, ketentuan, pernyataan "bukan jaminan".
-- [ ] Siapkan `integrasi-portal/` (draf `siapkan-antikebo.ts`, `prove-antikebo-beli.ts`,
-      teks listing id/en, `SKILL.md`).
+## P6 Spam kanal, pengingat malam, notifikasi web
 
-## P12 Gerbang rilis dan terbitkan (Laptop)
+Rujukan: PRD G1 sampai G7; arsitektur §7.
 
-- [ ] Jalankan semua butir `docs/GERBANG-RILIS.md` sampai hijau.
-- [ ] Gambar listing, tutorial, terbitkan dengan `--terbitkan`.
-- [ ] Entri laporan perubahan di portal dan repo ini.
+- [ ] Klien `/masuk/kanal` dan `/masuk/kabar`; langkah spam per kanal dengan jeda dan batas waktu;
+      `terlalu_cepat` menggeser jadwal; jejak `kiriman_kanal`.
+- [ ] Kumpulan pesan id/en tanpa AI; pesan penutup; pengingat malam; uji kanal.
+- [ ] Web Push (VAPID) + Service Worker notifikasi alarm berulang.
+
+## P7 Rumah pintar Tuya
+
+Rujukan: PRD I1 sampai I6; arsitektur §8.
+
+- [ ] Salin modul Tuya + wizard sambung + `connect_home` dari template.
+- [ ] Aturan per perangkat per alarm (zod), potret dan pulihkan, naik bertahap, kedip, lapisan
+      darurat tersembunyi.
+- [ ] Tes dengan `tuya-tiruan`.
+
+## P8 Layar inti tersambung API
+
+- [ ] Beranda, Ubah alarm, Berbunyi (hitungan, ingat angka, ketik, QR), Selamat pagi, Masih bangun,
+      dua alarm bersamaan, spanduk masalah, keadaan proses/galat/selesai.
+- [ ] Playwright: buat alarm, uji 1 menit, berbunyi, jawab, bangun, Masih bangun; tangkapan layar PR.
+
+## P9 Mode Jam Meja dan PWA
+
+Rujukan: PRD H2; `10-SUARA.md` §3, §6.
+
+- [ ] Manifest, ikon, Service Worker (cache bunyi + klip 24 jam), panduan pasang per platform.
+- [ ] Jam Meja: Mulai siaga (audio + Wake Lock + layar penuh), jam redup, tes bunyi, detak,
+      pengatur waktu lokal, peringatan dicas/koneksi, iOS `audioSession`.
+
+## P10 Aplikasi PC (Tauri)
+
+Rujukan: `09-APLIKASI-PC.md` seluruhnya.
+
+- [ ] `pc/` Tauri v2: baki, sambung (kode), jadwal lokal, SSE, unduh klip, pemutar rodio ke semua
+      keluaran, volume Core Audio, `SetThreadExecutionState`, jendela alarm terkunci, penjaga,
+      autostart, single-instance, updater ed25519, soal luring (Rust) dengan contoh emas yang sama.
+- [ ] Halaman unduh + panduan layar biru + sidik SHA-256.
+- [ ] CI Windows (`.github/workflows/pc.yml`): cargo test + tauri build pada tag `pc-v*`.
+
+Selesai bila: cargo test hijau di Linux dan Windows CI, pemasang terbentuk, daftar uji manual
+§9 siap untuk L2.
+
+## P11 Orientasi, Siaga, Riwayat, Pengaturan, Template
+
+- [ ] Orientasi (PRD J), tab Siaga, Riwayat + skor (contoh emas) + grafik + ekspor CSV,
+      Pengaturan lengkap, hapus data, UI template.
+
+## P12 MCP paritas penuh + SKILL.md
+
+Rujukan: `11-ALAT-MCP.md`.
+
+- [ ] Semua alat, `paritas.ts` + guard, sambung otomatis, halaman Agen, `skill/SKILL.md`.
+- [ ] Tes: 401 token salah/dicabut, `access_frozen`, `commitment_locked`, idempotensi.
+
+## P13 Mutu, keamanan, aksesibilitas, Inggris, legal
+
+- [ ] Audit kontras + axe semua halaman kedua tema, 320 px, teks 200%, keyboard, pembaca layar.
+- [ ] Anggaran performa, batas laju, CSP, tinjauan keamanan.
+- [ ] Kamus Inggris lengkap; privasi, ketentuan, "bukan jaminan".
+- [ ] Bahan `integrasi-portal/`: teks listing id/en, `SKILL.md`, draf skrip bukti.
+
+## L1 Pintu kanal, pesan, suara di AgentBuff (Laptop, repo AgentBuff)
+
+Kontrak `05-INTEGRASI-AGENTBUFF.md` §4, §5. Rincian teknis ada di repo AgentBuff (privat). Selesai
+bila skrip bukti di AgentBuff hijau dan AntiKebo lolos tes yang sama terhadap pintu asli.
+
+## L2 Rilis uji + uji PC dan HP asli (Laptop)
+
+- [ ] DNS `antikebo`, VPS (`pasang-pertama.sh`), deploy, klien OIDC, katalog `coming_soon`, hibah
+      produk ke akun Chief, sambung MCP otomatis.
+- [ ] Uji manual aplikasi PC (`09-APLIKASI-PC.md` §9) di PC Chief.
+- [ ] Uji Jam Meja di iPhone dan Android (saklar senyap, layar redup, tab di latar, baterai).
+- [ ] Hasil dicatat di `KEPUTUSAN.md`; perbaiki yang gagal.
+
+## L3 Gerbang rilis dan terbitkan (Laptop)
+
+- [ ] Semua butir `GERBANG-RILIS.md` hijau.
+- [ ] Gambar listing, tutorial, terbitkan.
+- [ ] Laporan perubahan di AgentBuff dan repo ini.

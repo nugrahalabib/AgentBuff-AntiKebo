@@ -1,147 +1,191 @@
-# Konsep AntiKebo
+# Konsep AntiKebo (versi 2, disepakati Chief 2026-10-07)
 
-## Masalah versi lama
+Versi 1 (2026-10-06) ada di riwayat git berkas ini dan **sudah tidak berlaku**. Kebutuhan
+berkode ada di `02-PRD.md`; keputusan dan alasannya di `KEPUTUSAN.md`.
 
-AntiKebo lama (shila-wake) hidup di PC Windows. Jadwal, suara, lampu Tuya, dan spam semuanya
-dijalankan PC itu. Akibatnya:
+## 1. Janji produk
 
-- PC harus menyala, tidak tidur, dan masuk ke desktop 24 jam. Kalau PC tidur saat jam alarm,
-  alarm **hilang tanpa kabar**.
-- Suara hanya keluar dari speaker PC. Kalau tidur di kamar lain, tidak terdengar.
-- Spam dikirim lewat agen AI, jadi setiap pesan memakan token dan kadang salah kirim.
-- Tidak bisa dipakai orang lain, tidak bisa dijual.
+**"Alarm yang tidak berhenti sampai kamu benar-benar bangun."**
 
-## Jawaban: otaknya pindah ke server
+Saat berbunyi, AntiKebo menyerang dari semua arah sekaligus: bunyi alarm keras, suara omelan
+galak yang diputar bersamaan, judul agenda raksasa di layar, spam chat ke kanal agen AgentBuff
+pengguna, notifikasi HP, dan (opsional) lampu rumah pintar. Semua itu **baru berhenti saat soal
+tantangan terjawab** di perangkat mana pun.
 
-AntiKebo baru adalah aplikasi web di `antikebo.agentbuff.id`. **Semua yang penting berjalan di
-server AgentBuff (VPS) yang menyala 24 jam**, bukan di PC atau HP pengguna:
+Dijual Rp29.000 sekali bayar di Marketplace AgentBuff. Semua yang bisa diatur di web bisa
+juga diatur lewat chat ke agen AgentBuff pengguna.
 
-```
-                       ┌─────────────────────────────────────┐
-                       │  Server AntiKebo (VPS, 24 jam)       │
-  HP / laptop  ◄──────►│  - simpan jadwal semua pengguna      │
-  (atur alarm,         │  - worker penjadwal (tepat ±2 detik) │
-   jawab tantangan)    │  - tangga bangun (eskalasi)          │
-                       └──────┬──────────┬──────────┬────────┘
-                              │          │          │
-                     Tuya Cloud     Telegram     Web Push
-                     (lampu, colokan,  (spam      (notifikasi
-                      sirene, telepon   pesan)     ke HP/laptop)
-                      ke HP pengguna)
-```
+## 2. Pelajaran dari aplikasi lama (shila-wake)
 
-PC tidak perlu menyala sama sekali. HP boleh terkunci. Server yang membangunkan, lewat banyak
-jalur sekaligus, sampai pengguna membuktikan dia benar-benar bangun.
+Rahasia shila-wake: bunyi alarm diputar oleh **program di PC**, bukan oleh halaman web. Browser
+cuma layar soal; menutupnya tidak menghentikan bunyi, dan program membukanya lagi tiap 30 detik.
 
-## Bagaimana HP ikut berbunyi (jujur soal batasan)
-
-Aplikasi web punya batasan: di HP yang terkunci, halaman web **tidak bisa** memutar suara
-alarm terus-menerus seperti aplikasi Jam bawaan, apalagi di iPhone. Karena itu AntiKebo tidak
-bergantung pada satu jalur. HP dibangunkan lewat jalur yang memang bisa menembus HP terkunci:
-
-| Jalur | Cara kerja | Kekuatan |
-|---|---|---|
-| **Telepon suara Tuya** | Server meminta Tuya menelepon nomor HP pengguna (fitur `voice/self-send` di kunci `sk-` pengguna). HP berdering seperti telepon biasa. | Paling kuat. Batas Tuya: 15 telepon per hari per nomor, pesan sama maks 2 per 50 detik. Kalau nomor penelepon Tuya selalu sama, dua telepon dalam 3 menit menembus mode Fokus iPhone (fitur "Panggilan Berulang"). |
-| **Mode Malam** | Sebelum tidur, pengguna membuka AntiKebo dan menaruh HP di charger. Layar redup menampilkan jam. Saat alarm, halaman yang terbuka ini **berbunyi keras** seperti alarm sungguhan. | Kuat dan gratis. Aplikasi menjaga layar tetap hidup (Wake Lock) dan punya pengatur waktu cadangan di HP sendiri kalau internet putus. |
-| **Notifikasi push** | Notifikasi web (PWA) ke HP dan laptop, diulang selama alarm berbunyi. | Sedang. Di iPhone hanya jalan kalau AntiKebo dipasang ke Layar Utama (iOS 16.4+). Bunyinya bunyi notifikasi biasa. |
-| **Spam Telegram** | Bot Telegram AntiKebo mengirim pesan beruntun dengan bunyi notifikasi. Pesan dihapus otomatis setelah pengguna bangun supaya chat tetap bersih. | Sedang, gratis, tanpa token AI. |
-| **Push aplikasi Smart Life** | Notifikasi dari aplikasi Smart Life/Tuya di HP (`push/self-send`). | Sedang. Notifikasi asli aplikasi HP. |
-| **Perangkat kamar** | Lampu menyala perlahan seperti matahari terbit, colokan menyalakan kipas/speaker, sirene Tuya berbunyi. | Kuat untuk yang punya perangkat Tuya. Tidak butuh HP sama sekali. |
-
-Pengguna tanpa perangkat Tuya sama sekali tetap bisa memakai AntiKebo lewat Mode Malam,
-notifikasi push, dan Telegram. Telepon suara butuh akun Smart Life/Tuya (gratis) dan kunci `sk-`.
-
-## Tangga Bangun
-
-Setiap alarm punya **Tangga Bangun**: urutan langkah yang makin keras sampai pengguna lolos
-tantangan. Contoh tingkat Normal:
-
-| Waktu | Langkah |
+| Dipertahankan (dibuat lebih kuat) | Kelemahan yang diperbaiki |
 |---|---|
-| 10 menit sebelum | Lampu kamar menyala perlahan dari 1% ke 100%, warna hangat ke putih (matahari terbit). |
-| Jam alarm | Mode Malam berbunyi, notifikasi push, push Smart Life, colokan kipas/speaker menyala. |
-| +2 menit | Spam Telegram mulai (tiap 20 detik). Suara Mode Malam makin keras. |
-| +4 menit | Telepon suara Tuya. Sirene Tuya menyala. |
-| +6 menit | Telepon kedua (menembus mode Fokus), semua lampu 100% putih dingin. |
-| Seterusnya | Ulangi spam dan telepon sampai batas harian, lalu tetap spam Telegram dan push. |
+| Bunyi diputar program, berulang tanpa jeda | Tunda tanpa soal, dan tunda menghentikan semua bunyi dan spam |
+| Volume PC dipaksa maksimal | Caranya "tekan tombol volume 50 kali", bisa gagal |
+| Layar alarm muncul lagi bila ditutup | Baru muncul lagi tiap 30 detik |
+| Suara omelan buatan AI (Gemini "Kore") | Butuh kunci Gemini di PC |
+| Soal hitungan setara kelas 6, salah = soal baru | Bisa buntu bila salah terus; hanya hitungan |
+| Spam tiap 15 detik ke Telegram dan WhatsApp | Lewat agen yang berpikir tiap pesan: boros token, lambat, bisa menolak |
+| Lampu menyala, AC mati | PC harus menyala 24 jam dengan platform lama |
 
-Tiga tingkat bawaan, bisa diatur per alarm:
+Rincian lengkap di `08-REFERENSI-LAMA.md`.
 
-| Tingkat | Tunda (snooze) | Tantangan | Tangga |
-|---|---|---|---|
-| **Lembut** | Maks 3 kali, 9 menit | 1 soal mudah | Pelan, tanpa telepon kecuali diaktifkan |
-| **Normal** | Maks 2 kali, 5 menit | 3 soal benar berturut-turut | Seperti tabel di atas |
-| **Nuklir** | Tidak bisa ditunda | 5 soal sulit berturut-turut **dan** pindai Kode Bangun | Semua jalur langsung, telepon dari menit pertama |
+## 3. Bentuk produk: empat bagian
 
-## Mematikan alarm: harus membuktikan bangun
+1. **Server AntiKebo** (otak, 24 jam di VPS AgentBuff). Jadwal tepat sampai detik, status
+   setiap kejadian alarm, spam kanal, lampu Tuya, menyiapkan suara omelan, mengawasi perangkat
+   siaga.
+2. **Web app `antikebo.agentbuff.id`** (bisa dipasang di HP sebagai PWA). Tempat mengatur
+   semuanya, layar alarm berbunyi, dan **Mode Jam Meja** untuk HP/tablet.
+3. **AntiKebo untuk PC** (aplikasi kecil Windows, diunduh dari situs AntiKebo). Satu-satunya
+   cara memenuhi "kalau ditutup, alarm muncul lagi": bunyi diputar aplikasi, jendela alarm tidak
+   bisa ditutup selama berbunyi. Spesifikasi di `09-APLIKASI-PC.md`.
+4. **Agen AgentBuff pengguna lewat chat (MCP).** Paritas penuh dengan web, kecuali yang sengaja
+   dilarang (mematikan alarm yang berbunyi, menjawab soal). Daftar alat di `11-ALAT-MCP.md`.
 
-Alarm hanya berhenti kalau pengguna lolos **tantangan** di aplikasi (dibuka dari notifikasi,
-tautan Telegram, atau layar Mode Malam):
+Tidak ada aplikasi Android/iPhone di versi ini (keputusan Chief). Aplikasi Android dibuat nanti
+bila uji nyata membuktikan Mode Jam Meja tidak cukup. Microsoft Store juga nanti, bila peminat
+banyak.
 
-- **Hitungan:** soal dibuat dan diperiksa di server, tiga tingkat kesulitan, harus benar
-  berturut-turut. Salah satu kali mengulang hitungan dan membuat suara makin keras.
-- **Kode Bangun:** pindai kode QR atau barcode benda yang sudah didaftarkan (misalnya stiker QR
-  di kamar mandi, barcode pasta gigi). Memaksa pengguna berdiri dan berjalan.
-- **Ketik kalimat:** ketik ulang kalimat penyemangat persis sama.
-- **Goyang HP:** goyangkan HP sejumlah kali (sensor gerak).
+## 4. Di mana alarm berbunyi, dan seberapa kuat
 
-Agen AI, skrip, atau API tanpa sesi pengguna **tidak bisa** mematikan alarm.
+| Tempat | Cara | Bisa dihentikan tanpa soal? |
+|---|---|---|
+| PC dengan AntiKebo untuk PC | Bunyi dari aplikasi. Jendela alarm menempel di atas semua jendela, tidak bisa ditutup, muncul lagi ±1 detik bila dipaksa. Volume dipaksa maksimal. Suara sudah diunduh sejak malam, jadi tetap bunyi walau internet putus. | Hanya dengan mematikan paksa dua proses sekaligus di Task Manager. Spam dan notifikasi tetap jalan. |
+| HP/tablet dengan Mode Jam Meja | Bunyi dari halaman web yang dibiarkan terbuka di charger, layar tetap menyala redup. | Ya, bila tab ditutup (batas web). Tapi notifikasi dan spam chat terus datang; mengetuknya membuka layar alarm yang berbunyi lagi. |
+| Tanpa perangkat siaga | Spam chat + notifikasi HP + lampu Tuya | Tidak ada bunyi alarm. AntiKebo mengingatkan di malam hari bila tidak ada perangkat siaga. |
 
-## Cek Masih Bangun
+**Kebenaran tunggal ada di server.** Soal yang terjawab di satu perangkat menghentikan semua
+perangkat, spam, dan lampu bersamaan.
 
-Beberapa menit setelah alarm mati (bawaan 5 menit), AntiKebo bertanya "Masih bangun?" lewat push
-dan Telegram. Kalau tidak dijawab dalam 2 menit, Tangga Bangun mulai lagi. Ini menutup celah
-"matikan alarm lalu tidur lagi".
+## 5. Saat alarm berbunyi
 
-## Fitur lain
+**Detik 0, semua serentak:**
 
-- **Rutinitas:** skenario perangkat bernama (Pagi Semangat, Tidur, Fokus Kerja) yang bisa
-  dijalankan manual, dijadwalkan sendiri, atau dipasang ke alarm (mis. setelah bangun: lampu
-  putih, colokan pemanas air menyala).
-- **Pengingat:** pengingat berjadwal dengan tingkat penting (mis. "Ada kelas jam 8"), memakai
-  jalur yang sama tapi lebih ringan.
-- **Riwayat dan statistik:** skor bangun, hari beruntun, rata-rata waktu dari berbunyi sampai
-  bangun, jumlah tunda, peta jam kesiangan. Datanya benar, bukan angka tempelan.
-- **Cuaca pagi:** setelah bangun, tampilkan cuaca lokasi rumah (dari API cuaca Tuya, tanpa
-  layanan tambahan).
-- **Agen AgentBuff:** "bangunin aku jam 5 besok, tingkat nuklir" langsung dari chat lewat alat MCP.
+- Layar alarm muncul langsung dengan **judul agenda raksasa** dan deskripsinya ("Presentasi ke
+  klien jam 9"), dan **soal langsung tampil**, tanpa ketukan tambahan.
+- Bunyi alarm berulang tanpa jeda + suara omelan, di semua perangkat siaga.
+- Spam chat ke kanal yang dipilih, notifikasi HP, lampu dan perangkat Tuya sesuai aturan.
 
-## Yang sengaja tidak dibuat
+**Pola suara:** omelan, lalu 3 detik bunyi alarm saja, lalu omelan berikutnya, terus begitu.
+Bunyi alarm tetap berjalan di bawah suara omelan (dikecilkan sebentar supaya kata-katanya jelas,
+lalu keras lagi). Kalimat omelan diacak tanpa pengulangan berturut-turut. Rincian di `10-SUARA.md`.
 
-- **WhatsApp:** tidak ada API resmi yang gratis; API tidak resmi berisiko nomor diblokir.
-  Telepon suara dan Telegram sudah menggantikan perannya.
-- **AC lewat IR blaster:** kunci `sk-` Tuya tidak bisa memancarkan IR. AC yang tersambung Wi-Fi
-  langsung tetap bisa.
-- **Aplikasi native di Play Store/App Store:** tidak dibutuhkan untuk rilis. Arsitektur tetap
-  memungkinkan dibungkus jadi aplikasi native nanti (iOS 26 punya AlarmKit untuk alarm pihak
-  ketiga).
-- **Fitur sistem PC lama** (tangkapan layar jarak jauh, bisukan PC, kunci internal): dibuang
-  karena berbahaya.
+**Tidak berhenti** sampai soal terjawab. Spam tanpa batas waktu sebagai bawaan; pengguna boleh
+mengatur batasnya.
 
-## Harus dibuktikan di perangkat asli
+**Tunda:** maksimal N kali (bawaan 2, bisa 0 sampai 5), tiap tunda butuh satu soal ringan.
+Selama tunda: bunyi, omelan, dan spam berhenti; lampu tetap menyala. Sesudah jatah habis, tombol
+tunda hilang dan satu-satunya jalan adalah menyelesaikan soal.
 
-Konsep di atas memakai kemampuan yang belum pernah diuji untuk AntiKebo. Paket kerja wajib
-membuktikannya dengan kunci dan HP asli Chief sebelum dijanjikan ke pembeli. Kalau ada yang
-gagal, ganti janjinya di listing dan catat di `docs/KEPUTUSAN.md`:
+**Sesudah lolos:**
 
-1. Telepon `voice/self-send` Tuya benar-benar berdering di nomor Indonesia (+62), berapa lama
-   jeda dari permintaan sampai berdering, dan apakah nomor peneleponnya selalu sama.
-2. Dua telepon dalam 3 menit benar-benar menembus mode Fokus iPhone dan Jangan Ganggu Android.
-3. Mode Malam berbunyi keras di iPhone saat sakelar senyap aktif (pakai elemen `<audio>` dan
-   `navigator.audioSession.type = "playback"`), dan di Android saat mode getar.
-4. Wake Lock bertahan semalaman di PWA terpasang (iPhone dan Android), dan perilaku saat HP
-   dikunci manual.
-5. Notifikasi push PWA berulang tetap muncul di layar kunci iPhone dan Android.
-6. Tombol "Pasang alarm cadangan di HP": membuat alarm di aplikasi Jam bawaan lewat Pintasan
-   iOS dan intent `SET_ALARM` Android. Kalau tidak bisa dari web, ganti dengan panduan singkat.
+1. Layar "Selamat pagi" + agenda + ringkasan (bangun jam berapa, tunda berapa kali).
+2. Lampu ke keadaan semula, ke "suasana pagi", atau dibiarkan (sesuai aturan).
+3. **"Masih bangun?"** N menit kemudian (bawaan 5). Bila tidak diketuk dalam 60 detik, alarm
+   kembali penuh tanpa pilihan tunda.
+4. Satu pesan penutup ke kanal: rekap singkat.
 
-## Keandalan server
+## 6. Soal: bikin mikir, tapi pasti bisa diselesaikan
 
-Karena server jadi satu-satunya otak, keandalannya wajib dijaga:
+- **Hitungan** tiga tingkat (Ringan `47 + 38`, Sedang `7 × 8 + 13`, Berat `(6 + 9) × 4 − 17`),
+  harus benar N kali berturut-turut (bawaan 2).
+- **Ingat angka:** 6 digit tampil 3 detik, lalu diketik ulang.
+- **Ketik kalimat:** salin kalimat yang tampil (bisa judul agenda).
+- **Misi QR:** cetak kode QR dari AntiKebo, tempel di kamar mandi; alarm hanya mati bila kode
+  itu dipindai kamera HP.
+- **Aturan adil:** jawaban selalu bilangan bulat, tanpa batas waktu, papan angka besar. Salah =
+  soal baru di tingkat yang sama. Salah 3 kali berturut-turut = turun satu tingkat. Kamera ditolak
+  atau gagal pindai 3 kali = diganti hitungan Berat. Tidak pernah buntu.
 
-- Worker penjadwal tahan restart: jadwal tersimpan di database, bukan di memori.
-- Kalau worker sempat mati dan jam alarm terlewat kurang dari 30 menit, alarm tetap dibunyikan
-  saat worker hidup lagi dan pengguna diberi tahu terlambat.
-- Detak jantung worker dipantau. Kalau berhenti lebih dari 60 detik, Chief diberi tahu.
-- Mode Malam punya pengatur waktu cadangan di HP, jadi tetap berbunyi walau server atau
-  internet bermasalah.
+## 7. Suara omelan: dibuat oleh AgentBuff milik pengguna
+
+Suara omelan memakai **jalur suara yang sama dengan Telepon Agent di AgentBuff**:
+
+1. Alarm disimpan (web atau chat). AntiKebo menyusun naskah: kalimat karakter + nama panggilan
+   + agenda. Kalimat umum dibuat sekali per pengguna per karakter; kalimat agenda per alarm.
+2. Server AntiKebo meminta **AgentBuff milik pengguna itu** membuat suaranya, memakai
+   pengaturan suara pengguna di AgentBuff. Agen tidak berpikir, jadi nol token chat.
+3. Pengguna tanpa kunci suara mendapat suara gratis berbahasa Indonesia. Pengguna yang punya
+   kunci Gemini, OpenAI, atau ElevenLabs di AgentBuff otomatis mendapat suara itu (biaya di kunci
+   pengguna sendiri). Platform tidak menanggung biaya apa pun.
+4. Supaya galak: AntiKebo meminta gaya "galak"; AgentBuff menerjemahkannya ke setelan penyedia
+   (suara gratis: lebih cepat, nada lebih tinggi, volume maksimal; penyedia berbayar: instruksi
+   nada marah).
+5. Suara disimpan AntiKebo, diunduh ke perangkat siaga sebelum malam, diputar ulang tiap pagi.
+   Dibuat ulang hanya bila naskah, karakter, atau pilihan suara berubah.
+6. Bila AgentBuff belum bisa membuat suara (kontainer mati sementara, layanan gagal), alarm tetap
+   mengomel dengan suara bawaan perangkat membaca naskah yang sama.
+
+Jalur ini dibangun di AgentBuff (sesi laptop). Selama belum ada, AntiKebo dikembangkan memakai
+server tiruan yang mengikuti kontrak di `05-INTEGRASI-AGENTBUFF.md`.
+
+## 8. Spam chat: lewat bot agen pengguna, tanpa AI
+
+Di mata pengguna, pesan datang dari bot agennya sendiri (Telegram, WhatsApp, Discord, Slack,
+Google Chat). Bedanya dengan shila-wake: AntiKebo **tidak menyuruh agen berpikir**, tapi meminta
+AgentBuff mengirim pesannya langsung lewat bot agen.
+
+| | Cara lama (suruh agen) | Cara AntiKebo |
+|---|---|---|
+| Kecepatan | 5 sampai 30 detik per pesan | 1 sampai 2 detik |
+| Biaya | Token kunci AI pengguna tiap pesan | Nol |
+| Kalimat | Bisa diubah atau ditolak agen | Persis seperti yang diatur |
+| Ingatan agen | Penuh pesan spam | Bersih |
+| Kuota AI habis jam 5 pagi | Spam mati | Tetap jalan |
+
+Pengguna tidak perlu mengatur apa pun: kanal yang sudah tersambung ke agennya otomatis muncul di
+AntiKebo, tinggal dicentang. Jeda bawaan: Telegram 15 detik, Discord/Slack/Google Chat 20 detik,
+WhatsApp 45 detik (lebih jarang supaya nomor agen tidak diblokir). Tiap pesan membawa tautan
+ke layar alarm. Teksnya saja, tanpa voice note (suara diputar di perangkat siaga).
+
+## 9. Rumah pintar (opsional, bukan inti)
+
+Tanpa Tuya semua fitur inti tetap jalan penuh. Bagi yang punya Tuya/Smart Life:
+
+- **Cara sambung meniru tuya.agentbuff.id:** wizard 3 langkah (siapkan app Smart Life, pindai QR
+  di Hey Tuya untuk ambil kunci `sk-`, tempel), wilayah terbaca otomatis dari kunci, kunci diuji
+  dulu baru disimpan. Bisa juga dengan menempel kunci di chat ke agen. Kode diambil dari
+  `referensi/template-tuya/`.
+- **Aturan per perangkat per alarm:** kapan (X menit sebelum dengan terang naik bertahap,
+  bareng alarm, saat tunda, sesudah bangun), apa (nyala, mati, terang, warna, suhu dan mode AC),
+  efek (berkedip sampai bangun), dan sesudah bangun (kembalikan seperti semula, suasana pagi,
+  atau biarkan).
+- Telepon/SMS Tuya ke nomor akun Smart Life sendiri hanya opsi tersembunyi, mati bawaannya.
+
+## 10. Agen lewat chat
+
+Contoh: *"Bangunin aku jam 5 besok, ada presentasi jam 9, pakai karakter pelatih tentara, lampu
+kamar nyala bareng, spam Telegram."* Jadi dalam satu pesan.
+
+Sengaja **tidak bisa** lewat chat: mematikan atau menunda alarm yang sedang berbunyi, menjawab
+soal, dan melanggar Mode Komitmen. Bila pengguna minta "matikan alarm", agen mengirim tautan ke
+layar soal. Hal yang memang harus di perangkat (memasang aplikasi PC, menyalakan Mode Jam Meja,
+memindai QR) dijawab agen dengan tautan.
+
+## 11. Mode Komitmen
+
+Per alarm (bisa dijadikan bawaan). Antara **jam tidur** dan jam alarm, alarm itu **tidak bisa
+dihapus, dimatikan, dilewati, atau dimundurkan**, dari web, PC, maupun chat. Menambah alarm atau
+memajukan jamnya tetap boleh. Jam tidur diatur pengguna (bawaan 22.00).
+
+## 12. Malam hari
+
+- Pengingat ke kanal dan notifikasi pada jam tidur: "Alarm besok 05.00, Presentasi klien. PC
+  siaga ✓, HP belum siaga."
+- Bila tidak ada perangkat siaga sama sekali, pengingat menyebutnya terang-terangan.
+- Aplikasi PC mencegah PC tertidur selama ada alarm malam itu.
+
+## 13. Batas yang diakui terang-terangan
+
+- Halaman web di HP tidak bisa berbunyi bila tab ditutup atau browser dimatikan sistem.
+- PC yang dimatikan total tidak bisa berbunyi. Membangunkan PC dari mode tidur tidak dijanjikan
+  (tidak andal di banyak laptop baru); karena itu aplikasi mencegah PC tidur.
+- Suara gratis memakai layanan Microsoft Edge yang tidak resmi; bila gagal, suara bawaan perangkat
+  dipakai.
+- Aplikasi PC belum bertanda tangan digital: saat pertama dipasang Windows memunculkan layar
+  "Windows melindungi PC Anda" yang dilewati lewat "Info selengkapnya, Tetap jalankan". Panduan
+  bergambar disediakan.
+- AntiKebo membantu bangun, bukan jaminan. Untuk hal sangat penting, pasang juga alarm cadangan.
