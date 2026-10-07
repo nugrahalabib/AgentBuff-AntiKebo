@@ -542,7 +542,7 @@ Catatan untuk paket berikutnya:
 pembatas laju, redaksi log, beku di penjadwal + jadwal perangkat + kabar sekali + pengingat malam,
 batas token manual dan batas laju MCP per pengguna lintas token, id palsu ditolak, Komitmen mengunci
 putus perangkat/rumah/darurat); 127 uji Playwright mode produksi (baru: `aksesibilitas.spec.ts`
-axe 0 pelanggaran WCAG 2.2 AA di 22 layar kedua tema, tanpa gulir mendatar di 320 dan 640 px, lima
+axe 0 pelanggaran WCAG 2.2 AA di 20 layar kedua tema, tanpa gulir mendatar di 320 dan 640 px, lima
 alur hanya papan ketik; `anggaran.spec.ts` JS awal 156 sampai 223 KB, CLS 0, LCP paling lama 0,4 dtk di mesin uji; akses beku: pengaturan dibekukan, alarm tetap
 berbunyi dan berhenti lewat soal); 14 penjaga jaga.
 
