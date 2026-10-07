@@ -274,3 +274,26 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
   belum bangun, Tuya menghubungi nomor akun Smart Life pengguna sendiri tiap 5 menit, maks 15 dalam
   24 jam terakhir per pengguna, berhenti saat tunda, tidak untuk uji alarm. AntiKebo tidak pernah menyimpan
   nomor telepon.
+- **K-74 (2026-10-07, P8) Susunan halaman aplikasi:** gerbang sesi dan hak di `src/app/app/layout.tsx`;
+  halaman berkerangka (Beranda, Pengaturan, Rumah pintar, cetak kode QR) di grup `(utama)` beserta
+  pengawas SSE; layar alarm penuh di `/app/bunyi/<id kejadian>` tanpa kerangka. Pengawas membuka
+  layar alarm saat ada yang berbunyi atau saat "Masih bangun?" tiba, juga sesudah koneksi pulih.
+- **K-75 (2026-10-07, P8) Rincian skor bangun:** potongan menit memakai menit penuh dari berbunyi
+  sampai soal terjawab; skor sementara ditampilkan saat menunggu "Masih bangun?"; hari beruntun
+  dihitung mundur dari hari terbaru, hari tanpa kejadian terhitung (libur, tanpa alarm) dilewati,
+  satu kejadian di bawah 70 memutus. Uji alarm menampilkan "Uji", bukan skor.
+- **K-76 (2026-10-07, P8) Dua alarm bersamaan** (PRD B8 "bergantian") dikerjakan satu per satu:
+  layar menandai "1 dari 2", sesudah satu lolos langsung pindah ke yang lain tanpa Selamat pagi;
+  Selamat pagi muncul sesudah yang terakhir.
+- **K-77 (2026-10-07, P8) Lembar Ubah alarm:** alarm baru bawaan 06.00, sekali (kemunculan jam itu
+  berikutnya), isi lain dari bawaan pengguna. Menyimpan perubahan hanya mengirim isian yang berubah,
+  supaya pemeriksaan yang tidak perlu (rumah pintar) tidak menghalangi. Tombol dengar karakter
+  memakai suara bawaan perangkat (contoh instan); contoh suara AgentBuff lewat antrean biasa. Uji
+  alarm dari lembar dengan pilihan ikut spam chat dan rumah pintar (bawaannya tidak). Ketik kalimat
+  menolak tempel. Geser kartu (lewati/hapus) hanya di layar sentuh; aksi yang sama ada di lembar.
+- **K-78 (2026-10-07, P8) Hitung mundur** (tunda, Masih bangun, Beranda) memakai jam server saat
+  halaman dibuat untuk render pertama, lalu jam perangkat, supaya teks server dan peramban sama.
+- **K-79 (2026-10-07, P8) Uji ujung ke ujung memakai worker sungguhan** (`pnpm worker` dinyalakan
+  uji). Uji alarm ditunggu 60 detik penuh (jalur asli); alarm lain dimajukan jadwalnya, batas tunda,
+  dan waktu "Masih bangun?" langsung di DB pengembangan supaya uji tidak menunggu menit. Uji
+  membersihkan alarm akun contoh sesudahnya.

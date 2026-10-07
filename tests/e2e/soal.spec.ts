@@ -1,31 +1,12 @@
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
 import { expect, test } from "@playwright/test";
 import postgres from "postgres";
-import { aturTiruan, masukSebagai, NUGI, pantauGalat, tangkap } from "./bantu";
+import { aturTiruan, hitung, masukSebagai, NUGI, pantauGalat, tangkap, urlWorker } from "./bantu";
 
 // P4 ujung ke ujung: halaman cetak kode QR, dan menjawab soal alarm lewat SESI peramban (cek asal
 // + batas laju) sampai alarm berhenti. Kejadian berbunyi disiapkan langsung di DB pengembangan
 // (peran antikebo_worker) karena layar berbunyi baru disambung di P8.
 
 test.describe.configure({ mode: "serial" });
-
-function urlWorker(): string {
-  if (process.env.DATABASE_URL_WORKER) return process.env.DATABASE_URL_WORKER;
-  const f = path.resolve(process.cwd(), ".env.local");
-  const baris = existsSync(f) ? readFileSync(f, "utf8").split("\n") : [];
-  const b = baris.find((x) => x.startsWith("DATABASE_URL_WORKER="));
-  if (!b) throw new Error("DATABASE_URL_WORKER tidak ada (jalankan scripts/siapkan-lokal.sh)");
-  return b.slice("DATABASE_URL_WORKER=".length);
-}
-
-function hitung(teks: string): string {
-  const js = teks
-    .replace(/×/g, "*")
-    .replace(/−/g, "-")
-    .replace(/(\d+)²/g, "($1*$1)");
-  return String(Function(`"use strict"; return (${js});`)());
-}
 
 test.beforeEach(async () => {
   await aturTiruan(NUGI, { hak: "ok", izin: { kabar: true, suara: true } });

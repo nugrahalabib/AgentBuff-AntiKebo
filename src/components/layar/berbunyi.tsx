@@ -1,7 +1,7 @@
 "use client";
 
 import { Camera } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Kebo } from "@/components/ui/kebo";
 import { PapanAngka } from "@/components/ui/papan-angka";
 import { cn } from "@/lib/cn";
@@ -30,11 +30,17 @@ export function LayarBerbunyi({
   periksa,
   mintaTunda,
   gantiSoal,
+  kartu,
+  aksiBawah,
 }: {
   jam: string;
   judul: string;
   detail?: string;
-  soal: SoalTampil;
+  /** Soal contoh (prototipe). Layar asli memberi `kartu` dari server. */
+  soal?: SoalTampil;
+  kartu?: ReactNode;
+  /** Pengganti tombol tunda (mis. "Kembali ke soal" saat mengerjakan soal tunda). */
+  aksiBawah?: ReactNode;
   perluBenar: number;
   benarBeruntun: number;
   tunda: { sisa: number; menit: number } | null;
@@ -82,14 +88,17 @@ export function LayarBerbunyi({
           ) : null}
         </header>
 
-        {soal.jenis === "hitungan" ? (
-          <KartuHitungan soal={soal.teks} perluBenar={perluBenar} benarBeruntun={benarBeruntun} periksa={periksa} />
-        ) : (
-          <KartuQr tempat={soal.tempat} gantiSoal={gantiSoal} />
-        )}
+        {kartu ??
+          (soal?.jenis === "qr" ? (
+            <KartuQr tempat={soal.tempat} gantiSoal={gantiSoal} />
+          ) : soal ? (
+            <KartuHitungan soal={soal.teks} perluBenar={perluBenar} benarBeruntun={benarBeruntun} periksa={periksa} />
+          ) : null)}
 
         <div className="lg:col-span-2">
-          {tunda && tunda.sisa > 0 ? (
+          {aksiBawah ? (
+            aksiBawah
+          ) : tunda && tunda.sisa > 0 ? (
             <button
               type="button"
               onClick={mintaTunda}

@@ -1,9 +1,9 @@
 "use client";
 
-import { Lamp, Lock, MessageCircle, Monitor, Plus, Smartphone } from "lucide-react";
+import { Lamp, Lock, MessageCircle, Monitor, Plus, SkipForward, Smartphone, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
-import { Saklar, Spanduk, TautanTombol } from "@/components/ui/dasar";
+import { useRef, useState, type ReactNode } from "react";
+import { kelasTombol, Saklar, Spanduk, TautanTombol } from "@/components/ui/dasar";
 import { Kebo } from "@/components/ui/kebo";
 import { cn } from "@/lib/cn";
 import { isi } from "@/lib/i18n";
@@ -23,6 +23,10 @@ export function LayarBeranda({
   hrefTambah,
   hrefSiaga,
   ubahAktif,
+  spanduk,
+  buka,
+  tambah,
+  aksiKartu,
 }: {
   sapaan: string;
   berikutnya: RingkasAlarm | null;
@@ -30,31 +34,50 @@ export function LayarBeranda({
   lainnya: RingkasAlarm[];
   perangkat: RingkasPerangkat[];
   hrefTambah: string;
-  hrefSiaga: string;
+  hrefSiaga?: string;
   ubahAktif?: (id: string, aktif: boolean) => void;
+  /** Spanduk masalah lain (izin AgentBuff, kunci rumah pintar) di atas kartu. */
+  spanduk?: ReactNode;
+  /** Buka lembar Ubah alarm untuk kartu ini. */
+  buka?: (id: string) => void;
+  /** Buka lembar alarm baru (tanpa pindah halaman). */
+  tambah?: () => void;
+  /** Geser kartu di HP: lewati sekali dan hapus. */
+  aksiKartu?: { lewati: (id: string) => void; hapus: (id: string) => void };
 }) {
   const { t } = useKamus();
   const B = t.beranda;
   const tanpaSiaga = perangkat.every((p) => !p.siapMalamIni);
   const kosong = !berikutnya && lainnya.length === 0;
+  const tombolTambah = (kelas: string, isiTombol: ReactNode, label?: string) =>
+    tambah ? (
+      <button type="button" onClick={tambah} aria-label={label} className={kelas}>
+        {isiTombol}
+      </button>
+    ) : (
+      <Link href={hrefTambah} aria-label={label} className={kelas}>
+        {isiTombol}
+      </Link>
+    );
 
   return (
     <div className="flex flex-col gap-6">
       <header className="flex items-center gap-3 pt-2">
         <h1 className="t-judul-besar muncul min-w-0 flex-1">{sapaan}</h1>
-        <Link href={hrefTambah} aria-label={t.navigasi.tambah} className="tekan grid size-11 shrink-0 place-items-center rounded-full bg-grafit text-grafit-label lg:hidden">
-          <Plus size={22} strokeWidth={2.4} />
-        </Link>
+        {tombolTambah("tekan grid size-11 shrink-0 place-items-center rounded-full bg-grafit text-grafit-label lg:hidden", <Plus size={22} strokeWidth={2.4} />, t.navigasi.tambah)}
       </header>
 
+      {spanduk}
       {!kosong && tanpaSiaga ? (
         <Spanduk
           judul={B.tanpaSiagaJudul}
           isi={B.tanpaSiagaIsi}
           aksi={
-            <TautanTombol href={hrefSiaga} ukuran="sedang">
-              {B.tanpaSiagaTombol}
-            </TautanTombol>
+            hrefSiaga ? (
+              <TautanTombol href={hrefSiaga} ukuran="sedang">
+                {B.tanpaSiagaTombol}
+              </TautanTombol>
+            ) : undefined
           }
         />
       ) : null}
@@ -64,18 +87,31 @@ export function LayarBeranda({
           <Kebo pose="tidur" ukuran={132} />
           <h2 className="t-judul-2 mt-6">{B.kosongJudul}</h2>
           <p className="t-isi mt-2 max-w-[32ch] text-label-2">{B.kosongIsi}</p>
-          <TautanTombol href={hrefTambah} ukuran="besar" className="mt-7">
-            <Plus size={20} strokeWidth={2.4} />
-            {B.pasang}
-          </TautanTombol>
+          {tombolTambah(
+            kelasTombol("utama", "besar", "mt-7"),
+            <>
+              <Plus size={20} strokeWidth={2.4} />
+              {B.pasang}
+            </>,
+          )}
         </div>
       ) : null}
 
       {berikutnya ? (
-        <section aria-labelledby="judul-berikutnya" className="muncul kaca-kuat rounded-[30px] p-6 sm:p-7">
-          <h2 id="judul-berikutnya" className="t-subjudul font-semibold text-label-2">
-            {B.berikutnya}
-          </h2>
+        <section aria-labelledby="judul-berikutnya" className="muncul kaca-kuat relative rounded-[30px] p-6 sm:p-7">
+          {buka ? (
+            <button type="button" onClick={() => buka(berikutnya.id)} aria-label={isi(B.ubahAlarm, { judul: berikutnya.judul })} className="absolute inset-0 rounded-[30px]" />
+          ) : null}
+          <div className="flex items-start gap-3">
+            <h2 id="judul-berikutnya" className="t-subjudul min-w-0 flex-1 font-semibold text-label-2">
+              {B.berikutnya}
+            </h2>
+            {ubahAktif ? (
+              <span className="relative">
+                <SaklarAlarm alarm={berikutnya} ubahAktif={ubahAktif} />
+              </span>
+            ) : null}
+          </div>
           <p className="t-jam mt-2 text-[88px] sm:text-[104px]">{berikutnya.jam}</p>
           <p className="t-judul-2 mt-1">{berikutnya.judul}</p>
           {sisa ? <p className="t-isi mt-1 text-label-2">{sisa.jam > 0 ? isi(B.lagiJam, { jam: sisa.jam, menit: sisa.menit }) : isi(B.lagiMenit, { menit: sisa.menit })}</p> : null}
@@ -101,7 +137,7 @@ export function LayarBeranda({
           </h2>
           <ul className="flex flex-col gap-2.5">
             {lainnya.map((a) => (
-              <KartuAlarm key={a.id} alarm={a} ubahAktif={ubahAktif} />
+              <KartuAlarm key={a.id} alarm={a} ubahAktif={ubahAktif} buka={buka} aksi={aksiKartu} />
             ))}
           </ul>
         </section>
@@ -110,28 +146,106 @@ export function LayarBeranda({
   );
 }
 
-function KartuAlarm({ alarm, ubahAktif }: { alarm: RingkasAlarm; ubahAktif?: (id: string, aktif: boolean) => void }) {
+function SaklarAlarm({ alarm, ubahAktif }: { alarm: RingkasAlarm; ubahAktif?: (id: string, aktif: boolean) => void }) {
   const { t } = useKamus();
-  const [aktif, setAktif] = useState(alarm.aktif);
   return (
-    <li className={cn("kaca flex items-center gap-4 rounded-[22px] py-4 pr-4 pl-5", !aktif && "opacity-60")}>
-      <div className="min-w-0 flex-1">
-        <p className="t-jam text-[40px]">{alarm.jam}</p>
-        <p className="t-kepala truncate">{alarm.judul}</p>
-        <p className="t-subjudul truncate text-label-2">{alarm.uraianUlang}</p>
-        <div className="mt-2">
-          <Rincian alarm={alarm} ringkas />
+    <Saklar nyala={alarm.aktif} label={isi(t.beranda.aktifkan, { judul: alarm.judul })} nonaktif={!!alarm.terkunciSampai && alarm.aktif} ubah={(v) => ubahAktif?.(alarm.id, v)} />
+  );
+}
+
+const LEBAR_AKSI = 168;
+
+function KartuAlarm({
+  alarm,
+  ubahAktif,
+  buka,
+  aksi,
+}: {
+  alarm: RingkasAlarm;
+  ubahAktif?: (id: string, aktif: boolean) => void;
+  buka?: (id: string) => void;
+  aksi?: { lewati: (id: string) => void; hapus: (id: string) => void };
+}) {
+  const { t } = useKamus();
+  const B = t.beranda;
+  const [geser, setGeser] = useState(0);
+  const awal = useRef<{ x: number; y: number; geser: number; arah: "x" | "y" | null } | null>(null);
+  const terbuka = geser <= -LEBAR_AKSI / 2;
+
+  // Geser ke kiri di layar sentuh (docs/04-DESAIN.md §4.1) membuka "Lewati sekali" dan "Hapus".
+  const sentuh = aksi
+    ? {
+        onPointerDown: (e: React.PointerEvent) => {
+          if (e.pointerType !== "touch") return;
+          awal.current = { x: e.clientX, y: e.clientY, geser, arah: null };
+        },
+        onPointerMove: (e: React.PointerEvent) => {
+          const a = awal.current;
+          if (!a) return;
+          const dx = e.clientX - a.x;
+          if (!a.arah) a.arah = Math.abs(dx) > Math.abs(e.clientY - a.y) + 4 ? "x" : Math.abs(e.clientY - a.y) > 8 ? "y" : null;
+          if (a.arah === "x") setGeser(Math.max(-LEBAR_AKSI, Math.min(0, a.geser + dx)));
+        },
+        onPointerUp: () => {
+          if (awal.current?.arah === "x") setGeser((g) => (g < -LEBAR_AKSI / 3 ? -LEBAR_AKSI : 0));
+          awal.current = null;
+        },
+        onPointerCancel: () => {
+          awal.current = null;
+          setGeser((g) => (g < -LEBAR_AKSI / 3 ? -LEBAR_AKSI : 0));
+        },
+      }
+    : {};
+
+  return (
+    <li className="relative">
+      {aksi && geser < 0 ? (
+        <div className="absolute inset-y-0 right-0 flex items-stretch gap-1.5 py-1" style={{ width: LEBAR_AKSI }}>
+          <button
+            type="button"
+            tabIndex={terbuka ? 0 : -1}
+            onClick={() => (setGeser(0), aksi.lewati(alarm.id))}
+            className="tekan flex flex-1 flex-col items-center justify-center gap-1 rounded-[18px] bg-waspada-isi text-[13px] font-semibold text-[#2b1700]"
+          >
+            <SkipForward size={18} />
+            {B.lewati}
+          </button>
+          <button
+            type="button"
+            tabIndex={terbuka ? 0 : -1}
+            onClick={() => (setGeser(0), aksi.hapus(alarm.id))}
+            className="tekan flex flex-1 flex-col items-center justify-center gap-1 rounded-[18px] bg-bahaya-isi text-[13px] font-semibold text-white"
+          >
+            <Trash2 size={18} />
+            {B.hapus}
+          </button>
         </div>
+      ) : null}
+      <div
+        {...sentuh}
+        style={geser ? { transform: `translateX(${geser}px)` } : undefined}
+        className={cn("kaca relative flex touch-pan-y items-center gap-4 rounded-[22px] py-4 pr-4 pl-5 transition-transform duration-200", !alarm.aktif && "opacity-60")}
+      >
+        {buka ? (
+          <button
+            type="button"
+            onClick={() => (geser ? setGeser(0) : buka(alarm.id))}
+            aria-label={isi(B.ubahAlarm, { judul: alarm.judul })}
+            className="absolute inset-0 rounded-[22px]"
+          />
+        ) : null}
+        <div className="pointer-events-none relative min-w-0 flex-1">
+          <p className="t-jam text-[40px]">{alarm.jam}</p>
+          <p className="t-kepala truncate">{alarm.judul}</p>
+          <p className="t-subjudul truncate text-label-2">{alarm.uraianUlang}</p>
+          <div className="mt-2">
+            <Rincian alarm={alarm} ringkas />
+          </div>
+        </div>
+        <span className="relative">
+          <SaklarAlarm alarm={alarm} ubahAktif={ubahAktif} />
+        </span>
       </div>
-      <Saklar
-        nyala={aktif}
-        label={isi(t.beranda.aktifkan, { judul: alarm.judul })}
-        nonaktif={!!alarm.terkunciSampai}
-        ubah={(v) => {
-          setAktif(v);
-          ubahAktif?.(alarm.id, v);
-        }}
-      />
     </li>
   );
 }

@@ -2,7 +2,6 @@ import { PauseCircle } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { Shell } from "@/components/app/shell";
 import { TautanTombol } from "@/components/ui/dasar";
 import { cekHak } from "@/lib/agentbuff/status";
 import { tautanPerpanjang } from "@/lib/agentbuff/tautan-beku";
@@ -12,7 +11,10 @@ import { kamusServer } from "@/lib/i18n/server";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false } };
 
-/** Gerbang aplikasi: sesi (masuk senyap bila belum), lalu hak AgentBuff. */
+/**
+ * Gerbang aplikasi: sesi (masuk senyap bila belum), lalu hak AgentBuff. Kerangka (tab/bilah samping)
+ * dipasang grup `(utama)`; layar penuh (berbunyi, Masih bangun, Selamat pagi) tanpa kerangka.
+ */
 export default async function TataLetakApp({ children }: { children: React.ReactNode }) {
   const s = await sesiSaatIni();
   if (!s) {
@@ -47,5 +49,5 @@ export default async function TataLetakApp({ children }: { children: React.React
     );
   }
 
-  return <Shell>{children}</Shell>;
+  return children;
 }

@@ -18,7 +18,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P5 | Suara dan bunyi | Cloud | Selesai |
 | P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Selesai |
 | P7 | Rumah pintar Tuya | Cloud | Selesai |
-| P8 | Layar inti tersambung API | Cloud | Belum |
+| P8 | Layar inti tersambung API | Cloud | Selesai |
 | P9 | Mode Jam Meja dan PWA | Cloud | Belum |
 | P10 | Aplikasi PC (Tauri) | Cloud | Belum |
 | P11 | Orientasi, Siaga, Riwayat, Pengaturan, Template | Cloud | Belum |
@@ -373,9 +373,37 @@ Catatan untuk paket berikutnya:
 
 ## P8 Layar inti tersambung API
 
-- [ ] Beranda, Ubah alarm, Berbunyi (hitungan, ingat angka, ketik, QR), Selamat pagi, Masih bangun,
-      dua alarm bersamaan, spanduk masalah, keadaan proses/galat/selesai.
-- [ ] Playwright: buat alarm, uji 1 menit, berbunyi, jawab, bangun, Masih bangun; tangkapan layar PR.
+**Status: selesai 2026-10-07.** Bukti di cloud: jaga (13 penjaga), tsc, lint, format, 598 tes
+vitest (termasuk Postgres 16 sungguhan dan contoh emas skor), build, 81 uji Playwright mode produksi
+(desktop + 390 px) dengan worker sungguhan. Pemindaian kode QR dengan kamera HP asli, suara di HP
+terkunci, dan layar alarm di aplikasi PC: **wajib diuji** di L2.
+
+- [x] Beranda, Ubah alarm, Berbunyi (hitungan, ingat angka, ketik, QR), Selamat pagi, Masih bangun,
+      dua alarm bersamaan, spanduk masalah, keadaan proses/galat/selesai. (Rute
+      `/api/app/alarm` (+ `[id]`, `aktif`, `lewati`, `gandakan`), `/api/app/uji`,
+      `/api/app/kejadian/aktif`, `/api/app/kejadian/[id]`; Beranda `src/components/app/beranda-alarm.tsx`
+      dengan hitung mundur, sakelar, geser kartu di HP untuk lewati/hapus; lembar Ubah alarm lengkap
+      `src/components/layar/ubah-alarm.tsx` (pengulangan lanjutan, karakter + dengar, kalimat pribadi,
+      soal + kode QR, tunda, kanal, rumah pintar per perangkat, lanjutan, uji/lewati/gandakan/hapus);
+      layar penuh `/app/bunyi/[id]` (`src/components/app/alarm-hidup.tsx`, `kartu-soal.tsx`) dengan
+      suara P5; pengawas SSE yang membuka layar alarm; skor `src/lib/skor.ts` dengan contoh emas.)
+- [x] Playwright: buat alarm, uji 1 menit, berbunyi, jawab, bangun, Masih bangun; tangkapan layar PR.
+      (`tests/e2e/alarm.spec.ts`: uji alarm menunggu 60 detik sungguhan sampai worker
+      membunyikannya; alarm biasa dimajukan jadwalnya di DB, K-79.)
+
+Catatan untuk paket berikutnya:
+- P9: Jam Meja cukup membuka `/app/bunyi/<id>` saat SSE `berbunyi` (pola `PengawasAlarm`), atau
+  memasang `LayarAlarmHidup` langsung; bunyi dan soal sudah lengkap di sana. Spanduk "Belum ada
+  perangkat siaga" di Beranda butuh tujuan tombol (`hrefSiaga`) begitu tab Siaga ada.
+- P11: Riwayat memakai `skorKejadian`, `skorHarian`, `hariBeruntun` (`src/lib/skor.ts`, K-75).
+  Tab Siaga dan Riwayat ditambahkan ke daftar tab `Shell` di `src/app/app/(utama)/layout.tsx`.
+  Template: `POST /api/app/alarm?template=<id>` sudah menerima template; tinggal UI pilih template di
+  lembar alarm baru. Pengaturan kode QR: lembar alarm sudah bisa membuat kode dan mencetaknya.
+- P12: alat MCP untuk rute baru (`list_alarms`, `create_alarm`, `update_alarm`, `delete_alarm`,
+  `set_alarm_enabled`, `skip_alarm`, `duplicate_alarm`, `test_alarm`); layar alarm (soal, tunda,
+  Masih bangun) adalah pengecualian sengaja di `paritas.ts` (aturan teknis 2).
+- P13: geser kartu hanya untuk sentuh; papan ketik dan pembaca layar memakai aksi yang sama di lembar
+  Ubah alarm. Periksa kontras layar Bara dan Fajar dengan axe.
 
 ## P9 Mode Jam Meja dan PWA
 

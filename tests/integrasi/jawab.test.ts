@@ -400,3 +400,44 @@ describe("luring (PRD D8)", () => {
     expect(await kejadian(id)).toMatchObject({ status: "bangun", selesaiOleh: "luring", perangkatSelesai: pc.id });
   });
 });
+
+describe("data layar alarm (P8)", () => {
+  it("berbunyi: judul, jam, tunda, suara; tanpa jawaban. Lolos: ringkasan Selamat pagi dengan skor", async () => {
+    const A = await buatPengguna(u, "Nugi Pratama");
+    const id = await berbunyi(A, { agendaJudul: "Presentasi klien", agendaDetail: "Bawa laptop", soal: { benar: 1 } });
+    const { layarKejadian } = await import("@/lib/layanan/kejadian");
+    const l = await layarKejadian(A, id);
+    expect(l).toMatchObject({
+      status: "berbunyi",
+      judul: "Presentasi klien",
+      detail: "Bawa laptop",
+      jam: "05.00",
+      tunda: { terpakai: 0, jatah: 2, menit: 5, boleh: true },
+      masihBangun: { aktif: true, menit: 5, batasDtk: 60 },
+      nama: "Nugi",
+      pagi: null,
+    });
+    expect(l.suara.bunyi).toBe("klasik");
+    expect(l.suara.omelan.length).toBeGreaterThan(10);
+    expect(l.suara.omelan.every((o) => o.klip === null && o.teks.length > 0)).toBe(true);
+    expect(JSON.stringify(l)).not.toMatch(/hash_jawaban|hashJawaban|garam/);
+
+    // Soal terjawab 7 menit sesudah berbunyi: Selamat pagi dengan skor sementara 95.
+    const { ambilSoal, jawab, konfirmasiMasihBangun } = await Jw();
+    const s = await ambilSoal(sesi(A), id, "bangun");
+    const lolos = new Date(T.getTime() + 7 * 60_000);
+    expect(await jawab(sesi(A), id, s.id, hitung(s.tampil.teks), lolos)).toMatchObject({ hasil: "selesai", status: "cek_bangun" });
+    expect((await layarKejadian(A, id)).pagi).toEqual({ jamBangun: "05.07", menit: 7, tunda: 0, skor: 95 });
+    await konfirmasiMasihBangun(sesi(A), id, new Date(lolos.getTime() + 5 * 60_000));
+    expect(await layarKejadian(A, id)).toMatchObject({ status: "bangun", pagi: { jamBangun: "05.07", skor: 95 } });
+  });
+
+  it("kejadian milik pengguna lain tidak terlihat", async () => {
+    const A = await buatPengguna(u);
+    const B = await buatPengguna(u);
+    const id = await berbunyi(A);
+    const { layarKejadian } = await import("@/lib/layanan/kejadian");
+    expect((await galat(layarKejadian(B, id))).kode).toBe("tidak_ditemukan");
+    expect((await galat(layarKejadian(A, "bukan-uuid"))).kode).toBe("tidak_ditemukan");
+  });
+});
