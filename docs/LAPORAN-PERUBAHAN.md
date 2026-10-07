@@ -3,6 +3,14 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07: Status gerbang rilis dirapikan
+
+**Diubah**
+- Daftar syarat sebelum dijual (`GERBANG-RILIS.md`) kini mencatat butir 10 (contoh emas: aturan
+  pengulangan, soal, skor, urutan suara) sebagai lulus. Tesnya sudah ada dan hijau di setiap CI sejak
+  P2 sampai P10, hanya statusnya yang belum diperbarui. Sisa butir yang belum lulus semuanya butuh
+  produksi, pintu AgentBuff asli, atau perangkat asli (L1 sampai L3).
+
 ## 2026-10-07 (P13): Privasi, aksesibilitas, keamanan, dan aturan saat akses berakhir
 
 **Baru**
