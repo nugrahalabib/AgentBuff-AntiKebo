@@ -240,3 +240,37 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
 - **K-67 (2026-10-07, P6) Rute `GET/PATCH /api/app/preferensi`** dibuat sekarang (kanal bawaan dan
   pengingat malam di Pengaturan), dipakai juga P11. Bagian kanal, notifikasi, dan pengingat malam
   tampil di halaman Pengaturan yang sekarang; P11 memindahkannya ke rancangan P1.
+- **K-68 (2026-10-07, P6, dicatat di P7) Playwright di CI memakai Chromium penuh** (`channel:
+  "chromium"`, mode headless baru), bukan "headless shell" bawaan: shell tidak mendukung notifikasi
+  dan push Service Worker, jadi uji notifikasi alarm tidak nyata. Sesi cloud memakai Chromium
+  bawaan sesi. Uji push menunggu Service Worker benar-benar `activated` supaya tidak berpacu.
+- **K-69 (2026-10-07, P7) Sambungan rumah pintar:** kunci `sk-` diuji ke Tuya (`homes/all`) sebelum
+  disimpan, tersandi amplop (AAD terikat pengguna), yang tampil hanya samaran (`sk-SG••••3456`),
+  tidak pernah dikirim ke peramban, agen, atau log. Tuya menolak kunci (kapan pun: uji perangkat,
+  muat ulang, langkah alarm) = sambungan ditandai `kunci_bermasalah`, aksi alarm berhenti dengan
+  catatan, spanduk perbaikan di Beranda dan Rumah pintar; kunci baru yang lolos uji memulihkannya.
+  Putuskan = kunci dan cermin perangkat dihapus, aturan di alarm tetap (berlaku lagi bila disambung
+  ulang). Alamat Tuya tiruan (`TUYA_BASIS_UJI`) hanya dipakai bila `AGENTBUFF_TIRUAN=1`.
+- **K-70 (2026-10-07, P7) Aturan rumah pintar per alarm diperiksa saat disimpan:** perangkat harus
+  ada di akun dan sanggup melakukan aksinya (dari model Tuya), maks 20 aturan. Saat alarm diubah,
+  pemeriksaan hanya bila isian `tuya` ikut diubah, supaya rumah yang sedang bermasalah tidak
+  menghalangi mengubah jam atau soal. Sensor dan perangkat hanya-baca tampil "Hanya dipantau",
+  tanpa tombol uji.
+- **K-71 (2026-10-07, P7) Urutan aksi alarm:** aturan "sebelum X menit" direncanakan saat jadwal
+  tinggal ≤ 61 menit; lampu naik satu langkah per menit dari 1% sampai terang tujuan (perangkat
+  tanpa terang: sekali saat X menit sebelum). Kedip = 100% dan 10% bergantian tiap 3 dtk; saat
+  tunda dan saat soal terjawab menunggu "Masih bangun?" kedip berhenti dengan lampu terang tetap
+  (bukan tertinggal redup). Kedip tidak menunggu konfirmasi dan naik bertahap hanya dikonfirmasi di
+  langkah pertama dan terakhir (hemat batas laju Tuya); aksi lain dikonfirmasi lewat laporan
+  perangkat. Perangkat offline dilewati dan dicatat.
+- **K-72 (2026-10-07, P7) Sesudah bangun:** "kembalikan" memakai potret keadaan sebelum aksi pertama
+  kejadian, dipulihkan sekali per perangkat per kejadian; "suasana pagi" = lampu nyala 100%, putih
+  60% (perangkat bukan lampu dilewati); "biarkan" mengembalikan lampu yang dikedipkan ke terang
+  tujuannya. Suasana pagi dan aturan "sesudah" hanya untuk kejadian yang benar-benar `bangun`
+  (sesudah "Masih!" bila Masih bangun aktif); dibatalkan atau tidak bangun tidak menjalankannya.
+  Uji perangkat di web = nyala (terang 100% bila lampu) lalu dikembalikan sesudah 2 dtk.
+- **K-73 (2026-10-07, P7) Lapisan darurat:** mati bawaannya, tersembunyi di bagian Lanjutan Rumah
+  pintar; pilihan telepon atau SMS, sesudah 10/15/20/30 menit (server menerima 5 sampai 60). Bila
+  belum bangun, Tuya menghubungi nomor akun Smart Life pengguna sendiri tiap 5 menit, maks 15 dalam
+  24 jam terakhir per pengguna, berhenti saat tunda, tidak untuk uji alarm. AntiKebo tidak pernah menyimpan
+  nomor telepon.

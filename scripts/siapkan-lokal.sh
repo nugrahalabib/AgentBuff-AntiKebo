@@ -51,6 +51,12 @@ if ! grep -q '^VAPID_PUBLIC_KEY=.' "$ENV_LOKAL"; then
   echo "siapkan-lokal: kunci VAPID ditambahkan ke .env.local (tidak dicetak)"
 fi
 
+# Server Tuya tiruan (P7) untuk .env.local mode tiruan yang belum punya (tidak menimpa).
+if grep -q '^AGENTBUFF_TIRUAN=1' "$ENV_LOKAL" && ! grep -q '^TUYA_BASIS_UJI=' "$ENV_LOKAL"; then
+  echo "TUYA_BASIS_UJI=http://127.0.0.1:3198" >> "$ENV_LOKAL"
+  echo "siapkan-lokal: TUYA_BASIS_UJI (server Tuya tiruan) ditambahkan ke .env.local"
+fi
+
 set -a
 # shellcheck disable=SC1090
 . "./$ENV_LOKAL"

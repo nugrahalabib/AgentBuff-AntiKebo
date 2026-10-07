@@ -102,7 +102,7 @@ describe("/mcp", () => {
     }
   });
 
-  it("initialize + tools/list: server antikebo, petunjuk, alat get_setup_status", async () => {
+  it("initialize + tools/list: server antikebo, petunjuk, alat setup + rumah pintar (P7)", async () => {
     const token = await tokenOtomatis();
     const init = await rpc(token, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "uji", version: "1" } });
     expect(init.status).toBe(200);
@@ -110,7 +110,7 @@ describe("/mcp", () => {
     expect(init.json.result.instructions).toContain("NEVER stop, snooze, or answer a ringing alarm");
     const daftar = await rpc(token, "tools/list", {}, 2);
     const nama = daftar.json.result.tools.map((x: { name: string }) => x.name);
-    expect(nama).toEqual(["get_setup_status"]);
+    expect(nama).toEqual(["get_setup_status", "connect_home", "list_home_devices", "disconnect_home"]);
     // Tidak ada alat yang bisa mematikan, menunda, atau menjawab alarm.
     expect(nama.join(" ")).not.toMatch(/stop|snooze|dismiss|answer|solve/i);
   });

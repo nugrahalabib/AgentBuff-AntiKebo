@@ -17,7 +17,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Selesai 2026-10-07 |
 | P5 | Suara dan bunyi | Cloud | Selesai |
 | P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Selesai |
-| P7 | Rumah pintar Tuya | Cloud | Belum |
+| P7 | Rumah pintar Tuya | Cloud | Selesai |
 | P8 | Layar inti tersambung API | Cloud | Belum |
 | P9 | Mode Jam Meja dan PWA | Cloud | Belum |
 | P10 | Aplikasi PC (Tauri) | Cloud | Belum |
@@ -327,12 +327,49 @@ Catatan untuk paket berikutnya:
 
 ## P7 Rumah pintar Tuya
 
+**Status: selesai 2026-10-07.** Bukti di cloud: jaga (13 penjaga), tsc, lint, format, 557 tes
+vitest (termasuk Postgres 16 sungguhan), build, 72 uji Playwright mode produksi (desktop + 390 px);
+`uji-rls.sql` 51/51 di PGlite dan Postgres 16. Perangkat Tuya asli (lampu, AC, colokan) dan
+telepon/SMS darurat ke nomor asli: **wajib diuji** di L2.
+
 Rujukan: PRD I1 sampai I6; arsitektur §8.
 
-- [ ] Salin modul Tuya + wizard sambung + `connect_home` dari template.
-- [ ] Aturan per perangkat per alarm (zod), potret dan pulihkan, naik bertahap, kedip, lapisan
-      darurat tersembunyi.
-- [ ] Tes dengan `tuya-tiruan`.
+- [x] Salin modul Tuya + wizard sambung + `connect_home` dari template. (`src/lib/tuya/*` disalin
+      dari `937aa8a`, klien dipangkas; `src/lib/layanan/tuya.ts`; tabel `sambungan_tuya`,
+      `perangkat_tuya`, `potret_tuya` + RLS; halaman `/app/rumah` (wizard 3 langkah, daftar per
+      ruangan, uji perangkat, muat ulang, perbarui kunci, putuskan); rute `/api/app/rumah/*`; alat MCP
+      `connect_home`, `list_home_devices`, `disconnect_home` (merusak, wajib `confirm: true`);
+      `get_setup_status` menampilkan rumah pintar; server Tuya tiruan di `pnpm tiruan` port 3198.)
+- [x] Aturan per perangkat per alarm (zod), potret dan pulihkan, naik bertahap, kedip, lapisan
+      darurat tersembunyi. (`src/lib/penjadwal/saluran-tuya.ts`, K-68 sampai K-73; aturan diperiksa
+      saat alarm disimpan: perangkat milik pengguna dan sanggup melakukan aksinya; spanduk kunci
+      bermasalah di Beranda dan Rumah pintar.)
+- [x] Tes dengan `tuya-tiruan`. (`tests/integrasi/tuya.test.ts` 8 kasus dengan jam terkendali,
+      `tests/unit/tuya-*.test.ts`, `tests/e2e/rumah.spec.ts`.)
+
+Selesai bila (tidak tertulis di rencana awal; dipakai sesi ini): kunci diuji ke Tuya sebelum
+disimpan dan tidak pernah kembali ke peramban/agen; uji perangkat membedakan benar-benar melapor,
+diterima tapi tidak dijalankan, dan offline; dengan jam terkendali terbukti naik bertahap sebelum
+alarm, bareng, kedip 100/10 tiap 3 dtk, kedip berhenti terang tetap saat tunda dan saat menunggu
+"Masih bangun?", aturan saat tunda, kembalikan keadaan, suasana pagi, aturan "sesudah" hanya bila
+bangun, offline dilewati dan dicatat, kunci ditolak = bermasalah + spanduk, darurat mati bawaannya,
+sesudah X menit, tiap 5 menit, maks 15 sehari, tidak untuk uji alarm.
+
+Catatan untuk paket berikutnya:
+- P8: layar Ubah alarm menampilkan bagian rumah pintar hanya bila tersambung; daftar perangkat dan
+  aksi yang sanggup dilakukan dari `GET /api/app/rumah/perangkat` (`ruangan[].perangkat[].bisa`:
+  nyala, terang, warna, suhuPutih, suhuAc {min,max}, modeAc). Simpan lewat isian `tuya` alarm yang
+  sudah ada (galat `tuya_tidak_ada`/`tuya_tidak_bisa` sudah berbahasa pengguna).
+- P11: Pengaturan rancangan P1 memuat baris "Rumah pintar" yang menuju `/app/rumah` (sudah ada di
+  Pengaturan sekarang); orientasi langkah rumah pintar memakai wizard yang sama
+  (`src/components/app/wizard-rumah.tsx`). Riwayat bisa membaca hasil langkah `tuya*`
+  (`lewat: "offline"`, `status`) untuk menampilkan perangkat yang dilewati.
+- P12: alat `get_home_status` dan `test_home_device` (layanan `statusRumah`, `ujiPerangkat` sudah
+  ada); pengaturan lapisan darurat (`aturDarurat`) diberi alat atau dicatat sebagai pengecualian di
+  `paritas.ts`; muat ulang perangkat (`sinkronkanPengguna`) juga.
+- L2: uji dengan akun Smart Life dan perangkat asli: lampu naik bertahap terlihat halus, kedip tidak
+  kena batas laju Tuya, AC inframerah (status mungkin tidak terbaca balik, jadi konfirmasi bisa
+  hanya "terkirim"), telepon darurat benar-benar masuk.
 
 ## P8 Layar inti tersambung API
 

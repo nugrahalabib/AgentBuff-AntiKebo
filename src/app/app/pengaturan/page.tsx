@@ -1,13 +1,15 @@
-import { Check, CircleAlert } from "lucide-react";
+import { Check, CircleAlert, House } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PengaturanKanal, PengaturanNotifikasi, PengaturanPengingat } from "@/components/app/pengaturan-kanal";
 import { TombolKeluar } from "@/components/app/tombol-keluar";
 import { TautanTombol } from "@/components/ui/dasar";
+import { BarisGrup, Grup } from "@/components/ui/grup";
 import { sesiSaatIni } from "@/lib/auth/sesi";
 import { isi } from "@/lib/i18n";
 import { kamusServer } from "@/lib/i18n/server";
 import { ambilPreferensi } from "@/lib/layanan/preferensi";
+import { statusRumah } from "@/lib/layanan/tuya";
 import { kunciPublikVapid } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +30,7 @@ export default async function HalamanPengaturan() {
     { label: P.izinSuara, diberi: s.pengguna.izinSuara },
   ];
   const kurang = izin.some((i) => !i.diberi);
-  const pref = await ambilPreferensi(s.pengguna.id);
+  const [pref, rumah] = await Promise.all([ambilPreferensi(s.pengguna.id), statusRumah(s.pengguna.id)]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -70,6 +72,16 @@ export default async function HalamanPengaturan() {
       <PengaturanKanal spamBawaan={pref.bawaan.spam} />
       <PengaturanNotifikasi kunciPublik={kunciPublikVapid()} />
       <PengaturanPengingat nyala={pref.pengingatMalam} />
+
+      <Grup judul={t.rumah.judul} id="judul-rumah" catatan={t.rumah.ket}>
+        <BarisGrup
+          ikon={House}
+          warnaIkon={rumah.tersambung && rumah.bermasalah ? "#dc2626" : "#f59e0b"}
+          label={t.rumah.judul}
+          sub={!rumah.tersambung ? t.rumah.belum : rumah.bermasalah ? t.rumah.spanduk.judul : isi(t.rumah.jumlah, { n: rumah.perangkat })}
+          href="/app/rumah"
+        />
+      </Grup>
 
       <TombolKeluar />
     </div>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Kosong, Spanduk, TautanTombol } from "@/components/ui/dasar";
 import { sesiSaatIni } from "@/lib/auth/sesi";
 import { kamusServer } from "@/lib/i18n/server";
+import { statusRumah } from "@/lib/layanan/tuya";
 import { waktuHari } from "@/lib/waktu/suasana-hari";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export default async function HalamanAlarm() {
   const nama = (s.pengguna.nama ?? "").split(" ")[0];
   const sapaan = `${t.waktu[waktuHari(s.pengguna.zonaWaktu)]}${nama ? `, ${nama}` : ""}`;
   const izinKurang = !s.pengguna.izinKabar || !s.pengguna.izinSuara;
+  const rumah = await statusRumah(s.pengguna.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -26,6 +28,18 @@ export default async function HalamanAlarm() {
           aksi={
             <TautanTombol href="/auth/agentbuff/start?izin=1&lanjut=/app" ukuran="sedang">
               {t.izin.tombol}
+            </TautanTombol>
+          }
+        />
+      ) : null}
+      {rumah.tersambung && rumah.bermasalah ? (
+        <Spanduk
+          nada="bahaya"
+          judul={t.rumah.spanduk.judul}
+          isi={t.rumah.spanduk.isi}
+          aksi={
+            <TautanTombol href="/app/rumah?perbarui=1" ukuran="sedang">
+              {t.rumah.perbarui}
             </TautanTombol>
           }
         />

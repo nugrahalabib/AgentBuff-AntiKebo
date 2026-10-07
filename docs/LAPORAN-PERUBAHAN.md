@@ -3,6 +3,51 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P7): Lampu dan AC ikut membangunkan
+
+**Baru**
+- **Sambungkan rumah pintar** (Smart Life atau Tuya) di Pengaturan, Rumah pintar: tiga langkah,
+  sekitar 3 menit, tanpa akun developer. Kunci yang ditempel langsung diperiksa ke Tuya; kunci salah
+  ditolak dengan penjelasan, bukan galat.
+- **Perangkatmu per ruangan** dengan status online. Tombol **Uji** menyalakan perangkat sebentar
+  lalu mengembalikannya, dan memberi tahu apakah perangkat benar-benar merespons atau cuma "diterima
+  tapi belum melapor". Sensor tampil "Hanya dipantau". Ada tombol muat ulang dan putuskan.
+- **Aturan per alarm** (sudah bekerja di server; layar untuk mengaturnya menyusul di P8 dan alat
+  agennya di P12): lampu menyala pelan
+  dari redup ke terang mulai X menit sebelum alarm, perangkat menyala bareng alarm, lampu berkedip
+  terang dan redup tiap 3 detik sampai kamu bangun, aksi saat tunda, dan sesudah bangun:
+  kembalikan seperti semula, suasana pagi (lampu terang putih), atau biarkan. AC bisa diatur suhu
+  dan modenya.
+- Saat kamu menunda atau sudah menjawab soal dan menunggu "Masih bangun?", lampu berhenti berkedip
+  tapi tetap terang, tidak ditinggal redup.
+- **Lapisan darurat** (tersembunyi di Lanjutan, mati bawaannya): kalau sesudah sekian menit kamu belum
+  bangun, Tuya menelepon atau SMS ke nomor akun Smart Life-mu sendiri, paling banyak 15 kali sehari.
+- **Kunci kedaluwarsa atau dicabut**: muncul spanduk "Kunci rumah pintar bermasalah" di Beranda dan
+  Rumah pintar, dengan tombol Perbarui kunci. Alarm tetap berbunyi seperti biasa.
+- **Agenmu bisa** menyambungkan rumah dari kunci yang kamu tempel di chat, melihat perangkat, dan
+  memutus rumah (harus dikonfirmasi).
+
+**Diperbaiki**
+- Uji ujung ke ujung notifikasi dan Misi QR kini stabil saat diulang (tidak lagi berpacu dengan
+  Service Worker atau kehabisan jatah 10 kode QR).
+
+**Keputusan**
+- K-68 sampai K-73 (`KEPUTUSAN.md`). Yang terasa pengguna: kunci tidak pernah tampil lagi utuh
+  (K-69), suasana pagi hanya bila benar-benar bangun (K-72), darurat mati bawaannya dan tidak
+  menyimpan nomor teleponmu (K-73).
+
+**Masih butuh Chief**
+- K-07 masih menunggu.
+- **Wajib diuji dengan perangkat asli (L2):** lampu, AC, dan colokan Tuya sungguhan; telepon/SMS
+  darurat ke nomor asli.
+
+**Untuk teknisi**
+- Modul `src/lib/tuya/*` disalin dari template (`937aa8a`); tabel `sambungan_tuya`, `perangkat_tuya`,
+  `potret_tuya` dengan RLS + uji 51/51. Saluran worker `src/lib/penjadwal/saluran-tuya.ts`; mesin
+  mendapat fase `pra`/`tunda`, `rencanakanPra`, dan kait `rencanaCek`.
+- Server Tuya tiruan ikut `pnpm tiruan` (port 3198, `TUYA_BASIS_UJI`).
+- Bukti: 557 tes vitest, 72 uji Playwright mode produksi.
+
 ## 2026-10-07 (P6): Chat terus sampai bangun, notifikasi, dan pengingat malam
 
 **Baru**

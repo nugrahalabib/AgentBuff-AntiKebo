@@ -65,6 +65,12 @@ const STATUS_GALAT: Record<KodeGalat, number> = {
   komitmen_terkunci: 409,
   sedang_berbunyi: 409,
   kanal_gagal: 409,
+  belum_tersambung: 409,
+  kunci_bermasalah: 409,
+  kunci_tidak_sah: 400,
+  offline: 409,
+  tidak_didukung: 400,
+  tuya_gangguan: 503,
 };
 
 /** Galat layanan jadi jawaban {galat, pesan} dengan kode HTTP tepat; galat lain dicatat dan disamarkan. */

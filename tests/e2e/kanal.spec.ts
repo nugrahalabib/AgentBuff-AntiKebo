@@ -93,7 +93,11 @@ test("Service Worker: push alarm tampil sebagai notifikasi bertag, diulang, dita
   await cdp.send("ServiceWorker.enable");
   await page.evaluate(async () => {
     await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-    await navigator.serviceWorker.ready;
+    const reg = await navigator.serviceWorker.ready;
+    // `ready` sudah selesai saat pekerja masih "activating"; push nyata baru datang sesudah
+    // langganan dibuat, jadi tunggu sampai benar-benar "activated" supaya uji tidak berpacu.
+    const aktif = reg.active!;
+    if (aktif.state !== "activated") await new Promise<void>((ok) => aktif.addEventListener("statechange", () => aktif.state === "activated" && ok()));
   });
   const registrationId = await regId;
 

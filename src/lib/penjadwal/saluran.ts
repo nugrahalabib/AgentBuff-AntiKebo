@@ -41,9 +41,10 @@ export type StatusSelesai = "bangun" | "tidak_bangun" | "dibatalkan";
 
 /**
  * Kapan langkah saluran pantas dijalankan: `berbunyi` (bawaan; juga saat ditunda bila
- * `saatTunda` = lanjut), `cek` (status cek_bangun), `terlewat`, `selesai` (sesudah berhenti).
+ * `saatTunda` = lanjut), `pra` (sebelum berbunyi sampai selesai berbunyi), `tunda` (status
+ * ditunda), `cek` (status cek_bangun), `terlewat`, `selesai` (sesudah berhenti).
  */
-export type FaseSaluran = "berbunyi" | "cek" | "terlewat" | "selesai";
+export type FaseSaluran = "berbunyi" | "pra" | "tunda" | "cek" | "terlewat" | "selesai";
 
 export interface Saluran {
   jenis: string;
@@ -54,6 +55,12 @@ export interface Saluran {
   rencana(isi: IsiKejadian, mulai: Date, kejadian: BarisKejadian): RencanaLangkah[];
   /** Langkah untuk kejadian yang terlewat (server sempat mati > 30 menit). Opsional. */
   rencanaTerlewat?(isi: IsiKejadian | null, sekarang: Date, kejadian: BarisKejadian): RencanaLangkah[];
+  /** Langkah sebelum berbunyi (rumah pintar naik bertahap), direncanakan saat jadwal tinggal ≤ 61 menit. Opsional. */
+  rencanaPra?(isi: IsiKejadian, kejadian: BarisKejadian, sekarang: Date): RencanaLangkah[];
+  /** Langkah saat kejadian ditunda (aturan rumah pintar "saat tunda"). Opsional. */
+  rencanaTunda?(isi: IsiKejadian | null, sekarang: Date, kejadian: BarisKejadian): RencanaLangkah[];
+  /** Langkah saat soal terjawab dan "Masih bangun?" menunggu (status `cek_bangun`). Opsional. */
+  rencanaCek?(isi: IsiKejadian | null, sekarang: Date, kejadian: BarisKejadian): RencanaLangkah[];
   /** Langkah sesudah kejadian berhenti (pesan penutup, notifikasi diganti "sudah mati"). Opsional. */
   rencanaSelesai?(isi: IsiKejadian | null, sekarang: Date, kejadian: BarisKejadian, status: StatusSelesai): RencanaLangkah[];
   jalankan(k: KonteksLangkah): Promise<HasilLangkah>;
