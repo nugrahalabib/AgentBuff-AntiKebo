@@ -1,0 +1,761 @@
+{
+  "keterangan": "Contoh emas mesin pengulangan (PRD B3 sampai B6). Harapan dihitung tangan, dicek silang dengan perhitungan Python zoneinfo terpisah. Hari 0 = Minggu.",
+  "kasus": [
+    {
+      "nama": "harian sebelum jam",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T03:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-06T22:00:00Z",
+      "tanggal": "2026-10-07"
+    },
+    {
+      "nama": "harian tepat di jam = besok",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-06T22:00:00Z",
+      "opsi": {},
+      "harapan": "2026-10-07T22:00:00Z",
+      "tanggal": "2026-10-08"
+    },
+    {
+      "nama": "harian sesudah jam",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T06:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-07T22:00:00Z",
+      "tanggal": "2026-10-08"
+    },
+    {
+      "nama": "harian tengah malam",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "00:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T23:59:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-07T17:00:00Z",
+      "tanggal": "2026-10-08"
+    },
+    {
+      "nama": "harian lintas tahun",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "23:59",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-12-31T23:59:30+07:00",
+      "opsi": {},
+      "harapan": "2027-01-01T16:59:00Z",
+      "tanggal": "2027-01-01"
+    },
+    {
+      "nama": "hari kerja dari Jumat ke Senin",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-09T07:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-11T23:00:00Z",
+      "tanggal": "2026-10-12"
+    },
+    {
+      "nama": "hari kerja dari Sabtu",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-10T05:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-11T23:00:00Z",
+      "tanggal": "2026-10-12"
+    },
+    {
+      "nama": "hari kerja hari ini",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T05:59:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-06T23:00:00Z",
+      "tanggal": "2026-10-07"
+    },
+    {
+      "nama": "akhir pekan dari Rabu",
+      "pengulangan": {
+        "jenis": "akhir_pekan"
+      },
+      "jam": "08:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-10T01:00:00Z",
+      "tanggal": "2026-10-10"
+    },
+    {
+      "nama": "akhir pekan Sabtu ke Minggu",
+      "pengulangan": {
+        "jenis": "akhir_pekan"
+      },
+      "jam": "08:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-10T09:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-11T01:00:00Z",
+      "tanggal": "2026-10-11"
+    },
+    {
+      "nama": "hari pilihan Sen Rab Jum",
+      "pengulangan": {
+        "jenis": "hari",
+        "hari": [1, 3, 5]
+      },
+      "jam": "05:30",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T06:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-08T22:30:00Z",
+      "tanggal": "2026-10-09"
+    },
+    {
+      "nama": "hari pilihan Minggu tepat di jam",
+      "pengulangan": {
+        "jenis": "hari",
+        "hari": [0]
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-11T00:00:00Z",
+      "opsi": {},
+      "harapan": "2026-10-18T00:00:00Z",
+      "tanggal": "2026-10-18"
+    },
+    {
+      "nama": "hari pilihan Sabtu lintas bulan",
+      "pengulangan": {
+        "jenis": "hari",
+        "hari": [6]
+      },
+      "jam": "09:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-31T10:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-11-07T02:00:00Z",
+      "tanggal": "2026-11-07"
+    },
+    {
+      "nama": "sekali besok",
+      "pengulangan": {
+        "jenis": "sekali",
+        "tanggal": "2026-10-08"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-07T22:00:00Z",
+      "tanggal": "2026-10-08"
+    },
+    {
+      "nama": "sekali tepat di jam = habis",
+      "pengulangan": {
+        "jenis": "sekali",
+        "tanggal": "2026-10-08"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T22:00:00Z",
+      "opsi": {},
+      "harapan": null,
+      "tanggal": null
+    },
+    {
+      "nama": "sekali sudah lewat",
+      "pengulangan": {
+        "jenis": "sekali",
+        "tanggal": "2026-10-01"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": null,
+      "tanggal": null
+    },
+    {
+      "nama": "sekali di libur nasional (opsi libur)",
+      "pengulangan": {
+        "jenis": "sekali",
+        "tanggal": "2026-12-25"
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {
+        "liburNasional": true
+      },
+      "harapan": null,
+      "tanggal": null
+    },
+    {
+      "nama": "sekali di libur nasional (tanpa opsi)",
+      "pengulangan": {
+        "jenis": "sekali",
+        "tanggal": "2026-12-25"
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-12-25T00:00:00Z",
+      "tanggal": "2026-12-25"
+    },
+    {
+      "nama": "sekali dilewati",
+      "pengulangan": {
+        "jenis": "sekali",
+        "tanggal": "2026-10-08"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {
+        "lewati": ["2026-10-08"]
+      },
+      "harapan": null,
+      "tanggal": null
+    },
+    {
+      "nama": "bulanan 31 di Oktober",
+      "pengulangan": {
+        "jenis": "bulanan_tanggal",
+        "tanggal": 31
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-31T00:00:00Z",
+      "tanggal": "2026-10-31"
+    },
+    {
+      "nama": "bulanan 31 jatuh 30 November",
+      "pengulangan": {
+        "jenis": "bulanan_tanggal",
+        "tanggal": 31
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-31T08:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-11-30T00:00:00Z",
+      "tanggal": "2026-11-30"
+    },
+    {
+      "nama": "bulanan 31 jatuh 28 Februari",
+      "pengulangan": {
+        "jenis": "bulanan_tanggal",
+        "tanggal": 31
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2027-01-31T08:00:00+07:00",
+      "opsi": {},
+      "harapan": "2027-02-28T00:00:00Z",
+      "tanggal": "2027-02-28"
+    },
+    {
+      "nama": "bulanan 29 jatuh 28 Februari",
+      "pengulangan": {
+        "jenis": "bulanan_tanggal",
+        "tanggal": 29
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2027-01-30T08:00:00+07:00",
+      "opsi": {},
+      "harapan": "2027-02-28T00:00:00Z",
+      "tanggal": "2027-02-28"
+    },
+    {
+      "nama": "bulanan 31 kabisat 29 Februari",
+      "pengulangan": {
+        "jenis": "bulanan_tanggal",
+        "tanggal": 31
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2028-01-31T08:00:00+07:00",
+      "opsi": {},
+      "harapan": "2028-02-29T00:00:00Z",
+      "tanggal": "2028-02-29"
+    },
+    {
+      "nama": "bulanan 30 kabisat 29 Februari",
+      "pengulangan": {
+        "jenis": "bulanan_tanggal",
+        "tanggal": 30
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2028-02-01T08:00:00+07:00",
+      "opsi": {},
+      "harapan": "2028-02-29T00:00:00Z",
+      "tanggal": "2028-02-29"
+    },
+    {
+      "nama": "bulanan 15 tepat di jam = bulan depan",
+      "pengulangan": {
+        "jenis": "bulanan_tanggal",
+        "tanggal": 15
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-15T00:00:00Z",
+      "opsi": {},
+      "harapan": "2026-11-15T00:00:00Z",
+      "tanggal": "2026-11-15"
+    },
+    {
+      "nama": "Senin pertama",
+      "pengulangan": {
+        "jenis": "bulanan_hari_ke",
+        "ke": 1,
+        "hari": 1
+      },
+      "jam": "08:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-11-02T01:00:00Z",
+      "tanggal": "2026-11-02"
+    },
+    {
+      "nama": "Jumat terakhir Oktober",
+      "pengulangan": {
+        "jenis": "bulanan_hari_ke",
+        "ke": -1,
+        "hari": 5
+      },
+      "jam": "17:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-30T10:00:00Z",
+      "tanggal": "2026-10-30"
+    },
+    {
+      "nama": "Jumat terakhir November",
+      "pengulangan": {
+        "jenis": "bulanan_hari_ke",
+        "ke": -1,
+        "hari": 5
+      },
+      "jam": "17:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-30T18:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-11-27T10:00:00Z",
+      "tanggal": "2026-11-27"
+    },
+    {
+      "nama": "Kamis keempat",
+      "pengulangan": {
+        "jenis": "bulanan_hari_ke",
+        "ke": 4,
+        "hari": 4
+      },
+      "jam": "09:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-11-01T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-11-26T02:00:00Z",
+      "tanggal": "2026-11-26"
+    },
+    {
+      "nama": "Minggu kedua Februari",
+      "pengulangan": {
+        "jenis": "bulanan_hari_ke",
+        "ke": 2,
+        "hari": 0
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2027-01-20T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2027-02-13T23:00:00Z",
+      "tanggal": "2027-02-14"
+    },
+    {
+      "nama": "Minggu terakhir Februari",
+      "pengulangan": {
+        "jenis": "bulanan_hari_ke",
+        "ke": -1,
+        "hari": 0
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-02-01T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-02-21T23:00:00Z",
+      "tanggal": "2026-02-22"
+    },
+    {
+      "nama": "Minggu pertama = tanggal 1",
+      "pengulangan": {
+        "jenis": "bulanan_hari_ke",
+        "ke": 1,
+        "hari": 0
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-01-20T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-01-31T23:00:00Z",
+      "tanggal": "2026-02-01"
+    },
+    {
+      "nama": "tiap 2 minggu Senin",
+      "pengulangan": {
+        "jenis": "tiap_minggu",
+        "setiap": 2,
+        "hari": [1],
+        "mulai": "2026-10-05"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-18T23:00:00Z",
+      "tanggal": "2026-10-19"
+    },
+    {
+      "nama": "tiap 2 minggu mulai Rabu, Kamis pekan sama",
+      "pengulangan": {
+        "jenis": "tiap_minggu",
+        "setiap": 2,
+        "hari": [1, 4],
+        "mulai": "2026-10-07"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T00:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-10-07T23:00:00Z",
+      "tanggal": "2026-10-08"
+    },
+    {
+      "nama": "tiap 3 minggu mulai di masa depan",
+      "pengulangan": {
+        "jenis": "tiap_minggu",
+        "setiap": 3,
+        "hari": [2],
+        "mulai": "2026-11-01"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {},
+      "harapan": "2026-11-16T23:00:00Z",
+      "tanggal": "2026-11-17"
+    },
+    {
+      "nama": "tiap 2 minggu dilewati sekali",
+      "pengulangan": {
+        "jenis": "tiap_minggu",
+        "setiap": 2,
+        "hari": [1],
+        "mulai": "2026-10-05"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T12:00:00+07:00",
+      "opsi": {
+        "lewati": ["2026-10-19"]
+      },
+      "harapan": "2026-11-01T23:00:00Z",
+      "tanggal": "2026-11-02"
+    },
+    {
+      "nama": "tiap 4 minggu lintas tahun",
+      "pengulangan": {
+        "jenis": "tiap_minggu",
+        "setiap": 4,
+        "hari": [3],
+        "mulai": "2026-12-02"
+      },
+      "jam": "07:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-12-02T23:00:00Z",
+      "opsi": {},
+      "harapan": "2026-12-30T00:00:00Z",
+      "tanggal": "2026-12-30"
+    },
+    {
+      "nama": "harian lewati besok",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T06:00:00+07:00",
+      "opsi": {
+        "lewati": ["2026-10-08"]
+      },
+      "harapan": "2026-10-08T22:00:00Z",
+      "tanggal": "2026-10-09"
+    },
+    {
+      "nama": "hari kerja lewati dua hari",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-09T07:00:00+07:00",
+      "opsi": {
+        "lewati": ["2026-10-12", "2026-10-13"]
+      },
+      "harapan": "2026-10-13T23:00:00Z",
+      "tanggal": "2026-10-14"
+    },
+    {
+      "nama": "lewati tanggal yang tidak cocok tidak berpengaruh",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-09T07:00:00+07:00",
+      "opsi": {
+        "lewati": ["2026-10-10"]
+      },
+      "harapan": "2026-10-11T23:00:00Z",
+      "tanggal": "2026-10-12"
+    },
+    {
+      "nama": "libur Natal dilompati, cuti bersama tetap bunyi",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-12-23T07:00:00+07:00",
+      "opsi": {
+        "liburNasional": true
+      },
+      "harapan": "2026-12-23T23:00:00Z",
+      "tanggal": "2026-12-24"
+    },
+    {
+      "nama": "libur Natal dilompati ke Senin",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-12-24T07:00:00+07:00",
+      "opsi": {
+        "liburNasional": true
+      },
+      "harapan": "2026-12-27T23:00:00Z",
+      "tanggal": "2026-12-28"
+    },
+    {
+      "nama": "Idulfitri 2027 dua hari dilompati",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "04:30",
+      "zona": "Asia/Jakarta",
+      "setelah": "2027-03-09T05:00:00+07:00",
+      "opsi": {
+        "liburNasional": true
+      },
+      "harapan": "2027-03-11T21:30:00Z",
+      "tanggal": "2027-03-12"
+    },
+    {
+      "nama": "Idulfitri 2027 tanpa opsi libur",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "04:30",
+      "zona": "Asia/Jakarta",
+      "setelah": "2027-03-09T05:00:00+07:00",
+      "opsi": {},
+      "harapan": "2027-03-09T21:30:00Z",
+      "tanggal": "2027-03-10"
+    },
+    {
+      "nama": "17 Agustus dilompati",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-08-14T07:00:00+07:00",
+      "opsi": {
+        "liburNasional": true
+      },
+      "harapan": "2026-08-17T23:00:00Z",
+      "tanggal": "2026-08-18"
+    },
+    {
+      "nama": "tahun baru dilompati",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-12-31T07:00:00+07:00",
+      "opsi": {
+        "liburNasional": true
+      },
+      "harapan": "2027-01-01T23:00:00Z",
+      "tanggal": "2027-01-02"
+    },
+    {
+      "nama": "libur dan lewati bersamaan",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-12-23T07:00:00+07:00",
+      "opsi": {
+        "liburNasional": true,
+        "lewati": ["2026-12-24"]
+      },
+      "harapan": "2026-12-27T23:00:00Z",
+      "tanggal": "2026-12-28"
+    },
+    {
+      "nama": "tahun tanpa data libur tidak dilompati",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2027-12-31T07:00:00+07:00",
+      "opsi": {
+        "liburNasional": true
+      },
+      "harapan": "2027-12-31T23:00:00Z",
+      "tanggal": "2028-01-01"
+    },
+    {
+      "nama": "WITA",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Makassar",
+      "setelah": "2026-10-07T00:00:00Z",
+      "opsi": {},
+      "harapan": "2026-10-07T21:00:00Z",
+      "tanggal": "2026-10-08"
+    },
+    {
+      "nama": "WIT hari kerja",
+      "pengulangan": {
+        "jenis": "hari_kerja"
+      },
+      "jam": "05:00",
+      "zona": "Asia/Jayapura",
+      "setelah": "2026-10-09T21:00:00Z",
+      "opsi": {},
+      "harapan": "2026-10-11T20:00:00Z",
+      "tanggal": "2026-10-12"
+    },
+    {
+      "nama": "WIB lewat tengah malam UTC",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "06:00",
+      "zona": "Asia/Jakarta",
+      "setelah": "2026-10-07T23:30:00Z",
+      "opsi": {},
+      "harapan": "2026-10-08T23:00:00Z",
+      "tanggal": "2026-10-09"
+    },
+    {
+      "nama": "New York jam maju: 02.30 jadi 03.30",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "02:30",
+      "zona": "America/New_York",
+      "setelah": "2026-03-07T12:00:00Z",
+      "opsi": {},
+      "harapan": "2026-03-08T07:30:00Z",
+      "tanggal": "2026-03-08"
+    },
+    {
+      "nama": "New York jam mundur: 01.30 pertama",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "01:30",
+      "zona": "America/New_York",
+      "setelah": "2026-10-31T12:00:00Z",
+      "opsi": {},
+      "harapan": "2026-11-01T05:30:00Z",
+      "tanggal": "2026-11-01"
+    },
+    {
+      "nama": "New York jam mundur: tidak bunyi dua kali",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "01:30",
+      "zona": "America/New_York",
+      "setelah": "2026-11-01T05:30:00Z",
+      "opsi": {},
+      "harapan": "2026-11-02T06:30:00Z",
+      "tanggal": "2026-11-02"
+    },
+    {
+      "nama": "London jam maju: 01.30 jadi 02.30",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "01:30",
+      "zona": "Europe/London",
+      "setelah": "2026-03-28T12:00:00Z",
+      "opsi": {},
+      "harapan": "2026-03-29T01:30:00Z",
+      "tanggal": "2026-03-29"
+    },
+    {
+      "nama": "London jam mundur: 01.30 pertama",
+      "pengulangan": {
+        "jenis": "harian"
+      },
+      "jam": "01:30",
+      "zona": "Europe/London",
+      "setelah": "2026-10-24T12:00:00Z",
+      "opsi": {},
+      "harapan": "2026-10-25T00:30:00Z",
+      "tanggal": "2026-10-25"
+    }
+  ]
+}

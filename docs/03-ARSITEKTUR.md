@@ -14,7 +14,7 @@ berbeda**. Bila bertentangan dengan kode template, ikuti template kecuali disebu
 | AntiKebo untuk PC | Aplikasi Tauri v2 di Windows (repo yang sama, folder `pc/`). Spesifikasi `09-APLIKASI-PC.md` |
 | AgentBuff (luar) | Masuk, cek hak, MCP otomatis, **daftar kanal, kirim pesan, buat suara** (kontrak `05-INTEGRASI-AGENTBUFF.md`) |
 
-Stack sama dengan template, ditambah: `web-push`, `date-fns` v4 + `@date-fns/tz`, pustaka pindai QR
+Stack sama dengan template, ditambah: `web-push`, `@date-fns/tz` (zona waktu), pustaka pindai QR
 untuk peramban tanpa `BarcodeDetector` (mis. `jsqr`), `qrcode` untuk membuat kode, Tauri v2 +
 Rust untuk aplikasi PC.
 
