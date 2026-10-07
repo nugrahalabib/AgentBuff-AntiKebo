@@ -2,11 +2,11 @@
 
 ## Status terkini
 
-- **2026-10-07:** **P0 dan P1 selesai**: kerangka aplikasi + server tiruan AgentBuff (P0), dan
-  rancangan semua layar sebagai komponen siap pakai di `src/components/layar/*` dengan galeri
-  `/prototipe` (P1). Paket cloud berikutnya: **P2** (data, pengulangan, layanan alarm, template,
-  Komitmen). Paket laptop L1 (pintu AgentBuff) bisa jalan paralel; acuannya
-  `tests/integrasi/tiruan-kontrak.test.ts`.
+- **2026-10-07:** **P0, P1, P2 selesai**: kerangka + server tiruan (P0), rancangan semua layar
+  sebagai komponen di `src/components/layar/*` (P1), data alarm, mesin pengulangan, libur
+  nasional, layanan alarm/template/preferensi, dan Mode Komitmen (P2). Paket cloud berikutnya:
+  **P3** (penjadwal, kejadian, SSE, perangkat siaga). Paket laptop L1 (pintu AgentBuff) bisa
+  jalan paralel; acuannya `tests/integrasi/tiruan-kontrak.test.ts`.
 - Menunggu Chief: K-07 (`KEPUTUSAN.md`).
 
 (Perbarui bagian ini di akhir setiap sesi: tanggal, paket yang selesai, paket berikutnya.)

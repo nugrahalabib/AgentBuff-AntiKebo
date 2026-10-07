@@ -1,0 +1,35 @@
+{
+  "tahun": 2027,
+  "sumber": "SKB Menteri Agama, Menteri Ketenagakerjaan, dan Menteri PANRB Nomor 1205 Tahun 2026, Nomor 3 Tahun 2026, dan Nomor 2 Tahun 2026 tentang Hari Libur Nasional dan Cuti Bersama Tahun 2027",
+  "diperiksa": "2026-10-07",
+  "libur": [
+    { "tanggal": "2027-01-01", "nama": "Tahun Baru 2027 Masehi" },
+    { "tanggal": "2027-01-05", "nama": "Isra Mikraj Nabi Muhammad SAW 1448 Hijriah" },
+    { "tanggal": "2027-02-06", "nama": "Tahun Baru Imlek 2578 Kongzili" },
+    { "tanggal": "2027-03-08", "nama": "Hari Suci Nyepi (Tahun Baru Saka 1949)" },
+    { "tanggal": "2027-03-10", "nama": "Idulfitri 1448 Hijriah" },
+    { "tanggal": "2027-03-11", "nama": "Idulfitri 1448 Hijriah" },
+    { "tanggal": "2027-03-26", "nama": "Wafat Yesus Kristus" },
+    { "tanggal": "2027-03-28", "nama": "Hari Kebangkitan Yesus Kristus (Paskah)" },
+    { "tanggal": "2027-05-01", "nama": "Hari Buruh Internasional" },
+    { "tanggal": "2027-05-06", "nama": "Kenaikan Yesus Kristus" },
+    { "tanggal": "2027-05-17", "nama": "Iduladha 1448 Hijriah" },
+    { "tanggal": "2027-05-20", "nama": "Hari Raya Waisak 2571 BE" },
+    { "tanggal": "2027-06-01", "nama": "Hari Lahir Pancasila" },
+    { "tanggal": "2027-06-06", "nama": "Tahun Baru Islam 1449 Hijriah" },
+    { "tanggal": "2027-08-15", "nama": "Maulid Nabi Muhammad SAW" },
+    { "tanggal": "2027-08-17", "nama": "Proklamasi Kemerdekaan" },
+    { "tanggal": "2027-12-25", "nama": "Kelahiran Yesus Kristus" },
+    { "tanggal": "2027-12-26", "nama": "Isra Mikraj Nabi Muhammad SAW 1449 Hijriah" }
+  ],
+  "cutiBersama": [
+    { "tanggal": "2027-02-05", "nama": "Cuti bersama Tahun Baru Imlek" },
+    { "tanggal": "2027-03-09", "nama": "Cuti bersama Idulfitri" },
+    { "tanggal": "2027-03-12", "nama": "Cuti bersama Idulfitri" },
+    { "tanggal": "2027-03-15", "nama": "Cuti bersama Idulfitri" },
+    { "tanggal": "2027-03-25", "nama": "Cuti bersama Wafat Yesus Kristus" },
+    { "tanggal": "2027-05-18", "nama": "Cuti bersama Iduladha" },
+    { "tanggal": "2027-05-19", "nama": "Cuti bersama Waisak" },
+    { "tanggal": "2027-12-24", "nama": "Cuti bersama Kelahiran Yesus Kristus" }
+  ]
+}

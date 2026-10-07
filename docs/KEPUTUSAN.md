@@ -97,3 +97,32 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
 - **K-32 (2026-10-07, P1) Navigasi final 4 tab: Alarm, Siaga, Riwayat, Pengaturan.** HP: bilah tab
   kaca di bawah; laptop: bilah samping kaca dengan tombol "Alarm baru". Tab untuk halaman yang belum
   ada tidak ditampilkan (bukan tab mati).
+- **K-33 (2026-10-07, P2) "Jangan bunyi saat libur nasional" hanya melompati libur nasional,
+  bukan cuti bersama.** Data cuti bersama tetap disimpan (untuk keterangan di layar). Alasan:
+  banyak pekerja swasta tetap masuk saat cuti bersama; alarm yang diam di hari kerja lebih
+  berbahaya daripada alarm yang berbunyi di hari libur. Tahun tanpa data = tidak ada yang dilompati.
+- **K-34 (2026-10-07, P2) Mode Komitmen juga menolak perubahan yang melemahkan alarm** selama
+  terkunci: soal lebih ringan atau jenisnya diganti, kode QR ditukar, jumlah benar dikurangi, jatah
+  atau durasi tunda ditambah, batas berhenti sendiri ditambahkan atau dipersingkat, "Masih bangun?"
+  dimatikan, kanal spam atau aturan rumah pintar dikurangi. Ditambah aturan PRD (hapus, matikan,
+  lewati, mundurkan) dan mematikan Komitmen itu sendiri. Jam tidur dan zona juga tidak bisa diubah
+  bila membuka kunci yang sedang berjalan. Jendela kunci = dari jam tidur terakhir sebelum jadwal
+  sampai jadwal (alarm siang ikut terkunci sejak jam tidur malam sebelumnya). Alasan: tanpa ini
+  Komitmen bisa dibobol dengan mengubah soal jadi 1 soal ringan dan tunda 5 x 15 menit. Semua di
+  satu modul murni (`src/lib/alarm/komitmen.ts`), mudah dilonggarkan bila Chief mau.
+- **K-35 (2026-10-07, P2) Template bawaan hidup di kode, bukan di DB.** Lima template PRD B10,
+  nama dan judul ikut bahasa pengguna, tidak bisa diubah (simpan sebagai template baru). Template
+  buatan pengguna di tabel `template_alarm` ber-RLS, nama unik tanpa beda huruf besar/kecil.
+- **K-36 (2026-10-07, P2) Gandakan alarm menghasilkan salinan nonaktif tanpa Komitmen.** Alasan:
+  salinan aktif langsung berbunyi bersamaan dengan aslinya dan bisa langsung terkunci.
+- **K-37 (2026-10-07, P2) Alarm yang sedang berbunyi tidak bisa diubah, dihapus, dimatikan, atau
+  dilewati dari mana pun** (`sedang_berbunyi`, MCP `alarm_ringing`). Batal lewati dan gandakan tetap
+  boleh. Alasan: aturan teknis 2 (satu-satunya jalan berhenti adalah soal di layar alarm).
+- **K-38 (2026-10-07, P2) Aturan jam musim panas** untuk pengguna di zona yang memakainya: jam yang
+  tidak ada bergeser maju sebesar celahnya, jam yang muncul dua kali memakai kemunculan pertama
+  (alarm tidak berbunyi dua kali). Dihitung sendiri dari `tzOffset` karena `TZDate` tidak konsisten
+  antar zona. Indonesia tidak terdampak.
+- **K-39 (2026-10-07, P2) Alarm aktif yang tidak akan pernah berbunyi lagi ditolak** (sekali yang
+  sudah lewat, melewati satu-satunya tanggal). Alasan: invarian "alarm aktif = tepat satu kejadian
+  menunggu" tidak boleh punya pengecualian. Menyalakan lagi alarm sekali yang sudah lewat memakai
+  kemunculan jam itu berikutnya, seperti jam weker.

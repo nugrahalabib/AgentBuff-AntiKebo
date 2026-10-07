@@ -3,6 +3,45 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P2): Otak alarm: pengulangan, lewati, libur, template, Mode Komitmen
+
+**Baru**
+- AntiKebo sekarang bisa menyimpan alarm lengkap: jam, agenda, pengulangan, karakter, bunyi, soal,
+  tunda, spam chat, rumah pintar, Komitmen, "Masih bangun?", libur nasional, dan batas berhenti.
+  Layarnya disambungkan di P8; agen AgentBuff di P12.
+- Semua pengulangan benar-benar jalan: sekali, setiap hari, hari kerja, akhir pekan, hari pilihan,
+  tiap N minggu, bulanan tanggal X (tanggal 31 jatuh ke hari terakhir bulan), dan bulanan hari ke-N
+  (mis. Senin pertama, Jumat terakhir).
+- **Lewati sekali** atau lewati tanggal tertentu tanpa mematikan alarm, dan bisa dibatalkan.
+- **Libur nasional 2026 dan 2027** sesuai SKB 3 Menteri. Kalau dicentang, alarm diam saat tanggal
+  merah. Cuti bersama tetap berbunyi.
+- **Lima template bawaan:** Bangun kerja, Kuliah pagi, Sholat Subuh, Pengingat penting siang,
+  Nuklir. Pengguna juga bisa menyimpan template sendiri (sampai 20).
+- **Mode Komitmen** bekerja: dari jam tidur sampai alarm berbunyi, alarm tidak bisa dihapus,
+  dimatikan, dilewati, dimundurkan, atau dibuat lebih ringan. Memajukan jam dan menambah alarm
+  tetap boleh. Pesannya menyebut jam kapan kunci terbuka.
+- Alarm yang sedang berbunyi tidak bisa diubah atau dihapus dari mana pun. Satu-satunya jalan
+  tetap menjawab soal.
+- Pengaturan dasar tersimpan: nama panggilan, zona waktu, bahasa, jam tidur, bawaan alarm baru,
+  pengingat malam. Pindah zona waktu ikut memindahkan jadwal semua alarm.
+- Pesan galat sudah dalam bahasa pengguna (Indonesia atau Inggris), tanpa istilah teknis.
+
+**Keputusan**
+- K-33 sampai K-39 (`KEPUTUSAN.md`).
+
+**Masih butuh Chief**
+- Bila Mode Komitmen terasa terlalu ketat (K-34: juga menolak membuat soal lebih ringan), bilang
+  saja; aturannya ada di satu tempat.
+- K-07 masih menunggu.
+
+**Untuk teknisi**
+- Tabel baru: `alarm`, `lewati_alarm`, `template_alarm`, `kejadian_alarm`, `langkah_kejadian`
+  (RLS ENABLE + FORCE), kolom preferensi di `pengguna`. Indeks unik parsial menjamin satu kejadian
+  menunggu per alarm.
+- Mesin pengulangan murni + 57 contoh emas (dicek silang Python) + tes properti fast-check.
+- `@date-fns/tz` untuk zona waktu; aturan jam musim panas sendiri (K-38).
+- Bukti: 213 tes vitest, uji RLS 22/22 di PGlite dan Postgres 16, build hijau.
+
 ## 2026-10-07 (P1): Rancangan semua layar siap dinilai
 
 **Baru**

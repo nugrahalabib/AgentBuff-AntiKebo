@@ -12,7 +12,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 |---|---|---|---|
 | P0 | Kerangka dari template Tuya + server tiruan AgentBuff | Cloud | Selesai 2026-10-07 |
 | P1 | Prototipe desain semua layar (untuk dinilai Chief) | Cloud | Selesai 2026-10-07 |
-| P2 | Data, pengulangan, layanan alarm, template, Komitmen | Cloud | Belum |
+| P2 | Data, pengulangan, layanan alarm, template, Komitmen | Cloud | Selesai 2026-10-07 |
 | P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Belum |
 | P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Belum |
 | P5 | Suara dan bunyi | Cloud | Belum |
@@ -111,16 +111,44 @@ Catatan untuk paket berikutnya:
 
 ## P2 Data, pengulangan, layanan alarm, template, Komitmen
 
+**Status: selesai 2026-10-07.** Bukti: 57 contoh emas pengulangan (dicek silang perhitungan
+Python `zoneinfo` terpisah) + 6 tes properti fast-check (termasuk "semua jenis berulang 12 kali
+naik"), 35 contoh emas Komitmen, 32 tes integrasi layanan di PGlite sebagai `antikebo_app`
+(termasuk invarian satu kejadian menunggu pada urutan tindakan acak), `deploy/uji-rls.sql` 22/22
+di PGlite dan Postgres 16 sungguhan; jaga, tsc, lint, format, 213 tes, build hijau.
+
 Rujukan: PRD B1 sampai B11, E3; arsitektur §2, §3.
 
-- [ ] Migrasi tabel alarm, lewati_alarm, template_alarm, kejadian_alarm, langkah_kejadian,
-      preferensi pengguna, RLS + `deploy/uji-rls.sql`.
-- [ ] `src/lib/jadwal/pengulangan.ts` + ≥ 40 contoh emas + tes properti; data libur nasional.
-- [ ] Layanan alarm (buat, ubah dengan ID tetap, hapus, aktif, lewati, gandakan) menjaga satu
+- [x] Migrasi tabel alarm, lewati_alarm, template_alarm, kejadian_alarm, langkah_kejadian,
+      preferensi pengguna, RLS + `deploy/uji-rls.sql`. (`0002_alarm.sql`; preferensi = kolom
+      baru di `pengguna`: nama panggilan, jam tidur, bawaan, pengingat malam, orientasi.)
+- [x] `src/lib/jadwal/pengulangan.ts` + ≥ 40 contoh emas + tes properti; data libur nasional.
+      (`tests/emas/pengulangan.json`; libur 2026 dan 2027 dari SKB 3 Menteri di
+      `src/lib/jadwal/libur/`; aturan jam musim panas pasti untuk pengguna di luar negeri.)
+- [x] Layanan alarm (buat, ubah dengan ID tetap, hapus, aktif, lewati, gandakan) menjaga satu
       kejadian `menunggu` per alarm aktif. Aturan Komitmen di satu modul murni + tes.
-- [ ] Template bawaan.
+      (`src/lib/layanan/alarm.ts`, `src/lib/alarm/komitmen.ts`; juga layanan preferensi.)
+- [x] Template bawaan. (5 template di kode + template pengguna maks 20, `src/lib/layanan/template.ts`.)
 
 Selesai bila: tes hijau, guard rls hijau, semua pengulangan benar-benar berulang.
+
+Catatan untuk paket berikutnya:
+- P3: worker mengklaim kejadian `menunggu`, lalu WAJIB memanggil `materialisasi(tx, alarm, jadwal)`
+  di transaksi yang sama supaya kejadian berikutnya langsung ada; alarm `sekali` diset
+  `aktif = false` sesudah berbunyi. Kejadian `uji` tidak terkena indeks unik menunggu.
+  `kejadianDalamRentang` siap untuk jadwal 24 jam perangkat siaga.
+- P3/P4: selama kejadian `berbunyi`/`ditunda`/`cek_bangun`, layanan menolak ubah, hapus, matikan,
+  dan lewati dengan `sedang_berbunyi` (K-37). Isi alarm disalin ke `kejadian_alarm.isi` saat mulai
+  berbunyi.
+- P8/P11: masukan web dan MCP lewat `SkemaMasukanAlarm` (isian bersarang boleh sebagian;
+  `{ jenis: "sekali" }` tanpa tanggal = kemunculan jam berikutnya). Galat layanan sudah dalam
+  bahasa pengguna (`galat.*` di kamus). Uraian pengulangan untuk layar ("Sen-Jum") belum ada:
+  dibuat di P8 memakai `t.ulang` dan `t.hari`.
+- P11: ganti zona memanggil `pindahZona` (sudah lewat `ubahPreferensi`); data libur 2028 wajib
+  ditambah begitu SKB-nya terbit (`adaDataLibur` untuk peringatan di layar).
+- P12: kode galat layanan dipetakan ke MCP: `komitmen_terkunci` → `commitment_locked` (dengan
+  `terkunciSampai`), `sedang_berbunyi` → `alarm_ringing`, `masukan` → `validation`,
+  `tidak_ditemukan` → `not_found`.
 
 ## P3 Penjadwal, kejadian, SSE, perangkat siaga
 

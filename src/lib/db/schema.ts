@@ -1,9 +1,14 @@
-import { bigserial, boolean, char, customType, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { bigserial, boolean, char, customType, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import type { AturanTuya, Bawaan, IsiTemplate, MasihBangun, Soal, Spam, Tunda } from "@/lib/alarm/isi";
+import type { Pengulangan } from "@/lib/jadwal/pengulangan";
 
 // Skema AntiKebo. Nama tabel & kolom bahasa Indonesia snake_case, waktu timestamptz (UTC).
 // Setiap tabel ber-`pengguna_id` milik pemilik WAJIB punya RLS ENABLE+FORCE + kebijakan
 // di migrasi (dijaga scripts/jaga.mjs). Hanya skema di sini; SQL-nya di src/lib/db/migrasi.
-// P0 = tabel dasar. Tabel alarm, kejadian, perangkat siaga, suara, kanal, Tuya menyusul (P2 sampai P7).
+// P0 = tabel dasar; P2 = alarm, lewati, template, kejadian, langkah, preferensi. Perangkat siaga,
+// suara, kanal, Tuya menyusul (P3 sampai P7). Impor dari src/lib hanya `import type` (drizzle-kit
+// memuat berkas ini tanpa alias jalur).
 
 const citext = customType<{ data: string }>({ dataType: () => "citext" });
 const waktu = (nama: string) => timestamp(nama, { withTimezone: true, mode: "date" });
@@ -29,6 +34,15 @@ export const pengguna = pgTable(
     terakhirMasuk: waktu("terakhir_masuk"),
     dihapusPada: waktu("dihapus_pada"),
     dibuat: dibuat(),
+    // --- preferensi (P2, PRD M)
+    /** Nama yang dipakai omelan dan sapaan. Null = nama dari AgentBuff. */
+    namaPanggilan: text("nama_panggilan"),
+    /** Jam tidur lokal "HH:MM": awal kunci Mode Komitmen dan jam pengingat malam. */
+    jamTidur: text("jam_tidur").notNull().default("22:00"),
+    /** Bawaan alarm baru (sebagian isian alarm, divalidasi `SkemaBawaan`). */
+    bawaan: jsonb("bawaan").$type<Bawaan>().notNull().default({}),
+    pengingatMalam: boolean("pengingat_malam").notNull().default(true),
+    orientasiSelesai: waktu("orientasi_selesai"),
   },
   (t) => [uniqueIndex("pengguna_agentbuff_sub_unik").on(t.agentbuffSub)],
 );
@@ -116,4 +130,140 @@ export const audit = pgTable(
     dibuat: dibuat(),
   },
   (t) => [index("audit_pengguna_idx").on(t.penggunaId, t.dibuat)],
+);
+
+// ------------------------------------------------------------ alarm (P2)
+
+/** Satu alarm. ID tetap seumur hidup (ubah tidak membuat baris baru). Isi divalidasi `SkemaIsiAlarm`. */
+export const alarm = pgTable(
+  "alarm",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    /** Jam lokal "HH:MM". */
+    jam: text("jam").notNull(),
+    /** Zona IANA saat jam itu berlaku (ikut zona pengguna; diganti bersama bila pengguna pindah zona). */
+    zona: text("zona").notNull(),
+    pengulangan: jsonb("pengulangan").$type<Pengulangan>().notNull(),
+    agendaJudul: text("agenda_judul").notNull(),
+    agendaDetail: text("agenda_detail"),
+    karakter: text("karakter").notNull(),
+    suaraId: text("suara_id"),
+    bunyi: text("bunyi").notNull(),
+    soal: jsonb("soal").$type<Soal>().notNull(),
+    tunda: jsonb("tunda").$type<Tunda>().notNull(),
+    spam: jsonb("spam").$type<Spam>().notNull(),
+    tuya: jsonb("tuya").$type<AturanTuya[]>().notNull().default([]),
+    komitmen: boolean("komitmen").notNull().default(false),
+    masihBangun: jsonb("masih_bangun").$type<MasihBangun>().notNull(),
+    liburNasional: boolean("libur_nasional").notNull().default(false),
+    /** Berhenti sendiri sesudah X menit (PRD C4). Null = tanpa batas. */
+    batasMenit: integer("batas_menit"),
+    aktif: boolean("aktif").notNull().default(true),
+    /** Template asal ("bawaan:..." atau id template pengguna), hanya catatan. */
+    dariTemplate: text("dari_template"),
+    dibuat: dibuat(),
+    diubah: waktu("diubah").notNull().defaultNow(),
+  },
+  (t) => [index("alarm_pengguna_idx").on(t.penggunaId)],
+);
+
+/** Tanggal lokal yang dilewati sebuah alarm (PRD B4). Bisa dibatalkan. */
+export const lewatiAlarm = pgTable(
+  "lewati_alarm",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    alarmId: uuid("alarm_id")
+      .notNull()
+      .references(() => alarm.id, { onDelete: "cascade" }),
+    tanggal: date("tanggal", { mode: "string" }).notNull(),
+    dibuat: dibuat(),
+  },
+  (t) => [uniqueIndex("lewati_alarm_unik").on(t.alarmId, t.tanggal), index("lewati_alarm_pengguna_idx").on(t.penggunaId)],
+);
+
+/** Template buatan pengguna (PRD B10). Template bawaan ada di kode (`src/lib/alarm/template-bawaan.ts`). */
+export const templateAlarm = pgTable(
+  "template_alarm",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    nama: text("nama").notNull(),
+    isi: jsonb("isi").$type<IsiTemplate>().notNull(),
+    dibuat: dibuat(),
+    diubah: waktu("diubah").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("template_alarm_nama_unik").on(t.penggunaId, sql`lower(${t.nama})`)],
+);
+
+/**
+ * Satu bunyi alarm. Setiap alarm aktif punya TEPAT SATU kejadian `menunggu` (indeks unik parsial)
+ * untuk jadwal berikutnya, dibuat di transaksi yang sama dengan perubahan alarm (arsitektur §4).
+ * Judul dan jam disalin supaya riwayat tetap utuh walau alarmnya dihapus.
+ */
+export const kejadianAlarm = pgTable(
+  "kejadian_alarm",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    alarmId: uuid("alarm_id").references(() => alarm.id, { onDelete: "set null" }),
+    jadwalUtc: waktu("jadwal_utc").notNull(),
+    tanggalLokal: date("tanggal_lokal", { mode: "string" }).notNull(),
+    jamLokal: text("jam_lokal").notNull(),
+    judul: text("judul").notNull(),
+    /** menunggu | berbunyi | ditunda | cek_bangun | bangun | tidak_bangun | terlewat | dibatalkan */
+    status: text("status").notNull().default("menunggu"),
+    /** Uji alarm (PRD B9): tidak dihitung skor, tidak menggeser kejadian menunggu. */
+    uji: boolean("uji").notNull().default(false),
+    jumlahTunda: integer("jumlah_tunda").notNull().default(0),
+    tundaSampai: waktu("tunda_sampai"),
+    berbunyiPada: waktu("berbunyi_pada"),
+    bangunPada: waktu("bangun_pada"),
+    terlambatDtk: integer("terlambat_dtk"),
+    /** Salinan isi alarm saat mulai berbunyi (P3). */
+    isi: jsonb("isi"),
+    dibuat: dibuat(),
+    diubah: waktu("diubah").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("kejadian_menunggu_unik")
+      .on(t.alarmId)
+      .where(sql`status = 'menunggu' and not uji`),
+    index("kejadian_jadwal_idx").on(t.status, t.jadwalUtc),
+    index("kejadian_pengguna_idx").on(t.penggunaId, t.jadwalUtc),
+  ],
+);
+
+/** Langkah terjadwal per kejadian (spam, notifikasi, Tuya, batas waktu). Diisi worker mulai P3. */
+export const langkahKejadian = pgTable(
+  "langkah_kejadian",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    kejadianId: uuid("kejadian_id")
+      .notNull()
+      .references(() => kejadianAlarm.id, { onDelete: "cascade" }),
+    jenis: text("jenis").notNull(),
+    urutan: integer("urutan").notNull().default(0),
+    jatuhTempoUtc: waktu("jatuh_tempo_utc").notNull(),
+    parameter: jsonb("parameter"),
+    /** menunggu | jalan | selesai | gagal | dibatalkan */
+    status: text("status").notNull().default("menunggu"),
+    hasil: jsonb("hasil"),
+    percobaan: integer("percobaan").notNull().default(0),
+    dibuat: dibuat(),
+    diubah: waktu("diubah").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("langkah_kejadian_unik").on(t.kejadianId, t.jenis, t.urutan), index("langkah_jatuh_tempo_idx").on(t.status, t.jatuhTempoUtc)],
 );

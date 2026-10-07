@@ -56,7 +56,8 @@ alasan). Guard `jaga` gagal bila:
 
 `access_frozen` (hak tidak aktif), `commitment_locked` (dengan jam buka), `validation`,
 `not_found`, `rate_limited`, `permission_needed` (izin AgentBuff belum diberi),
-`device_required` (aksi harus di perangkat; disertai tautan).
+`device_required` (aksi harus di perangkat; disertai tautan), `alarm_ringing` (alarm sedang
+berbunyi: ubah, hapus, matikan, lewati ditolak; agen mengirim tautan layar alarm, K-37).
 
 ## 5. `skill/SKILL.md` pendamping (isi wajib)
 
