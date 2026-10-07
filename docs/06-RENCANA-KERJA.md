@@ -14,7 +14,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P1 | Prototipe desain semua layar (untuk dinilai Chief) | Cloud | Selesai 2026-10-07 |
 | P2 | Data, pengulangan, layanan alarm, template, Komitmen | Cloud | Selesai 2026-10-07 |
 | P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Selesai 2026-10-07 |
-| P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Belum |
+| P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Selesai 2026-10-07 |
 | P5 | Suara dan bunyi | Cloud | Belum |
 | P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Belum |
 | P7 | Rumah pintar Tuya | Cloud | Belum |
@@ -200,13 +200,39 @@ Catatan untuk paket berikutnya:
 
 ## P4 Soal, tunda, Masih bangun, Misi QR, anti curang
 
+**Status: selesai 2026-10-07.** Bukti: contoh emas soal `tests/emas/soal.json` (77 kasus + PRNG +
+benih luring) dibuat oracle Python terpisah dan cocok persis dengan TypeScript, plus tes properti
+3000 benih per tingkat; 18 tes integrasi jawab (hitungan, turun tingkat, HMAC tanpa jawaban di
+DB/audit/API, tunda + jatah, Masih bangun diketuk/tidak diketuk, ingat, ketik, Misi QR benar/salah
+3 kali/kamera ditolak, gabungan, anti curang, rute token + batas laju 30/menit, luring); jsQR
+membaca kode cetakan (termasuk kecil dan warna terbalik); `uji-rls.sql` 32/32; Playwright:
+halaman cetak kode QR dan menjawab lewat sesi peramban (cek asal) di desktop dan 390 px; penjaga
+baru `jalur-alarm` (13 penjaga) terbukti menangkap pelanggaran sungguhan.
+
 Rujukan: PRD D1 sampai D8, E1, E2; arsitektur §9.
 
-- [ ] `src/lib/soal/`: hitungan 3 tingkat (aturan PRD §15), ingat angka, ketik kalimat, gabungan,
+- [x] `src/lib/soal/`: hitungan 3 tingkat (aturan PRD §15), ingat angka, ketik kalimat, gabungan,
       turun tingkat, berkas contoh emas `tests/emas/soal.json` (dipakai juga oleh Rust di P10).
-- [ ] Tunda dengan jatah, Masih bangun, kode QR (buat, halaman cetak, pindai, hash).
-- [ ] Endpoint jawab ber-batas laju; jawaban tidak pernah keluar ke peramban/log (tes).
-- [ ] Guard `jaga`: tidak ada rute tanpa sesi/token atau alat MCP yang mematikan/menunda/menjawab.
+      (Deterministik dari benih mulberry32, K-46; luring dari benih turunan kunci kejadian, K-47.)
+- [x] Tunda dengan jatah, Masih bangun, kode QR (buat, halaman cetak, pindai, hash).
+      (`src/lib/layanan/{jawab,kode-qr}.ts`, `/app/kode-qr/[id]/cetak`, `src/lib/soal/pindai.ts`;
+      transisi `lolosKejadian`, `konfirmasiBangun`, `bunyikanLagiDariCek` di `mesin.ts`.)
+- [x] Endpoint jawab ber-batas laju; jawaban tidak pernah keluar ke peramban/log (tes).
+      (`/api/kejadian/[id]/{soal,jawab,ganti-soal,masih-bangun}`, `/api/perangkat/kejadian/[id]/luring`.)
+- [x] Guard `jaga`: tidak ada rute tanpa sesi/token atau alat MCP yang mematikan/menunda/menjawab.
+      (Penjaga `jalur-alarm`, K-53.)
+
+Catatan untuk paket berikutnya:
+- P5: layar berbunyi memutar bunyi/omelan; soal datang dari `GET /api/kejadian/[id]/soal`.
+- P6: saluran `cek_tampil` (notifikasi + satu pesan kanal saat "Masih bangun?" muncul) masih tiruan.
+- P8: sambungkan `LayarBerbunyi` ke `/api/kejadian/[id]/soal` + `/jawab` (hasil `salah` = getar,
+  `benar` = titik, `tahap` = ganti ke QR, `ditunda`, `selesai`), tombol tunda ke `?tujuan=tunda`,
+  pemindai kamera memakai `bacaQrVideo` (impor dinamis jsQR), "Masih!" ke `/masih-bangun`.
+- P10: PC luring membuat soal hitungan dengan `benihLuring(kunci, i)` dan mengirim semua jawaban ke
+  `/api/perangkat/kejadian/[id]/luring`; port Rust wajib lulus `tests/emas/soal.json`.
+- P11: daftar kode QR di Pengaturan memakai `/api/app/kode-qr` (buat, ganti nama, hapus, cetak);
+  riwayat soal per kejadian lewat `riwayatSoal`.
+- P12: MCP `create_wake_code` dkk. memakai layanan kode QR (bukan layanan jawab).
 
 ## P5 Suara dan bunyi
 

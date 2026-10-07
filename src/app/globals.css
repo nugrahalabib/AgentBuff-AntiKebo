@@ -590,3 +590,22 @@ body {
     background: var(--kaca-kuat);
   }
 }
+
+/* Cetak (halaman kode QR): hanya isi yang dicetak, latar putih, tanpa kaca dan navigasi. */
+@media print {
+  .tanpa-cetak,
+  [data-cetak="sembunyi"] {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .cetak-polos {
+    background: #fff !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    border: 0 !important;
+  }
+}

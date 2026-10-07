@@ -7,7 +7,7 @@ import type { Pengulangan } from "@/lib/jadwal/pengulangan";
 // Setiap tabel ber-`pengguna_id` milik pemilik WAJIB punya RLS ENABLE+FORCE + kebijakan
 // di migrasi (dijaga scripts/jaga.mjs). Hanya skema di sini; SQL-nya di src/lib/db/migrasi.
 // P0 = tabel dasar; P2 = alarm, lewati, template, kejadian, langkah, preferensi; P3 = perangkat
-// siaga, kode sambung. Suara, kanal, Tuya menyusul (P4 sampai P7). Impor dari src/lib hanya `import type` (drizzle-kit
+// siaga, kode sambung; P4 = soal kejadian, kode QR. Suara, kanal, Tuya menyusul (P5 sampai P7). Impor dari src/lib hanya `import type` (drizzle-kit
 // memuat berkas ini tanpa alias jalur).
 
 const citext = customType<{ data: string }>({ dataType: () => "citext" });
@@ -231,6 +231,16 @@ export const kejadianAlarm = pgTable(
     terlambatDtk: integer("terlambat_dtk"),
     /** Salinan isi alarm saat mulai berbunyi (P3). */
     isi: jsonb("isi"),
+    // --- P4: "Masih bangun?" dan penutup
+    /** Kapan "Masih bangun?" tampil (status cek_bangun). */
+    cekPada: waktu("cek_pada"),
+    /** Batas mengetuk "Masih!"; lewat = alarm kembali penuh. */
+    cekBatas: waktu("cek_batas"),
+    /** Tunda dimatikan (sesudah gagal "Masih bangun?", PRD E2). */
+    tanpaTunda: boolean("tanpa_tunda").notNull().default(false),
+    /** Siapa yang menghentikan: sesi | perangkat | luring | batas. */
+    selesaiOleh: text("selesai_oleh"),
+    perangkatSelesai: uuid("perangkat_selesai"),
     dibuat: dibuat(),
     diubah: waktu("diubah").notNull().defaultNow(),
   },
@@ -320,4 +330,72 @@ export const kodeSambung = pgTable(
     dibuat: dibuat(),
   },
   (t) => [uniqueIndex("kode_sambung_hash_unik").on(t.kodeHash)],
+);
+
+// ------------------------------------------------------------ soal & kode QR (P4)
+
+/** Isi yang boleh tampil di layar alarm untuk satu soal (TANPA jawaban hitungan). */
+export type TampilSoal = { teks: string; sembunyiSetelahMs?: number; tempat?: string[] };
+
+/**
+ * Satu soal yang ditampilkan untuk sebuah kejadian (PRD D1 sampai D7). Satu baris per soal;
+ * hitungan beruntun dibawa dari soal sebelumnya. Jawaban hanya disimpan sebagai HMAC dengan garam
+ * per soal, tidak pernah dikirim ke peramban, tidak pernah dicatat.
+ */
+export const soalKejadian = pgTable(
+  "soal_kejadian",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    kejadianId: uuid("kejadian_id")
+      .notNull()
+      .references(() => kejadianAlarm.id, { onDelete: "cascade" }),
+    /** bangun | tunda */
+    tujuan: text("tujuan").notNull(),
+    /** hitungan | ingat | ketik | qr */
+    jenis: text("jenis").notNull(),
+    tingkat: text("tingkat").notNull(),
+    /** Jawaban benar berturut-turut yang dibutuhkan tahap ini. */
+    target: integer("target").notNull(),
+    /** Gabungan: tahap ke berapa (0 = hitungan, 1 = QR). */
+    tahap: integer("tahap").notNull().default(0),
+    tampil: jsonb("tampil").$type<TampilSoal>().notNull(),
+    hashJawaban: char("hash_jawaban", { length: 64 }),
+    garam: text("garam").notNull(),
+    /** Kode QR yang diterima (Misi QR). */
+    kodeQr: jsonb("kode_qr").$type<string[]>().notNull().default([]),
+    benarBeruntun: integer("benar_beruntun").notNull().default(0),
+    salahBeruntun: integer("salah_beruntun").notNull().default(0),
+    /** aktif | benar | salah | diganti */
+    status: text("status").notNull().default("aktif"),
+    dijawabPada: waktu("dijawab_pada"),
+    dibuat: dibuat(),
+  },
+  (t) => [
+    index("soal_kejadian_idx").on(t.kejadianId, t.tujuan, t.status),
+    uniqueIndex("soal_aktif_unik")
+      .on(t.kejadianId, t.tujuan)
+      .where(sql`status = 'aktif'`),
+  ],
+);
+
+/**
+ * Kode QR Misi QR (PRD D4). Isi acak 128 bit: hash-nya untuk memeriksa pindaian, isinya tersandi
+ * amplop (kripto.ts) supaya halaman cetak bisa dibuka lagi.
+ */
+export const kodeQr = pgTable(
+  "kode_qr",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    nama: text("nama").notNull(),
+    isiHash: char("isi_hash", { length: 64 }).notNull(),
+    isiTersandi: text("isi_tersandi").notNull(),
+    dibuat: dibuat(),
+  },
+  (t) => [uniqueIndex("kode_qr_hash_unik").on(t.isiHash), index("kode_qr_pengguna_idx").on(t.penggunaId)],
 );

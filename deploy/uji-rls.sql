@@ -24,6 +24,10 @@ INSERT INTO langkah_kejadian (pengguna_id, kejadian_id, jenis, jatuh_tempo_utc) 
   ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000d4', 'uji', '2030-01-01 22:00+00');
 INSERT INTO perangkat_siaga (pengguna_id, jenis, nama, token_hash) VALUES
   ('00000000-0000-4000-8000-0000000000a1', 'pc', 'PC A', repeat('e', 64));
+INSERT INTO soal_kejadian (pengguna_id, kejadian_id, tujuan, jenis, tingkat, target, tampil, hash_jawaban, garam) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000d4', 'bangun', 'hitungan', 'sedang', 2, '{"teks":"7 × 8 + 13"}', repeat('f', 64), 'garam');
+INSERT INTO kode_qr (pengguna_id, nama, isi_hash, isi_tersandi) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', 'kamar mandi', repeat('9', 64), 'AK1uji');
 
 DO $$
 DECLARE n int;
@@ -39,6 +43,8 @@ BEGIN
        + (SELECT count(*) FROM kejadian_alarm) + (SELECT count(*) FROM langkah_kejadian) INTO n;
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: data alarm terbaca tanpa konteks'; END IF;
   SELECT count(*) INTO n FROM perangkat_siaga; IF n <> 0 THEN RAISE EXCEPTION 'RLS: perangkat terbaca tanpa konteks'; END IF;
+  SELECT (SELECT count(*) FROM soal_kejadian) + (SELECT count(*) FROM kode_qr) INTO n;
+  IF n <> 0 THEN RAISE EXCEPTION 'RLS: soal atau kode QR terbaca tanpa konteks'; END IF;
 
   -- Konteks B: tidak melihat, mengubah, atau menghapus milik A.
   PERFORM set_config('app.pengguna_id', '00000000-0000-4000-8000-0000000000b2', true);
@@ -59,6 +65,10 @@ BEGIN
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: B melihat data alarm A'; END IF;
   UPDATE perangkat_siaga SET dicabut_pada = now();
   GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B mencabut perangkat A'; END IF;
+  SELECT (SELECT count(*) FROM soal_kejadian) + (SELECT count(*) FROM kode_qr) INTO n;
+  IF n <> 0 THEN RAISE EXCEPTION 'RLS: B melihat soal atau kode QR A'; END IF;
+  UPDATE soal_kejadian SET status = 'benar';
+  GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B menandai soal A benar'; END IF;
   UPDATE alarm SET aktif = false;
   GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B mematikan alarm A'; END IF;
   DELETE FROM kejadian_alarm;
@@ -79,6 +89,8 @@ BEGIN
        + (SELECT count(*) FROM kejadian_alarm) + (SELECT count(*) FROM langkah_kejadian) INTO n;
   IF n <> 5 THEN RAISE EXCEPTION 'RLS: A tidak melihat data alarmnya'; END IF;
   SELECT count(*) INTO n FROM perangkat_siaga; IF n <> 1 THEN RAISE EXCEPTION 'RLS: A tidak melihat perangkatnya'; END IF;
+  SELECT (SELECT count(*) FROM soal_kejadian) + (SELECT count(*) FROM kode_qr) INTO n;
+  IF n <> 2 THEN RAISE EXCEPTION 'RLS: A tidak melihat soal dan kode QR-nya'; END IF;
 
   -- Hash token: tepat satu baris terlihat tanpa konteks pemilik; hash lain nol.
   PERFORM set_config('app.pengguna_id', '', true);
@@ -112,7 +124,7 @@ BEGIN
       AND NOT (c.relrowsecurity AND c.relforcerowsecurity);
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: ada tabel milik pemilik tanpa ENABLE+FORCE'; END IF;
 
-  RAISE NOTICE 'uji RLS: 28/28 lulus';
+  RAISE NOTICE 'uji RLS: 32/32 lulus';
 END $$;
 
 ROLLBACK;

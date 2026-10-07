@@ -3,6 +3,37 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P4): Soal, tunda, "Masih bangun?", dan Misi QR
+
+**Baru**
+- **Soal hitungan tiga tingkat** sesuai aturan (Ringan, Sedang, Berat). Salah = soal baru, salah
+  tiga kali berturut-turut = turun satu tingkat, jadi tidak pernah buntu.
+- **Ingat angka** (6 digit, Berat 8 digit, hilang sesudah 3 detik) dan **ketik kalimat** (judul
+  agendamu atau kalimat penyemangat; huruf besar/kecil dan spasi ganda tidak dipermasalahkan).
+- **Misi QR**: buat kode QR, cetak, tempel jauh dari kasur. Saat berbunyi, alarm hanya mati kalau
+  kode itu dipindai. Kamera ditolak atau salah tiga kali = diganti 3 soal hitungan berat.
+- **Gabungan**: hitungan dulu, lalu Misi QR.
+- **Tunda** butuh satu soal ringan dan hanya selama jatahnya masih ada.
+- **"Masih bangun?"**: beberapa menit sesudah lolos, ketuk "Masih!". Kalau tidak diketuk, alarm
+  berbunyi lagi penuh tanpa tunda.
+- **Anti curang**: hanya kamu (sesi peramban) atau perangkat siagamu yang bisa menjawab, ada batas
+  kecepatan menjawab, dan jawaban soal tidak pernah dikirim ke peramban atau dicatat.
+- **PC luring**: kalau internet putus, soal di PC tetap bisa dijawab dan diperiksa ulang server
+  begitu tersambung.
+
+**Keputusan**
+- K-46 sampai K-53 (`KEPUTUSAN.md`).
+
+**Masih butuh Chief**
+- K-07 masih menunggu.
+
+**Untuk teknisi**
+- Tabel `soal_kejadian` (jawaban HMAC bergaram) dan `kode_qr` (isi tersandi + hash), RLS + uji
+  RLS 32/32. Kolom baru kejadian: `cek_pada`, `cek_batas`, `tanpa_tunda`, `selesai_oleh`.
+- `src/lib/soal/` murni dan deterministik (dipakai juga Rust di P10), contoh emas dari oracle Python.
+- Penjaga baru `jalur-alarm` (13 penjaga).
+- Bukti: 364 tes vitest, 58 uji Playwright.
+
 ## 2026-10-07 (P3): Alarm benar-benar berbunyi tepat waktu dan perangkat bisa disambung
 
 **Baru**

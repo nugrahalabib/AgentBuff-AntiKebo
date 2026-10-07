@@ -124,12 +124,14 @@ bisa dikembalikan. Efek kedip = langkah berulang tiap 3 dtk dengan batas laju Tu
 
 ## 9. Soal
 
-`src/lib/soal/` murni: pembuat soal per tingkat (aturan PRD §15), pemeriksa, turun tingkat.
-Jawaban hash (HMAC dengan garam per soal). Endpoint jawab: sesi atau token perangkat pemilik,
+`src/lib/soal/` murni dan deterministik (benih mulberry32, K-46): pembuat soal per tingkat (aturan
+PRD §15), pemeriksa, turun tingkat. Jawaban hash (HMAC-SHA256 dengan garam per soal dan kunci
+turunan `SESSION_SECRET`, K-49). Satu-satunya jalan berhenti/tunda: `src/lib/layanan/jawab.ts`
+lewat `src/lib/penjawab.ts` (dijaga penjaga `jalur-alarm`, K-53). Endpoint jawab: sesi atau token perangkat pemilik,
 kejadian `berbunyi`, batas laju 30/menit. Misi QR: perangkat membaca isi QR, server membandingkan
 hash. PC luring: soal dibuat lokal (modul Rust dengan aturan sama, dites dengan contoh emas yang
-sama), hasil disinkronkan sebagai `selesai_luring` lalu diverifikasi server (kejadian milik
-perangkat itu, waktu masuk akal).
+sama) dari benih turunan kunci kejadian, semua jawaban dikirim ke
+`/api/perangkat/kejadian/[id]/luring` lalu server menghitung ulang soal yang sama (K-47).
 
 ## 10. Skor bangun
 

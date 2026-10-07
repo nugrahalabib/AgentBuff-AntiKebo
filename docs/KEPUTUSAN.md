@@ -149,3 +149,30 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
   pengembangan dari `.env.local`, data uji dihapus lagi). Dilewati bila DB tidak ada, kecuali
   `WAJIB_PG_ASLI=1` (CI menyiapkan DB sebelum tes). Alasan: PGlite satu koneksi tidak bisa
   membuktikan SKIP LOCKED dan LISTEN lintas koneksi.
+- **K-46 (2026-10-07, P4) Soal deterministik dari benih.** Soal = fungsi(jenis, tingkat, benih)
+  dengan PRNG mulberry32 32 bit; urutan tarikan acak di `src/lib/soal/soal.ts` adalah spesifikasi
+  untuk port Rust. Contoh emas dibuat oracle Python terpisah. Server memakai benih acak kripto.
+  Bentuk pengurangan dibuat tanpa coba ulang (b dulu, lalu a > b) supaya hasil selalu ≥ 1.
+- **K-47 (2026-10-07, P4) Jawaban luring diperiksa ulang.** Soal ke-i untuk PC luring memakai benih
+  4 bait pertama SHA-256("antikebo-luring:" + kunci kejadian + ":" + i); server menghitung ulang
+  soal yang sama dan aturan turun tingkat, menerima bila target benar berturut tercapai, dan hanya
+  dalam 6 jam sesudah jadwal. PC tidak bisa memilih soal gampang.
+- **K-48 (2026-10-07, P4) Kode QR: isi tersandi amplop + hash.** Hash untuk mencocokkan pindaian,
+  isi tersandi supaya halaman cetak bisa dibuka lagi kapan saja. Maks 10 kode per pengguna; kode
+  yang masih dipakai alarm tidak bisa dihapus; kode milik orang lain ditolak saat menyimpan alarm.
+- **K-49 (2026-10-07, P4) Jawaban disimpan sebagai HMAC-SHA256 bergaram** dengan kunci turunan
+  `SESSION_SECRET` (tidak bisa ditebak dari salinan DB). Bila rahasia diputar saat alarm berbunyi,
+  soal aktif tidak bisa dicocokkan; sesudah 3 salah soal baru dibuat dengan kunci baru (tidak buntu).
+- **K-50 (2026-10-07, P4) "Masih bangun?"**: sesudah soal terjawab alarm langsung diam (status
+  `cek_bangun`), waktu bangun dicatat saat itu; pertanyaan muncul N menit kemudian dan bisa diketuk
+  sampai batasnya (diterima 5 dtk lebih awal untuk selisih jam). Tidak diketuk = berbunyi lagi penuh,
+  tunda dimatikan, soal baru. Uji alarm tidak memakai "Masih bangun?".
+- **K-51 (2026-10-07, P4) Selama ditunda, soal bangun tetap bisa dijawab** untuk mematikan alarm lebih
+  awal. Soal tunda selalu Ringan 1 kali (PRD §15).
+- **K-52 (2026-10-07, P4) Misi QR:** kode lain (termasuk kode milik sendiri yang tidak dipilih alarm)
+  dihitung salah; 3 salah berturut atau kamera ditolak = diganti hitungan Berat 3 soal (PRD D6).
+  Ketik kalimat memakai judul agenda bila paling sedikit 8 huruf, selain itu kalimat penyemangat.
+- **K-53 (2026-10-07, P4) Penjaga `jalur-alarm`**: fungsi berhenti/tunda/lolos hanya boleh dipakai
+  `mesin.ts` dan `layanan/jawab.ts`; rute yang memakai layanan jawab wajib lewat `penjawabDari`
+  (sesi pemilik + cek asal, atau token perangkatnya); modul MCP dilarang mengimpor layanan jawab
+  atau mesin status dan dilarang punya alat bernama mematikan/menunda/menjawab.

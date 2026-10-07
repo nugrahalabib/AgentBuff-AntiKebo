@@ -1,0 +1,106 @@
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import { expect, test } from "@playwright/test";
+import postgres from "postgres";
+import { aturTiruan, masukSebagai, NUGI, pantauGalat, tangkap } from "./bantu";
+
+// P4 ujung ke ujung: halaman cetak kode QR, dan menjawab soal alarm lewat SESI peramban (cek asal
+// + batas laju) sampai alarm berhenti. Kejadian berbunyi disiapkan langsung di DB pengembangan
+// (peran antikebo_worker) karena layar berbunyi baru disambung di P8.
+
+test.describe.configure({ mode: "serial" });
+
+function urlWorker(): string {
+  if (process.env.DATABASE_URL_WORKER) return process.env.DATABASE_URL_WORKER;
+  const f = path.resolve(process.cwd(), ".env.local");
+  const baris = existsSync(f) ? readFileSync(f, "utf8").split("\n") : [];
+  const b = baris.find((x) => x.startsWith("DATABASE_URL_WORKER="));
+  if (!b) throw new Error("DATABASE_URL_WORKER tidak ada (jalankan scripts/siapkan-lokal.sh)");
+  return b.slice("DATABASE_URL_WORKER=".length);
+}
+
+function hitung(teks: string): string {
+  const js = teks
+    .replace(/×/g, "*")
+    .replace(/−/g, "-")
+    .replace(/(\d+)²/g, "($1*$1)");
+  return String(Function(`"use strict"; return (${js});`)());
+}
+
+test.beforeEach(async () => {
+  await aturTiruan(NUGI, { hak: "ok", izin: { kabar: true, suara: true } });
+});
+
+test("kode QR: dibuat lalu halaman cetaknya menampilkan kode besar dan petunjuk", async ({ page }) => {
+  const galat = pantauGalat(page);
+  await masukSebagai(page, "Nugi Pratama");
+  await expect(page).toHaveURL(/\/app$/);
+  const asal = new URL(page.url()).origin;
+  const r = await page.request.post("/api/app/kode-qr", { data: { nama: "kamar mandi" }, headers: { Origin: asal } });
+  expect(r.status()).toBe(201);
+  const { cetak } = (await r.json()) as { cetak: string };
+  await page.goto(cetak);
+  await expect(page.getByRole("heading", { name: "Kode bangun: kamar mandi" })).toBeVisible();
+  await expect(page.getByRole("img", { name: "Kode bangun: kamar mandi" }).locator("svg")).toBeVisible();
+  await expect(page.getByText("Tempel kode ini di kamar mandi, jauh dari kasur.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cetak" })).toBeVisible();
+  await tangkap(page, "p4", "kode-qr-cetak");
+  // Tampilan cetak: navigasi dan tombol hilang.
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("button", { name: "Cetak" })).toBeHidden();
+  await page.emulateMedia({ media: "screen" });
+  expect(galat).toEqual([]);
+});
+
+test("menjawab soal alarm lewat sesi peramban: cek asal, salah, lalu benar sampai berhenti", async ({ page }) => {
+  await masukSebagai(page, "Nugi Pratama");
+  await expect(page).toHaveURL(/\/app$/);
+  const asal = new URL(page.url()).origin;
+  const sql = postgres(urlWorker(), { max: 1, onnotice: () => {} });
+  try {
+    const [p] = await sql<{ id: string }[]>`select id from pengguna where agentbuff_sub = ${NUGI}`;
+    const isi = {
+      jam: "05:00",
+      zona: "Asia/Jakarta",
+      pengulangan: { jenis: "harian" },
+      agendaJudul: "Uji e2e",
+      agendaDetail: null,
+      karakter: "ibu_galak",
+      suaraId: null,
+      bunyi: "klasik",
+      soal: { jenis: "hitungan", tingkat: "ringan", benar: 1, kodeQr: [] },
+      tunda: { jatah: 1, menit: 5 },
+      spam: { kanal: [], jedaDtk: null, batasMenit: null },
+      tuya: [],
+      komitmen: false,
+      masihBangun: { aktif: false, menit: 5, batasDtk: 60 },
+      liburNasional: false,
+      batasMenit: null,
+      aktif: true,
+    };
+    const [k] = await sql<{ id: string }[]>`
+      insert into kejadian_alarm (pengguna_id, jadwal_utc, tanggal_lokal, jam_lokal, judul, status, berbunyi_pada, isi, uji)
+      values (${p.id}, now(), current_date, '05:00', 'Uji e2e', 'berbunyi', now(), ${sql.json(isi)}, true) returning id`;
+
+    const soal = await page.request.get(`/api/kejadian/${k.id}/soal`);
+    expect(soal.status()).toBe(200);
+    const { soal: s } = (await soal.json()) as { soal: { id: string; tampil: { teks: string }; jenis: string } };
+    expect(s.jenis).toBe("hitungan");
+    const benar = hitung(s.tampil.teks);
+    expect(JSON.stringify(s)).not.toContain(`"${benar}"`);
+
+    // Tanpa asal yang sama: ditolak (CSRF).
+    const asing = await page.request.post(`/api/kejadian/${k.id}/jawab`, { data: { soalId: s.id, jawaban: benar }, headers: { Origin: "https://jahat.example" } });
+    expect(asing.status()).toBe(403);
+
+    const salah = await page.request.post(`/api/kejadian/${k.id}/jawab`, { data: { soalId: s.id, jawaban: "0" }, headers: { Origin: asal } });
+    const hs = (await salah.json()) as { hasil: string; soal: { id: string; tampil: { teks: string } } };
+    expect(hs.hasil).toBe("salah");
+    const ok = await page.request.post(`/api/kejadian/${k.id}/jawab`, { data: { soalId: hs.soal.id, jawaban: hitung(hs.soal.tampil.teks) }, headers: { Origin: asal } });
+    expect(await ok.json()).toMatchObject({ hasil: "selesai", status: "bangun" });
+    const [akhir] = await sql<{ status: string; selesai_oleh: string }[]>`select status, selesai_oleh from kejadian_alarm where id = ${k.id}`;
+    expect(akhir).toEqual({ status: "bangun", selesai_oleh: "sesi" });
+  } finally {
+    await sql.end({ timeout: 2 });
+  }
+});

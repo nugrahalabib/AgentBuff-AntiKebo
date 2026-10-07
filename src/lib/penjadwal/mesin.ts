@@ -3,6 +3,7 @@ import { isiDariBaris } from "@/lib/alarm/baris";
 import { barisDari, schema, type Tx } from "@/lib/db";
 import { materialisasi } from "@/lib/layanan/alarm";
 import {
+  saluranCekTampilTiruan,
   saluranKabarTerlewatTiruan,
   saluranNotifikasiTiruan,
   saluranSpamTiruan,
@@ -20,11 +21,12 @@ import {
  * pemanggilnya (worker, web, uji), jadi aturan transisi ada di SATU tempat. Peristiwa ke perangkat
  * dikirim pemicu DB (`kabar_kejadian`, migrasi 0003) saat transaksi berhasil.
  *
- *   menunggu ──(jadwal tiba)──▶ berbunyi ──(soal benar, P4)──▶ bangun / cek_bangun
- *      │                          │  ▲
- *      │ (> 30 mnt terlambat)     │  └──(tunda habis)── ditunda ◀──(tunda, P4)
- *      ▼                          ▼
- *   terlewat                  tidak_bangun (batas waktu, PRD C4)
+ *   menunggu ──(jadwal tiba)──▶ berbunyi ──(soal benar)──▶ cek_bangun ──(ketuk "Masih!")──▶ bangun
+ *      │                          │  ▲  ▲                     │ (Masih bangun mati: langsung bangun)
+ *      │ (> 30 mnt terlambat)     │  │  └──(tidak diketuk)────┘
+ *      ▼                          │  └──(tunda habis)── ditunda ◀──(soal tunda benar)
+ *   terlewat                      ▼
+ *                             tidak_bangun (batas waktu, PRD C4)
  */
 
 export const STATUS_AKTIF = ["berbunyi", "ditunda", "cek_bangun"] as const;
@@ -45,7 +47,27 @@ export const saluranBatas: Saluran = {
   },
 };
 
-const SALURAN_BAWAAN: Saluran[] = [saluranNotifikasiTiruan, saluranSpamTiruan, saluranTuyaTiruan, saluranKabarTerlewatTiruan, saluranBatas];
+/** Batas mengetuk "Masih bangun?" lewat: alarm kembali penuh, tanpa tunda, soal baru (PRD E2). */
+export const saluranCekBatas: Saluran = {
+  jenis: "cek_batas",
+  saatTunda: "lanjut",
+  rencana: () => [],
+  async jalankan() {
+    return { hasil: { tidakDiketuk: true }, bunyikanLagi: true };
+  },
+};
+
+const SALURAN_BAWAAN: Saluran[] = [
+  saluranNotifikasiTiruan,
+  saluranSpamTiruan,
+  saluranTuyaTiruan,
+  saluranKabarTerlewatTiruan,
+  saluranCekTampilTiruan,
+  saluranBatas,
+  saluranCekBatas,
+];
+/** Saluran milik "Masih bangun?": hanya pantas saat status cek_bangun. */
+const SALURAN_CEK = new Set(["cek_tampil", "cek_batas"]);
 let saluran: Saluran[] = SALURAN_BAWAAN;
 
 /** Ganti daftar saluran (paket P5 sampai P7 memasang implementasi asli; uji memasang pencatat). */
@@ -165,12 +187,78 @@ export async function hentikanKejadian(tx: Tx, kejadianId: string, status: "bang
   return k ?? null;
 }
 
-/** Tunda kejadian berbunyi sampai `sampai` (P4 memanggilnya sesudah soal tunda benar). Saluran `berhenti` dibatalkan. */
+export type Penghenti = { oleh: "sesi" | "perangkat" | "luring"; perangkatId?: string | null };
+
+/**
+ * Soal terjawab (layanan jawab): bila "Masih bangun?" aktif, alarm diam dan pindah ke `cek_bangun`
+ * (cek tampil N menit lagi, batas mengetuk sesudahnya); selain itu langsung `bangun`. Waktu bangun
+ * dicatat sekarang (skor dihitung dari berbunyi sampai lolos).
+ */
+export async function lolosKejadian(tx: Tx, kejadianId: string, sekarang: Date, oleh: Penghenti): Promise<BarisKejadian | null> {
+  const [k] = await tx
+    .select()
+    .from(schema.kejadianAlarm)
+    .where(and(eq(schema.kejadianAlarm.id, kejadianId), inArray(schema.kejadianAlarm.status, ["berbunyi", "ditunda"])))
+    .for("update");
+  if (!k) return null;
+  const isi = k.isi as IsiKejadian | null;
+  const penanda = { selesaiOleh: oleh.oleh, perangkatSelesai: oleh.perangkatId ?? null };
+  if (!isi?.masihBangun.aktif || k.uji) {
+    const h = await hentikanKejadian(tx, k.id, "bangun", sekarang);
+    if (h) await tx.update(schema.kejadianAlarm).set(penanda).where(eq(schema.kejadianAlarm.id, k.id));
+    return h ? { ...h, ...penanda } : null;
+  }
+  const cekPada = new Date(sekarang.getTime() + isi.masihBangun.menit * 60_000);
+  const cekBatas = new Date(cekPada.getTime() + isi.masihBangun.batasDtk * 1000);
+  const [b] = await tx
+    .update(schema.kejadianAlarm)
+    .set({ status: "cek_bangun", bangunPada: sekarang, tundaSampai: null, cekPada, cekBatas, ...penanda, diubah: sekarang })
+    .where(eq(schema.kejadianAlarm.id, k.id))
+    .returning();
+  await batalkanLangkah(tx, k.id, sekarang);
+  await tulisRencana(tx, b, saluranCekTampilTiruan, [{ jatuhTempo: cekPada }], sekarang);
+  await tulisRencana(tx, b, saluranCekBatas, [{ jatuhTempo: cekBatas }], sekarang);
+  return b;
+}
+
+/** "Masih!" diketuk dalam jendela cek: bangun. Null bila bukan saatnya (belum tampil atau sudah lewat). */
+export async function konfirmasiBangun(tx: Tx, kejadianId: string, sekarang: Date): Promise<BarisKejadian | null> {
+  const [k] = await tx
+    .update(schema.kejadianAlarm)
+    .set({ status: "bangun", diubah: sekarang })
+    .where(
+      and(
+        eq(schema.kejadianAlarm.id, kejadianId),
+        eq(schema.kejadianAlarm.status, "cek_bangun"),
+        lte(schema.kejadianAlarm.cekPada, new Date(sekarang.getTime() + 5_000)),
+        sql`${schema.kejadianAlarm.cekBatas} >= ${sekarang.toISOString()}`,
+      ),
+    )
+    .returning();
+  if (k) await batalkanLangkah(tx, kejadianId, sekarang);
+  return k ?? null;
+}
+
+/** Tidak diketuk: kembali berbunyi penuh tanpa tunda; saluran direncanakan ulang. */
+export async function bunyikanLagiDariCek(tx: Tx, kejadianId: string, sekarang: Date): Promise<BarisKejadian | null> {
+  const [k] = await tx
+    .update(schema.kejadianAlarm)
+    .set({ status: "berbunyi", tanpaTunda: true, bangunPada: null, cekPada: null, cekBatas: null, selesaiOleh: null, perangkatSelesai: null, diubah: sekarang })
+    .where(and(eq(schema.kejadianAlarm.id, kejadianId), eq(schema.kejadianAlarm.status, "cek_bangun")))
+    .returning();
+  if (!k) return null;
+  await batalkanLangkah(tx, kejadianId, sekarang);
+  const isi = k.isi as IsiKejadian | null;
+  if (isi) for (const s of saluran.filter((x) => !SALURAN_CEK.has(x.jenis) && x.jenis !== "kabar_terlewat")) await tulisRencana(tx, k, s, s.rencana(isi, sekarang, k), sekarang);
+  return k;
+}
+
+/** Tunda kejadian berbunyi sampai `sampai` (layanan jawab, sesudah soal tunda benar). Saluran `berhenti` dibatalkan. */
 export async function tundaKejadian(tx: Tx, kejadianId: string, sampai: Date, sekarang: Date): Promise<BarisKejadian | null> {
   const [k] = await tx
     .update(schema.kejadianAlarm)
     .set({ status: "ditunda", tundaSampai: sampai, jumlahTunda: sql`${schema.kejadianAlarm.jumlahTunda} + 1`, diubah: sekarang })
-    .where(and(eq(schema.kejadianAlarm.id, kejadianId), eq(schema.kejadianAlarm.status, "berbunyi")))
+    .where(and(eq(schema.kejadianAlarm.id, kejadianId), eq(schema.kejadianAlarm.status, "berbunyi"), eq(schema.kejadianAlarm.tanpaTunda, false)))
     .returning();
   if (k)
     await batalkanLangkah(
@@ -238,6 +326,7 @@ export function langkahPantas(jenis: string, statusKejadian: string): boolean {
   const s = cariSaluran(jenis);
   if (!s) return false;
   if (jenis === "kabar_terlewat") return statusKejadian === "terlewat";
+  if (SALURAN_CEK.has(jenis)) return statusKejadian === "cek_bangun";
   if (statusKejadian === "berbunyi") return true;
   return statusKejadian === "ditunda" && s.saatTunda === "lanjut";
 }
@@ -253,6 +342,11 @@ export async function catatHasilLangkah(tx: Tx, l: BarisLangkah, h: HasilLangkah
   if (!k) return;
   if (h.akhiri && (STATUS_AKTIF as readonly string[]).includes(k.status)) {
     await hentikanKejadian(tx, k.id, h.akhiri, sekarang);
+    await tx.update(schema.kejadianAlarm).set({ selesaiOleh: "batas" }).where(eq(schema.kejadianAlarm.id, k.id));
+    return;
+  }
+  if (h.bunyikanLagi && k.status === "cek_bangun") {
+    await bunyikanLagiDariCek(tx, k.id, sekarang);
     return;
   }
   if (h.ulangiPada && langkahPantas(l.jenis, k.status)) {

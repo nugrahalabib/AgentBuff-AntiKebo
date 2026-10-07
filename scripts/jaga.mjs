@@ -198,6 +198,36 @@ function bacaModulAlias(dari) {
 }
 
 // ================================================================ jalankan
+// ------------------------------------------------------- jalur mematikan alarm
+// Aturan teknis 2: tidak ada jalan mematikan, menunda, atau menjawab alarm berbunyi selain soal
+// di layar alarm (sesi pemilik atau token perangkatnya). Maka:
+//  1. fungsi transisi berhenti/tunda hanya boleh dipanggil mesin status dan layanan jawab;
+//  2. rute yang memakai layanan jawab WAJIB otentikasi lewat penjawabDari (sesi/token);
+//  3. modul MCP tidak boleh mengimpor layanan jawab atau mesin status, dan tidak boleh ada alat
+//     bernama mematikan/menunda/menjawab.
+const FUNGSI_HENTI = ["hentikanKejadian", "tundaKejadian", "lolosKejadian", "konfirmasiBangun", "bunyikanLagiDariCek"];
+const IZIN_HENTI = new Set(["src/lib/penjadwal/mesin.ts", "src/lib/layanan/jawab.ts"]);
+const IMPOR_JAWAB = /import\s+(?!type\b)[^;]*?from\s+["']@\/lib\/layanan\/jawab["']/;
+const IMPOR_MESIN = /import\s+(?!type\b)[^;]*?from\s+["']@\/lib\/penjadwal\/mesin["']/;
+const NAMA_ALAT_TERLARANG = /(dismiss|snooze|answer|solve|silence|stop|matikan|tunda|jawab|henti)/i;
+function periksaJalurAlarm(berkas) {
+  const t = [];
+  for (const { jalur, isi } of berkas) {
+    if (!IZIN_HENTI.has(jalur)) {
+      for (const f of FUNGSI_HENTI) if (new RegExp(`\\b${f}\\b`).test(isi)) t.push(`${jalur}: memakai ${f} (hanya mesin status dan layanan jawab)`);
+    }
+    const mcp = jalur.startsWith("src/lib/mcp/") || jalur.startsWith("src/app/mcp");
+    if (IMPOR_JAWAB.test(isi)) {
+      if (mcp) t.push(`${jalur}: MCP mengimpor layanan jawab`);
+      else if (!/^src\/app\/api\/.+\/route\.ts$/.test(jalur)) t.push(`${jalur}: layanan jawab hanya boleh dipakai rute API`);
+      else if (!/penjawabDari\(/.test(isi)) t.push(`${jalur}: rute jawab tanpa penjawabDari (sesi/token)`);
+    }
+    if (mcp && IMPOR_MESIN.test(isi)) t.push(`${jalur}: MCP mengimpor mesin status kejadian`);
+    if (mcp) for (const m of isi.matchAll(/\bnama:\s*"([^"]+)"/g)) if (NAMA_ALAT_TERLARANG.test(m[1])) t.push(`${jalur}: alat MCP "${m[1]}" bernama mematikan/menunda/menjawab`);
+  }
+  return t;
+}
+
 const PENJAGA = [
   {
     nama: "naskah-keras",
@@ -364,6 +394,29 @@ PENJAGA.push({
     if (nama.length < 10) return [`hanya ${nama.length} env terbaca dari src/lib/env.ts: pengurai rusak?`];
     const contoh = existsSync(path.join(AKAR, ".env.example")) ? baca(path.join(AKAR, ".env.example")) : "";
     return periksaEnvContoh(nama, contoh);
+  },
+});
+
+PENJAGA.push({
+  nama: "jalur-alarm",
+  ujiDiri: () =>
+    periksaJalurAlarm([{ jalur: "src/lib/mcp/alat.ts", isi: 'import { jawab } from "@/lib/layanan/jawab";' }]).length > 0 &&
+    periksaJalurAlarm([{ jalur: "src/app/api/x/route.ts", isi: 'import { jawab } from "@/lib/layanan/jawab"; export const POST = () => jawab();' }]).length === 1 &&
+    periksaJalurAlarm([{ jalur: "src/lib/layanan/alarm.ts", isi: 'await hentikanKejadian(tx, id, "bangun", n);' }]).length === 1 &&
+    periksaJalurAlarm([{ jalur: "src/lib/mcp/alat.ts", isi: 'alat({ nama: "snooze_alarm" })' }]).length === 1 &&
+    periksaJalurAlarm([{ jalur: "src/lib/mcp/alat.ts", isi: 'import { tundaKejadian } from "@/lib/penjadwal/mesin";' }]).length === 2 &&
+    periksaJalurAlarm([
+      { jalur: "src/app/api/x/route.ts", isi: 'import { jawab } from "@/lib/layanan/jawab"; const p = await penjawabDari(req, id, true);' },
+      { jalur: "src/lib/penjadwal/mesin.ts", isi: "await hentikanKejadian(tx, id, 'bangun', n);" },
+      { jalur: "src/lib/penjawab.ts", isi: 'import type { Penjawab } from "@/lib/layanan/jawab";' },
+      { jalur: "src/lib/mcp/alat.ts", isi: 'alat({ nama: "list_alarms" })' },
+    ]).length === 0,
+  jalankan: () => {
+    const berkas = semuaBerkas(path.join(AKAR, "src"), (p) => /\.tsx?$/.test(p)).map((p) => ({ jalur: rel(p), isi: baca(p) }));
+    const t = periksaJalurAlarm(berkas);
+    // Pengurai harus melihat rute jawab yang ada; bila tidak, penjaga ini buta.
+    if (!berkas.some((b) => b.jalur === "src/app/api/kejadian/[id]/jawab/route.ts" && IMPOR_JAWAB.test(b.isi))) t.push("rute jawab tidak terbaca: penjaga jalur-alarm rusak?");
+    return t;
   },
 });
 

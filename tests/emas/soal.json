@@ -1,0 +1,613 @@
+{
+  "keterangan": "Contoh emas soal (PRD §15, D2, D3, D8). Dibuat oracle Python terpisah (mulberry32 + aturan yang sama), dipakai tes TypeScript dan Rust (P10). Tanda minus U+2212, kali U+00D7, kuadrat U+00B2.",
+  "prng": [
+    {
+      "benih": 0,
+      "keluaran": [1144304738, 1416247, 958946056, 627933444, 2007157716, 2340967985, 2642484575, 2787370982]
+    },
+    {
+      "benih": 1,
+      "keluaran": [2693262067, 11749833, 2265367787, 4213581821, 4159151403, 1207330352, 2632122864, 3095568220]
+    },
+    {
+      "benih": 42,
+      "keluaran": [2581720956, 1925393290, 3661312704, 2876485805, 750819978, 2261697747, 1173505300, 2683257857]
+    },
+    {
+      "benih": 123456789,
+      "keluaran": [1107202814, 4169434471, 3372958138, 885470128, 1301683845, 3208624240, 3344635568, 1221959552]
+    },
+    {
+      "benih": 4294967295,
+      "keluaran": [3850105811, 813802916, 3073704848, 4054706436, 3630262831, 2315588663, 2922715533, 2042566601]
+    }
+  ],
+  "kasus": [
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 0,
+      "teks": "13 + 28",
+      "jawaban": "41"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 1,
+      "teks": "42 − 30",
+      "jawaban": "12"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 2,
+      "teks": "85 − 33",
+      "jawaban": "52"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 3,
+      "teks": "87 + 44",
+      "jawaban": "131"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 7,
+      "teks": "80 + 50",
+      "jawaban": "130"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 42,
+      "teks": "40 + 48",
+      "jawaban": "88"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 99,
+      "teks": "79 + 82",
+      "jawaban": "161"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 1000,
+      "teks": "77 − 37",
+      "jawaban": "40"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 65535,
+      "teks": "89 + 73",
+      "jawaban": "162"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 123456789,
+      "teks": "19 + 16",
+      "jawaban": "35"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 2147483647,
+      "teks": "41 − 25",
+      "jawaban": "16"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 2147483648,
+      "teks": "57 + 62",
+      "jawaban": "119"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 3000000000,
+      "teks": "52 + 45",
+      "jawaban": "97"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 4294967295,
+      "teks": "16 − 15",
+      "jawaban": "1"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 17,
+      "teks": "66 + 22",
+      "jawaban": "88"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 256,
+      "teks": "70 + 19",
+      "jawaban": "89"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 4096,
+      "teks": "89 − 88",
+      "jawaban": "1"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 77777,
+      "teks": "52 − 19",
+      "jawaban": "33"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 555555,
+      "teks": "88 − 86",
+      "jawaban": "2"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "ringan",
+      "benih": 987654321,
+      "teks": "72 + 74",
+      "jawaban": "146"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 0,
+      "teks": "10 × 8 + 29",
+      "jawaban": "109"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 1,
+      "teks": "6 × 7 − 22",
+      "jawaban": "20"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 2,
+      "teks": "11 × 5 − 13",
+      "jawaban": "42"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 3,
+      "teks": "8 × 3 + 32",
+      "jawaban": "56"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 7,
+      "teks": "3 × 8 + 7",
+      "jawaban": "31"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 42,
+      "teks": "3 × 3 + 22",
+      "jawaban": "31"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 99,
+      "teks": "10 × 6 + 17",
+      "jawaban": "77"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 1000,
+      "teks": "3 × 4 − 6",
+      "jawaban": "6"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 65535,
+      "teks": "8 × 4 + 38",
+      "jawaban": "70"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 123456789,
+      "teks": "4 × 7 + 21",
+      "jawaban": "49"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 2147483647,
+      "teks": "3 × 3 − 6",
+      "jawaban": "3"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 2147483648,
+      "teks": "10 × 9 + 6",
+      "jawaban": "96"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 3000000000,
+      "teks": "5 × 7 + 33",
+      "jawaban": "68"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 4294967295,
+      "teks": "9 × 7 − 17",
+      "jawaban": "46"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 17,
+      "teks": "9 × 3 + 9",
+      "jawaban": "36"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 256,
+      "teks": "3 × 8 + 24",
+      "jawaban": "48"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 4096,
+      "teks": "7 × 7 − 7",
+      "jawaban": "42"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 77777,
+      "teks": "6 × 7 − 39",
+      "jawaban": "3"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 555555,
+      "teks": "9 × 9 − 21",
+      "jawaban": "60"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "sedang",
+      "benih": 987654321,
+      "teks": "7 × 3 + 17",
+      "jawaban": "38"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 0,
+      "teks": "(9 + 14) × 8 − 37",
+      "jawaban": "147"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 1,
+      "teks": "9² + 40",
+      "jawaban": "121"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 2,
+      "teks": "14² + 12",
+      "jawaban": "208"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 3,
+      "teks": "(5 + 2) × 9 − 37",
+      "jawaban": "26"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 7,
+      "teks": "(10 + 14) × 8 − 16",
+      "jawaban": "176"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 42,
+      "teks": "(4 + 2) × 7 − 19",
+      "jawaban": "23"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 99,
+      "teks": "(15 + 12) × 3 − 36",
+      "jawaban": "45"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 1000,
+      "teks": "6² + 40",
+      "jawaban": "76"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 65535,
+      "teks": "(13 + 3) × 4 − 23",
+      "jawaban": "41"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 123456789,
+      "teks": "(15 + 6) × 7 − 6",
+      "jawaban": "141"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 2147483647,
+      "teks": "6² + 40",
+      "jawaban": "76"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 2147483648,
+      "teks": "(3 + 8) × 6 − 14",
+      "jawaban": "52"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 3000000000,
+      "teks": "(4 + 13) × 5 − 36",
+      "jawaban": "49"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 4294967295,
+      "teks": "12² + 13",
+      "jawaban": "157"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 17,
+      "teks": "(4 + 2) × 6 − 14",
+      "jawaban": "22"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 256,
+      "teks": "(12 + 7) × 9 − 13",
+      "jawaban": "158"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 4096,
+      "teks": "10² + 31",
+      "jawaban": "131"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 77777,
+      "teks": "9² + 29",
+      "jawaban": "110"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 555555,
+      "teks": "12² + 27",
+      "jawaban": "171"
+    },
+    {
+      "jenis": "hitungan",
+      "tingkat": "berat",
+      "benih": 987654321,
+      "teks": "(12 + 2) × 7 − 29",
+      "jawaban": "69"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "ringan",
+      "benih": 0,
+      "teks": "976465",
+      "jawaban": "976465"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "ringan",
+      "benih": 1,
+      "teks": "837132",
+      "jawaban": "837132"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "ringan",
+      "benih": 2,
+      "teks": "387873",
+      "jawaban": "387873"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "ringan",
+      "benih": 3,
+      "teks": "258168",
+      "jawaban": "258168"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "ringan",
+      "benih": 7,
+      "teks": "804058",
+      "jawaban": "804058"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "ringan",
+      "benih": 42,
+      "teks": "104587",
+      "jawaban": "104587"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "berat",
+      "benih": 0,
+      "teks": "97646552",
+      "jawaban": "97646552"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "berat",
+      "benih": 1,
+      "teks": "83713240",
+      "jawaban": "83713240"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "berat",
+      "benih": 2,
+      "teks": "38787333",
+      "jawaban": "38787333"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "berat",
+      "benih": 3,
+      "teks": "25816852",
+      "jawaban": "25816852"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "berat",
+      "benih": 7,
+      "teks": "80405897",
+      "jawaban": "80405897"
+    },
+    {
+      "jenis": "ingat",
+      "tingkat": "berat",
+      "benih": 42,
+      "teks": "10458707",
+      "jawaban": "10458707"
+    },
+    {
+      "jenis": "ketik",
+      "tingkat": "sedang",
+      "benih": 0,
+      "sumber": ["Presentasi klien jam sembilan", "Aku bangun sekarang", "Kasur bukan tempat kerja"],
+      "teks": "Kasur bukan tempat kerja",
+      "jawaban": "Kasur bukan tempat kerja"
+    },
+    {
+      "jenis": "ketik",
+      "tingkat": "sedang",
+      "benih": 1,
+      "sumber": ["Presentasi klien jam sembilan", "Aku bangun sekarang", "Kasur bukan tempat kerja"],
+      "teks": "Aku bangun sekarang",
+      "jawaban": "Aku bangun sekarang"
+    },
+    {
+      "jenis": "ketik",
+      "tingkat": "sedang",
+      "benih": 2,
+      "sumber": ["Presentasi klien jam sembilan", "Aku bangun sekarang", "Kasur bukan tempat kerja"],
+      "teks": "Kasur bukan tempat kerja",
+      "jawaban": "Kasur bukan tempat kerja"
+    },
+    {
+      "jenis": "ketik",
+      "tingkat": "sedang",
+      "benih": 3,
+      "sumber": ["Presentasi klien jam sembilan", "Aku bangun sekarang", "Kasur bukan tempat kerja"],
+      "teks": "Aku bangun sekarang",
+      "jawaban": "Aku bangun sekarang"
+    },
+    {
+      "jenis": "ketik",
+      "tingkat": "sedang",
+      "benih": 7,
+      "sumber": ["Presentasi klien jam sembilan", "Aku bangun sekarang", "Kasur bukan tempat kerja"],
+      "teks": "Aku bangun sekarang",
+      "jawaban": "Aku bangun sekarang"
+    }
+  ],
+  "luring": [
+    {
+      "kunci": "0b5a6e1e-6f39-4b5c-9a33-1c2d3e4f5a6b:2026-10-08",
+      "i": 0,
+      "benih": 2420675151
+    },
+    {
+      "kunci": "0b5a6e1e-6f39-4b5c-9a33-1c2d3e4f5a6b:2026-10-08",
+      "i": 1,
+      "benih": 2019500903
+    },
+    {
+      "kunci": "0b5a6e1e-6f39-4b5c-9a33-1c2d3e4f5a6b:2026-10-08",
+      "i": 2,
+      "benih": 747601142
+    },
+    {
+      "kunci": "0b5a6e1e-6f39-4b5c-9a33-1c2d3e4f5a6b:2026-10-08",
+      "i": 3,
+      "benih": 2091750388
+    },
+    {
+      "kunci": "uji:7c1d",
+      "i": 0,
+      "benih": 3398830097
+    },
+    {
+      "kunci": "uji:7c1d",
+      "i": 1,
+      "benih": 1145426592
+    },
+    {
+      "kunci": "uji:7c1d",
+      "i": 2,
+      "benih": 3875375240
+    },
+    {
+      "kunci": "uji:7c1d",
+      "i": 3,
+      "benih": 815660225
+    }
+  ]
+}

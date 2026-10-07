@@ -40,7 +40,7 @@ export function Shell({
 
   return (
     <>
-      <aside className="kaca fixed inset-y-3 left-3 z-30 hidden w-[248px] flex-col rounded-[28px] p-3 lg:flex">
+      <aside data-cetak="sembunyi" className="kaca fixed inset-y-3 left-3 z-30 hidden w-[248px] flex-col rounded-[28px] p-3 lg:flex">
         <Link href={href.alarm} className="flex items-center gap-2.5 px-2 pt-1 pb-4">
           <Logo ukuran={34} />
           <span className="leading-none">
@@ -79,7 +79,7 @@ export function Shell({
         <div className="mx-auto max-w-[720px]">{children}</div>
       </div>
 
-      <nav aria-label={t.navigasi.utama} className="fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-30 flex justify-center px-4 lg:hidden">
+      <nav aria-label={t.navigasi.utama} data-cetak="sembunyi" className="fixed inset-x-0 bottom-[max(14px,env(safe-area-inset-bottom))] z-30 flex justify-center px-4 lg:hidden">
         <ul className="kaca-kuat flex gap-1 rounded-full p-1.5">
           {daftar.map(({ id, label, ikon: Ikon, href: tujuan, aktif: ya }) => (
             <li key={id}>
