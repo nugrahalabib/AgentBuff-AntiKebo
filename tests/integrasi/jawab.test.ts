@@ -134,7 +134,13 @@ describe("soal hitungan", () => {
     const h = await jawab(sesi(A), id, s.id, benar);
     expect(h).toMatchObject({ hasil: "selesai", status: "bangun" });
     const audit = await u.jalan(A, (tx) => tx.select().from(schema.audit).where(eq(schema.audit.penggunaId, A)));
-    expect(JSON.stringify(audit)).not.toContain(benar);
+    // Id (UUID, nomor baris) dan waktu bisa kebetulan memuat angka jawaban: buang dulu, lalu cari
+    // jawaban sebagai bilangan utuh.
+    const teksAudit = JSON.stringify(audit)
+      .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, "<id>")
+      .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z/g, "<waktu>")
+      .replace(/"id":\d+/g, '"id":0');
+    expect(teksAudit).not.toMatch(new RegExp(`(^|\\D)${benar}(\\D|$)`));
   });
 
   it("kode sumber jawab tidak pernah mencatat jawaban ke log", () => {
