@@ -6,8 +6,7 @@
   worker detak, DB ber-RLS, deploy, penjaga, tes, CI) + server tiruan AgentBuff (`pnpm tiruan`).
   Paket cloud berikutnya: **P1** (prototipe desain semua layar). Paket laptop L1 (pintu AgentBuff)
   bisa jalan paralel; acuannya `tests/integrasi/tiruan-kontrak.test.ts`.
-- Menunggu Chief: akses tulis Claude GitHub App ke repo ini (push/PR P0 ditolak 403), K-07
-  (`KEPUTUSAN.md`).
+- Menunggu Chief: K-07 (`KEPUTUSAN.md`).
 
 (Perbarui bagian ini di akhir setiap sesi: tanggal, paket yang selesai, paket berikutnya.)
 

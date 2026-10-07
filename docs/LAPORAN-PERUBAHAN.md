@@ -35,8 +35,6 @@ Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untu
 - K-22 sampai K-29 (`KEPUTUSAN.md`). Kontrak pintu diperjelas di `05-INTEGRASI-AGENTBUFF.md` (K-25).
 
 **Masih butuh Chief**
-- **Beri Claude GitHub App akses tulis ke repo ini.** Sesi cloud P0 bisa membaca repo tetapi push dan
-  API ditolak ("Resource not accessible by integration"), jadi PR dan CI belum bisa jalan.
 - K-07 (alarm saat langganan berakhir) masih menunggu; kode belum memakai masa tenggang (P3).
 - Menilai tampilan awal dari tangkapan layar di PR (rancangan lengkap di P1).
 
