@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AntiKebo</title>
+    <link rel="stylesheet" href="gaya.css" />
+    <script src="kamus.js"></script>
+    <script src="umum.js"></script>
+    <script src="alarm.js" defer></script>
+  </head>
+  <body class="gelap">
+    <div id="berbunyi" hidden>
+      <div class="latar-bara" aria-hidden="true"></div>
+      <main class="alarm">
+        <header>
+          <div class="jam angka" id="jam"></div>
+          <h1 class="judul" id="judul"></h1>
+          <p class="detail" id="detail" hidden></p>
+          <p class="omelan" id="omelan" aria-live="polite"></p>
+          <p class="pita" id="pita" role="status" hidden></p>
+        </header>
+        <section class="kaca-gelap kartu-soal" id="kartu" aria-live="polite"></section>
+        <div class="bawah" id="bawah"></div>
+      </main>
+    </div>
+
+    <div id="pagi" class="layar-tengah pagi" hidden>
+      <div class="latar-fajar" aria-hidden="true"></div>
+      <div>
+        <h1 id="pagi-judul"></h1>
+        <p id="pagi-jam"></p>
+        <div class="agenda" id="pagi-agenda" hidden>
+          <span class="catatan" data-t="pagi.agendaHariIni"></span>
+          <b id="pagi-agenda-judul"></b>
+          <span id="pagi-agenda-detail"></span>
+        </div>
+        <p id="pagi-catatan" hidden></p>
+        <button type="button" class="oke" id="tombol-oke" data-t="pagi.oke"></button>
+      </div>
+    </div>
+
+    <div id="cek" class="layar-tengah cek" hidden>
+      <div class="latar-bara" aria-hidden="true"></div>
+      <div>
+        <h1 data-t="cek.judul"></h1>
+        <p class="sisa angka" id="cek-sisa"></p>
+        <button type="button" class="masih" id="tombol-masih" data-t="cek.tombol"></button>
+        <p class="ket" data-t="cek.ket"></p>
+        <p class="umpan salah" id="cek-galat" role="alert"></p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+[package]
+name = "antikebo-klien"
+description = "Klien HTTP + SSE aplikasi PC ke server AntiKebo (tanpa Tauri, dites ujung ke ujung di Linux)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+antikebo-inti = { path = "../inti" }
+reqwest = { version = "0.12", default-features = false, features = ["default-tls", "json", "stream"] }
+serde_json = "1"
+futures-util = "0.3"
+bytes = "1"
+tokio = { version = "1", features = ["time", "macros", "rt-multi-thread"] }

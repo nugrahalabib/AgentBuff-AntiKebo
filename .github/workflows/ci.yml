@@ -1,7 +1,7 @@
 # CI AntiKebo: penjaga, tipe, lint, format, migrasi, tes (unit + integrasi PGlite + kontrak tiruan
 # + penjadwal di Postgres 16 sungguhan), uji RLS terhadap Postgres 16, build, dan uji peramban ujung ke ujung
-# terhadap server tiruan AgentBuff. Tidak memakai rahasia apa pun: semua nilai dibuat acak
-# oleh scripts/siapkan-lokal.sh di mesin CI.
+# terhadap server tiruan AgentBuff (termasuk protokol aplikasi PC lewat `uji-pc`; build Windows di
+# pc.yml). Tidak memakai rahasia apa pun: semua nilai dibuat acak oleh scripts/siapkan-lokal.sh.
 name: CI
 
 on:
@@ -77,6 +77,14 @@ jobs:
 
       - name: Pasang Chromium untuk Playwright
         run: pnpm exec playwright install --with-deps chromium
+
+      # Penguji aplikasi PC (kode Rust yang sama dengan versi Windows) untuk tests/e2e/pc.spec.ts.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: pc
+      - name: Bangun penguji aplikasi PC (uji-pc)
+        working-directory: pc
+        run: cargo build -p antikebo-klien --bin uji-pc
 
       - name: Uji ujung ke ujung (Playwright)
         run: pnpm test:e2e

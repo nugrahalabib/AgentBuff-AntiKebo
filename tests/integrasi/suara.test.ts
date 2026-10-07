@@ -108,6 +108,15 @@ describe("naskah dan status suara per alarm", () => {
     expect((await naskah(P)).some((x) => x.teks.includes("Woy Bos"))).toBe(true);
   });
 
+  it("salinan isi kejadian lama tanpa kalimat pribadi tetap menghasilkan naskah (tidak galat)", async () => {
+    const { kamusUntuk } = await import("@/lib/i18n/kamus-server");
+    const k = { bahasa: "id", namaSapaan: "Nugi", t: kamusUntuk("id") } as Parameters<Awaited<ReturnType<typeof S>>["kalimatAlarm"]>[1];
+    const lama = { karakter: "ibu_galak", agendaJudul: "Uji", suaraId: null } as unknown as Parameters<Awaited<ReturnType<typeof S>>["kalimatAlarm"]>[0];
+    const k1 = (await S()).kalimatAlarm(lama, k);
+    expect(k1.length).toBeGreaterThan(12);
+    expect(k1.some((x) => x.jenis === "pribadi")).toBe(false);
+  });
+
   it("kalimat pribadi kasar ditolak; Kustom tanpa kalimat pribadi ditolak; Kustom = hanya kalimat pribadi", async () => {
     const P = await penggunaBernama();
     const { buatAlarm } = await L();

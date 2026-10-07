@@ -44,13 +44,16 @@ services:
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:?}
       VAPID_SUBJECT: ${VAPID_SUBJECT:?}
       OPERATOR_KABAR: ${OPERATOR_KABAR:-}
-      PC_UPDATE_PUBKEY: ${PC_UPDATE_PUBKEY:-}
+      UNDUH_DIR: /app/unduh
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DATABASE_URL: postgres://antikebo_app:${ANTIKEBO_APP_PASSWORD}@antikebo-db:5432/antikebo
       ANTIKEBO_HAK_LAJU_PER_DTK: "4"
     depends_on:
       antikebo-db:
         condition: service_healthy
+    # Pemasang aplikasi PC (/unduh/pc/*), diunggah sesi laptop saat rilis PC (docs/09 §8).
+    volumes:
+      - ${ANTIKEBO_AKAR:-/opt/antikebo}/unduh:/app/unduh:ro
     networks: [antikebo_internal, proxy]
     healthcheck:
       test: ["CMD-SHELL", 'wget -qO- http://127.0.0.1:3000/api/health | grep -q ''"ok":true''']

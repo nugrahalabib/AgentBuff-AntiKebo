@@ -11,7 +11,7 @@ CADANGAN=${ANTIKEBO_CADANGAN:-/var/lib/antikebo/backups}
 ENV=$AKAR/.env
 RAHASIA_MASUK=${ANTIKEBO_RAHASIA_MASUK:-}
 
-mkdir -p "$AKAR/data/pg" "$CADANGAN/harian"
+mkdir -p "$AKAR/data/pg" "$AKAR/unduh/pc" "$CADANGAN/harian"
 chmod 700 "$CADANGAN"
 
 acak() { openssl rand -hex "$1"; }
@@ -34,7 +34,7 @@ if [ ! -f "$ENV" ]; then
     echo "LOG_LEVEL=info"
   } > "$ENV"
   chmod 600 "$ENV"
-  echo "  .env dibuat (nilai rahasia tidak dicetak). PC_UPDATE_PUBKEY ditambahkan saat P10 dirilis."
+  echo "  .env dibuat (nilai rahasia tidak dicetak)."
 else
   echo "  .env sudah ada: dibiarkan."
 fi

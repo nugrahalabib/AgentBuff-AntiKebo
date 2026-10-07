@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AntiKebo</title>
+    <link rel="stylesheet" href="gaya.css" />
+    <script src="kamus.js"></script>
+    <script src="umum.js"></script>
+    <script src="pengaturan.js" defer></script>
+  </head>
+  <body>
+    <main class="jendela">
+      <img src="logo.svg" width="56" height="56" alt="" />
+      <h1 data-t="pc.judul"></h1>
+
+      <section id="belum" hidden>
+        <p class="ket" data-t="pc.sambungKet"></p>
+        <div id="minta">
+          <button type="button" class="tombol" id="tombol-sambung" data-t="pc.sambung"></button>
+        </div>
+        <div id="kode" class="kode" hidden>
+          <div class="catatan" data-t="pc.kodeJudul"></div>
+          <div class="nilai angka" id="nilai-kode"></div>
+          <p class="ket" data-t="pc.kodeKet"></p>
+          <p class="catatan" data-t="pc.menunggu"></p>
+          <button type="button" class="tautan" id="tombol-buka" data-t="pc.bukaLagi"></button>
+          <button type="button" class="tombol kaca kecil" id="tombol-batal" data-t="umum.batal"></button>
+        </div>
+        <p class="catatan galat" id="galat-sambung" role="alert" hidden></p>
+      </section>
+
+      <section id="sudah" hidden>
+        <p class="status" id="status"></p>
+        <p class="berikut" id="berikut"></p>
+        <div class="bagian">
+          <h2 data-t="pc.periksa"></h2>
+          <ul class="daftar" id="daftar"></ul>
+          <p class="catatan galat" id="galat-tutup" hidden></p>
+        </div>
+        <div class="bagian">
+          <ul class="daftar">
+            <li>
+              <span class="teks" id="teks-dengar"></span>
+              <button type="button" class="tombol kecil" id="tombol-tes">&#9654;</button>
+              <button type="button" class="tombol kecil" id="tombol-ya" data-t="pc.ya" hidden></button>
+              <button type="button" class="tombol kaca kecil" id="tombol-tidak" data-t="pc.tidak" hidden></button>
+            </li>
+          </ul>
+          <p class="catatan" id="hasil-dengar" hidden></p>
+        </div>
+      </section>
+
+      <footer class="kaki">
+        <span id="versi" class="angka"></span>
+        <span id="terkunci" hidden></span>
+        <button type="button" class="tombol bahaya kecil" id="tombol-putus" data-t="pc.putuskan" hidden></button>
+        <button type="button" class="tombol bahaya kecil" id="tombol-keluar" data-t="pc.keluar"></button>
+      </footer>
+    </main>
+  </body>
+</html>

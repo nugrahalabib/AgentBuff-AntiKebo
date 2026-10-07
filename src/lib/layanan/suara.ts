@@ -21,7 +21,8 @@ export type StatusSuara = { status: "siap" } | { status: "dibuat"; n: number; to
 /** Kalimat yang dibutuhkan alarm ini untuk pengguna ini (nama panggilan, bahasa, agenda). */
 export function kalimatAlarm(isi: Pick<IsiAlarm, "karakter" | "agendaJudul" | "suaraId" | "kalimatPribadi">, k: KonteksPengguna): Kalimat[] {
   const agenda = isi.agendaJudul.trim() && isi.agendaJudul.trim() !== k.t.alarmBaru.judulBawaan ? isi.agendaJudul.trim() : null;
-  return naskahAlarm({ karakter: isi.karakter, bahasa: k.bahasa, nama: k.namaSapaan, agenda, suaraId: isi.suaraId, pribadi: isi.kalimatPribadi });
+  // Salinan isi kejadian lama (sebelum kalimat pribadi ada) tidak membawa kolom ini.
+  return naskahAlarm({ karakter: isi.karakter, bahasa: k.bahasa, nama: k.namaSapaan, agenda, suaraId: isi.suaraId, pribadi: isi.kalimatPribadi ?? [] });
 }
 
 /** Masukkan kalimat yang belum punya baris naskah ke antrean (idempoten). */

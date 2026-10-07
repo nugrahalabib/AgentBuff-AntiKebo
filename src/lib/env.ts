@@ -29,7 +29,8 @@ const WAJIB_WORKER = [
 ] as const;
 
 /**
- * Belum wajib; menjadi wajib saat fiturnya dibangun (VAPID wajib sejak P6, PC_UPDATE_PUBKEY di P10).
+ * Belum wajib; menjadi wajib saat fiturnya dibangun (VAPID wajib sejak P6). `UNDUH_DIR` = folder pemasang
+ * aplikasi PC (P10, bawaan `./unduh`).
  * Daftar ini juga dibaca penjaga `env-contoh` (scripts/jaga.mjs) untuk memastikan .env.example lengkap.
  */
 export const OPSIONAL = [
@@ -41,7 +42,7 @@ export const OPSIONAL = [
   "AGENTBUFF_TIRUAN_URL",
   "TUYA_BASIS_UJI",
   "OPERATOR_KABAR",
-  "PC_UPDATE_PUBKEY",
+  "UNDUH_DIR",
 ] as const;
 
 export type NamaEnv = (typeof WAJIB_WEB)[number] | (typeof WAJIB_WORKER)[number] | (typeof OPSIONAL)[number];

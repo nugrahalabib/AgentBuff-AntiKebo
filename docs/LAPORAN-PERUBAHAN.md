@@ -3,6 +3,63 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P10): AntiKebo untuk PC, alarm yang tidak bisa ditutup
+
+**Baru**
+- **Aplikasi AntiKebo untuk PC (Windows 10 dan 11).** Pasang sekali, tekan **Sambungkan PC ini**,
+  browser terbuka, tekan **Sambungkan**, selesai. Sesudah itu aplikasi diam di baki dan menyala
+  sendiri saat Windows hidup.
+- **Saat alarm:** layar alarm muncul menutupi layar, selalu di depan, tidak bisa ditutup, Alt+F4
+  tidak mempan. Bunyi alarm + omelan diputar ke semua speaker (speaker laptop tetap bunyi walau
+  headset tersambung) dan volume dinaikkan ke penuh terus selama berbunyi. Monitor tambahan ditutup
+  layar gelap "Lihat layar utama".
+- **Berhenti hanya dengan soal.** Jawab di PC, atau di HP/web: begitu soal terjawab di mana pun,
+  PC ikut berhenti ("Soalnya sudah dijawab di perangkat lain"). Ada tunda (kalau jatahnya masih ada)
+  dan "Masih bangun?".
+- **Internet putus?** PC tetap berbunyi tepat waktu dari jadwal yang dipegangnya, dan memberi soal
+  hitungan dari PC sendiri. Jawabannya dikirim dan diperiksa ulang server begitu internet kembali.
+- PC tidak tidur selama ada alarm malam itu (layar boleh mati). Keluar dari aplikasi dikunci selama
+  alarm berbunyi dan selama Mode Komitmen aktif.
+- Kalau proses AntiKebo ditutup paksa saat siaga, ia menyala lagi sendiri dalam sekitar 1 detik.
+- Jendela pengaturan kecil: status sambung, alarm berikutnya, daftar periksa (menyala saat Windows
+  hidup, tidak tidur, laptop ditutup sambil dicas dengan tombol **Perbaiki**, speaker, dicas), tes
+  bunyi "Kamu dengar? Ya / Tidak".
+- **Halaman unduh** (Pengaturan, AntiKebo untuk PC): tombol unduh, panduan layar biru Windows 3
+  langkah, dan sidik SHA-256 untuk memastikan berkasnya asli. Selama pemasang belum dirilis,
+  halaman ini jujur bilang sedang disiapkan.
+
+**Diubah**
+- Jadwal yang dibaca perangkat siaga kini membawa info Mode Komitmen, awal siaga, nama sapaan, dan
+  bahasa (dipakai aplikasi PC).
+- Gambar layar biru di halaman unduh dirapikan (teks tidak lagi bertumpuk dengan tombol) dan memakai
+  nama berkas yang benar.
+
+**Diperbaiki**
+- Alarm lama yang disimpan sebelum ada kalimat omelan pribadi tidak lagi membuat layar alarm galat.
+
+**Keputusan**
+- K-86 sampai K-95 (`KEPUTUSAN.md`). Yang terasa pengguna: layar alarm PC adalah tampilan bawaan
+  aplikasi, jadi tetap muncul walau internet putus (K-86); Misi QR di PC disarankan dipindai lewat HP
+  atau diganti soal hitungan (K-89).
+
+**Masih butuh Chief**
+- K-07 masih menunggu.
+- **Wajib diuji di PC Windows asli (L2):** daftar `09-APLIKASI-PC.md` §9 (layar terkunci, volume 10%
+  dan bisu, Alt+F4, cabut internet, matikan satu proses, headset Bluetooth, laptop ditutup, dua
+  monitor, buka dua kali, suara bawaan Windows).
+- **L3:** buat kunci pembaruan aplikasi PC dan simpan sebagai rahasia repo, lalu rilis `pc-v0.1.0`.
+
+**Untuk teknisi**
+- Workspace `pc/`: `inti` (logika murni + contoh emas yang sama dengan TypeScript), `klien` (HTTP +
+  SSE + penguji `uji-pc`), `src-tauri` (aplikasi), `ui` (jendela). `cd pc && cargo test --workspace`.
+- `tests/e2e/pc.spec.ts` menjalankan `pc/target/debug/uji-pc` melawan server + worker sungguhan
+  (dilewati bila belum dibangun: `cd pc && cargo build -p antikebo-klien --bin uji-pc`).
+- CI baru `.github/workflows/pc.yml` (Linux + Windows, pemasang NSIS sebagai artefak, terjemahan
+  pemasang Bahasa Indonesia sendiri karena NSIS Tauri tidak punya); env `PC_UPDATE_PUBKEY` diganti
+  `UNDUH_DIR` (folder pemasang, dipasang ke kontainer web).
+- Bukti: 613 tes vitest, 29 tes Rust, 99 uji Playwright mode produksi (desktop + 390 px), aplikasi
+  Tauri asli dijalankan di layar virtual Linux melawan server + worker lokal.
+
 ## 2026-10-07 (P9): HP jadi jam meja yang bisa membangunkan
 
 **Baru**

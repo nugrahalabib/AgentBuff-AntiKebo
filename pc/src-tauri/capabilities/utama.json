@@ -1,0 +1,13 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "utama",
+  "description": "Jendela pengaturan, jendela alarm, dan lapisan monitor tambahan.",
+  "windows": [
+    "utama",
+    "alarm",
+    "lapisan-*"
+  ],
+  "permissions": [
+    "core:default"
+  ]
+}

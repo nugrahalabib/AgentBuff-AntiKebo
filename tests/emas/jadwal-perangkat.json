@@ -1,0 +1,60 @@
+{
+  "keterangan": "Contoh jawaban GET /api/perangkat/jadwal (salinan jadwal 24 jam perangkat siaga). Kunci-kuncinya dijaga tes integrasi TypeScript (tests/integrasi/penjadwal.test.ts) dan dibaca tes Rust aplikasi PC (pc/inti/tests/jadwal.rs), jadi bentuknya tidak bisa berubah sebelah.",
+  "waktuServer": "2026-10-07T21:59:58.000Z",
+  "nama": "Nugi",
+  "bahasa": "id",
+  "kejadian": [
+    {
+      "kunci": "0b5a6e1e-6f39-4b5c-9a33-1c2d3e4f5a6b:2026-10-08",
+      "kejadianId": "7c1d2e3f-4a5b-4c6d-8e7f-90a1b2c3d4e5",
+      "alarmId": "0b5a6e1e-6f39-4b5c-9a33-1c2d3e4f5a6b",
+      "jadwalUtc": "2026-10-07T22:00:00.000Z",
+      "tanggal": "2026-10-08",
+      "jam": "05:00",
+      "status": "menunggu",
+      "judul": "Presentasi",
+      "detail": "Ruang rapat lantai 3",
+      "bunyi": "naik",
+      "karakter": "emak",
+      "suaraId": null,
+      "soal": { "jenis": "hitungan", "tingkat": "sedang", "benar": 2 },
+      "tunda": { "jatah": 1, "menit": 5, "terpakai": 0 },
+      "tundaSampai": null,
+      "cekPada": null,
+      "cekBatas": null,
+      "uji": false,
+      "komitmen": true,
+      "kunciMulai": "2026-10-07T15:00:00.000Z",
+      "siagaMulai": "2026-10-07T14:00:00.000Z",
+      "omelan": [
+        { "jenis": "umum", "teks": "Nugi, bangun! Matahari sudah nunggu.", "klip": "9f2c1a0b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8" },
+        { "jenis": "agenda", "teks": "Nugi, ingat Presentasi!", "klip": null },
+        { "jenis": "waktu", "menit": 3, "teks": "Sudah 3 menit, Nugi!", "klip": null }
+      ]
+    },
+    {
+      "kunci": "4d3c2b1a-0f9e-4d8c-b7a6-5f4e3d2c1b0a:2026-10-08",
+      "kejadianId": null,
+      "alarmId": "4d3c2b1a-0f9e-4d8c-b7a6-5f4e3d2c1b0a",
+      "jadwalUtc": "2026-10-08T06:00:00.000Z",
+      "tanggal": "2026-10-08",
+      "jam": "13:00",
+      "status": "menunggu",
+      "judul": "Alarm",
+      "detail": null,
+      "bunyi": "klasik",
+      "karakter": "santai",
+      "suaraId": "suara-1",
+      "soal": { "jenis": "qr", "tingkat": "ringan", "benar": 1 },
+      "tunda": { "jatah": 0, "menit": 5, "terpakai": 0 },
+      "tundaSampai": null,
+      "cekPada": null,
+      "cekBatas": null,
+      "uji": false,
+      "komitmen": false,
+      "kunciMulai": null,
+      "siagaMulai": "2026-10-07T15:00:00.000Z",
+      "omelan": []
+    }
+  ]
+}

@@ -59,6 +59,7 @@ test("menjawab soal alarm lewat sesi peramban: cek asal, salah, lalu benar sampa
       masihBangun: { aktif: false, menit: 5, batasDtk: 60 },
       liburNasional: false,
       batasMenit: null,
+      kalimatPribadi: [],
       aktif: true,
     };
     const [k] = await sql<{ id: string }[]>`

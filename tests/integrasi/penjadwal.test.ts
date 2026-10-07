@@ -5,6 +5,7 @@ import type { Db } from "@/lib/db";
 import { GalatLayanan } from "@/lib/layanan/dasar";
 import type { Saluran } from "@/lib/penjadwal/saluran";
 import { arahkanDbAplikasi, buatPengguna, siapkanBasisData, type Ujian } from "./harness";
+import emasJadwal from "../emas/jadwal-perangkat.json";
 
 // Penjadwal (P3) terhadap migrasi ASLI di PGlite: klaim, terlewat, tunda, batas, langkah berulang,
 // restart di tengah alarm, NOTIFY, SSE, perangkat siaga, uji alarm. Konkurensi sungguhan (dua
@@ -436,16 +437,33 @@ describe("perangkat siaga", () => {
   it("jadwal 24 jam: kejadian aktif + kejadian ke depan termasuk yang belum dimaterialisasi, tanpa jawaban", async () => {
     const A = await buatPengguna(u);
     const { buatAlarm } = await L();
-    const a1 = await buatAlarm(A, { jam: "05:00", pengulangan: { jenis: "harian" }, agendaJudul: "Presentasi" }, "web", { sekarang: SIANG });
+    const a1 = await buatAlarm(A, { jam: "05:00", pengulangan: { jenis: "harian" }, agendaJudul: "Presentasi", komitmen: true }, "web", { sekarang: SIANG });
     const a2 = await buatAlarm(A, { jam: "13:00", pengulangan: { jenis: "harian" } }, "web", { sekarang: SIANG });
     await buatAlarm(A, { jam: "06:00", pengulangan: { jenis: "harian" }, aktif: false }, "web", { sekarang: SIANG });
-    const { jadwalPerangkat } = await Pr();
+    const { jadwalPerangkat, salinanJadwal } = await Pr();
     // Jam 12.00: 13.00 hari ini dan 05.00 besok (13.00 besok di luar 24 jam).
-    const j = await jadwalPerangkat(A, SIANG);
+    const s = await salinanJadwal(A, SIANG);
+    const j = s.kejadian;
+    expect(Object.keys({ waktuServer: "", ...s }).sort()).toEqual(
+      Object.keys(emasJadwal)
+        .filter((x) => x !== "keterangan")
+        .sort(),
+    );
+    expect(s.bahasa).toBe("id");
     expect(j.map((x) => `${x.jam} ${x.tanggal}`)).toEqual(["13:00 2026-10-07", "05:00 2026-10-08"]);
     expect(j[1]).toMatchObject({ kunci: `${a1.id}:2026-10-08`, judul: "Presentasi", status: "menunggu", soal: { jenis: "hitungan", tingkat: "sedang", benar: 2 } });
     expect(j[0].kejadianId).not.toBeNull();
+    // Aplikasi PC: siaga mulai 8 jam sebelum (21.00) karena lebih awal dari jam tidur 22.00;
+    // tombol Keluar dikunci Komitmen mulai jam tidur.
+    expect(j[1]).toMatchObject({ komitmen: true, kunciMulai: wib("2026-10-07T22:00:00").toISOString(), siagaMulai: wib("2026-10-07T21:00:00").toISOString() });
+    expect(j[0]).toMatchObject({ komitmen: false, kunciMulai: null, siagaMulai: wib("2026-10-06T22:00:00").toISOString() });
     expect(JSON.stringify(j)).not.toMatch(/jawaban|hash/i);
+    // Bentuk jawaban = contoh emas yang dibaca aplikasi PC (Rust): kunci tidak boleh berubah sebelah.
+    const kunci = (o: object) => Object.keys(o).sort();
+    const [c] = emasJadwal.kejadian;
+    expect(kunci(j[1])).toEqual(kunci(c));
+    expect([kunci(j[1].soal), kunci(j[1].tunda)]).toEqual([kunci(c.soal), kunci(c.tunda)]);
+    expect([...new Set(j[1].omelan.flatMap(kunci))].sort()).toEqual([...new Set(c.omelan.flatMap(kunci))].sort());
     // Sesudah 13.00 berbunyi: kejadian aktif tetap ada, 13.00 besok masuk jendela.
     await klaim(wib("2026-10-07T13:00:01"));
     const j2 = await jadwalPerangkat(A, wib("2026-10-07T13:00:05"));
