@@ -105,7 +105,8 @@ test("izin kabar/suara ditolak: spanduk muncul, Beri izin mengulang persetujuan"
 test("belum membeli: ditolak dengan alasan ramah dan tautan perbaikan", async ({ page }) => {
   await masukSebagai(page, "Rani Belum Beli");
   await expect(page).toHaveURL(/\/masuk\?alasan=belum_beli/);
-  await expect(page.getByRole("alert")).toContainText("belum memiliki AntiKebo");
+  // Next juga memasang pengumum rute ber-role alert (#__next-route-announcer__): saring dengan teksnya.
+  await expect(page.getByRole("alert").filter({ hasText: "belum memiliki AntiKebo" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Perbaiki di AgentBuff" })).toBeVisible();
   await tangkap(page, "masuk-belum-beli");
 });
