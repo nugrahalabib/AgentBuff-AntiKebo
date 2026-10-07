@@ -44,6 +44,12 @@ export type OpsiPemutar = {
   /** Audio jalan atau ditahan peramban (tampilkan ajakan ketuk bila false). */
   saatKeadaan?: (berjalan: boolean) => void;
   catat?: (p: PeristiwaPemutar) => void;
+  /**
+   * Konteks audio yang sudah dibuka ketukan sebelumnya (Mode Jam Meja: "Mulai siaga"). Dipakai
+   * bersama dan tidak ditutup saat berhenti, supaya alarm berikutnya bisa langsung bersuara tanpa
+   * ketukan lagi (iPhone hanya membuka audio di dalam ketukan).
+   */
+  konteks?: AudioContext;
 };
 
 type SesiAudio = { type: string };
@@ -86,6 +92,7 @@ export class PemutarAlarm {
   private readonly pewaktu = new Set<ReturnType<typeof setTimeout>>();
   private sedang: AudioBufferSourceNode | null = null;
   private suaraTts: SpeechSynthesisVoice | null | undefined;
+  private saatStatus: (() => void) | null = null;
   private readonly jam: () => number;
 
   constructor(private readonly o: OpsiPemutar) {
@@ -107,17 +114,18 @@ export class PemutarAlarm {
     aturSesiAudio();
     const Konteks = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Konteks) return false;
-    const ctx = new Konteks({ latencyHint: "playback" });
+    const ctx = this.o.konteks && this.o.konteks.state !== "closed" ? this.o.konteks : new Konteks({ latencyHint: "playback" });
     this.ctx = ctx;
     this.gNaik = ctx.createGain();
     this.gRedam = ctx.createGain();
     this.gOmelan = ctx.createGain();
     this.gNaik.connect(this.gRedam).connect(ctx.destination);
     this.gOmelan.connect(ctx.destination);
-    ctx.addEventListener("statechange", () => {
+    this.saatStatus = () => {
       if (this.ctx === ctx) this.o.saatKeadaan?.(this.berjalan);
       this.sesudahJalan();
-    });
+    };
+    ctx.addEventListener("statechange", this.saatStatus);
     await this.pasangBunyi();
     await ctx.resume().catch(() => {});
     this.sesudahJalan();
@@ -148,7 +156,11 @@ export class PemutarAlarm {
     } catch {
       // Tidak didukung.
     }
-    void this.ctx?.close().catch(() => {});
+    if (this.ctx && this.saatStatus) this.ctx.removeEventListener("statechange", this.saatStatus);
+    if (this.ctx && this.ctx === this.o.konteks) {
+      // Konteks bersama tetap hidup untuk alarm berikutnya; cukup lepas rantai suara pemutar ini.
+      for (const g of [this.gNaik, this.gRedam, this.gOmelan]) g?.disconnect();
+    } else void this.ctx?.close().catch(() => {});
     this.ctx = null;
     this.o.saatOmelan?.(null, null);
     this.o.catat?.({ j: "berhenti", t: this.jam() });

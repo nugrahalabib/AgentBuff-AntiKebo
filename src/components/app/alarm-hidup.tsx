@@ -30,7 +30,20 @@ const ambilSoal = (kejadianId: string, tujuan: "bangun" | "tunda") =>
  * server: setiap perubahan (dari perangkat ini, PC, atau batas waktu) datang lewat SSE dan layar
  * membaca ulang keadaannya. Dua alarm bersamaan dikerjakan satu per satu ("1 dari 2").
  */
-export function LayarAlarmHidup({ awal }: { awal: LayarKejadianKlien }) {
+export function LayarAlarmHidup({
+  awal,
+  pindah,
+  selesai,
+  konteks,
+}: {
+  awal: LayarKejadianKlien;
+  /** Pindah ke kejadian lain yang masih berbunyi (bawaan: halaman `/app/bunyi/<id>`). */
+  pindah?: (id: string) => void;
+  /** Sesudah Selamat pagi / alarm selesai (bawaan: ke Beranda). Mode Jam Meja kembali siaga. */
+  selesai?: () => void;
+  /** Konteks audio yang sudah dibuka (Mode Jam Meja). */
+  konteks?: AudioContext;
+}) {
   const router = useRouter();
   const [k, setK] = useState(awal);
   const [berbunyiLain, setBerbunyiLain] = useState<Aktif[]>([]);
@@ -55,15 +68,21 @@ export function LayarAlarmHidup({ awal }: { awal: LayarKejadianKlien }) {
   const lain = berbunyiLain.find((x) => x.id !== id);
   const sudahLolos = k.status === "bangun" || k.status === "cek_bangun";
   useEffect(() => {
-    if (sudahLolos && lain) router.replace(`/app/bunyi/${lain.id}`);
-  }, [sudahLolos, lain, router]);
+    if (!sudahLolos || !lain) return;
+    if (pindah) pindah(lain.id);
+    else router.replace(`/app/bunyi/${lain.id}`);
+  }, [sudahLolos, lain, router, pindah]);
 
-  const keBeranda = () => router.push(lain ? `/app/bunyi/${lain.id}` : "/app");
+  const keBeranda = () => {
+    if (lain) return pindah ? pindah(lain.id) : router.push(`/app/bunyi/${lain.id}`);
+    if (selesai) return selesai();
+    router.push("/app");
+  };
 
   if (k.status === "berbunyi") {
     const posisi = berbunyiLain.findIndex((x) => x.id === id);
     const urutan = berbunyiLain.length > 1 && posisi >= 0 ? { ke: posisi + 1, dari: berbunyiLain.length } : undefined;
-    return <SaatBerbunyi key={`${k.id}-${k.tunda.terpakai}-${k.berbunyiPada}`} k={k} urutan={urutan} muat={() => void muat()} />;
+    return <SaatBerbunyi key={`${k.id}-${k.tunda.terpakai}-${k.berbunyiPada}`} k={k} urutan={urutan} muat={() => void muat()} konteks={konteks} />;
   }
   if (k.status === "ditunda") return <SaatDitunda k={k} muat={() => void muat()} />;
   if (k.status === "cek_bangun") return <SaatCek k={k} muat={() => void muat()} oke={keBeranda} />;
@@ -71,7 +90,7 @@ export function LayarAlarmHidup({ awal }: { awal: LayarKejadianKlien }) {
   return <Selesai k={k} oke={keBeranda} />;
 }
 
-function SaatBerbunyi({ k, urutan, muat }: { k: LayarKejadianKlien; urutan?: { ke: number; dari: number }; muat: () => void }) {
+function SaatBerbunyi({ k, urutan, muat, konteks }: { k: LayarKejadianKlien; urutan?: { ke: number; dari: number }; muat: () => void; konteks?: AudioContext }) {
   const { t, b } = useKamus();
   const T = t.bunyi;
   const [mode, setMode] = useState<"bangun" | "tunda">("bangun");
@@ -161,6 +180,7 @@ function SaatBerbunyi({ k, urutan, muat }: { k: LayarKejadianKlien; urutan?: { k
         mulaiMs: k.berbunyiPada ? Date.parse(k.berbunyiPada) : mulaiCadangan,
         bahasa: b,
         urlKlip: (h) => `/api/perangkat/klip/${h}`,
+        konteks,
       }}
       jam={k.jam}
       judul={k.judul}

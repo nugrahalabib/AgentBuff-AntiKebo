@@ -1,4 +1,4 @@
-import { Check, CircleAlert, House } from "lucide-react";
+import { Check, CircleAlert, House, Smartphone } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PengaturanKanal, PengaturanNotifikasi, PengaturanPengingat } from "@/components/app/pengaturan-kanal";
@@ -72,6 +72,10 @@ export default async function HalamanPengaturan() {
       <PengaturanKanal spamBawaan={pref.bawaan.spam} />
       <PengaturanNotifikasi kunciPublik={kunciPublikVapid()} />
       <PengaturanPengingat nyala={pref.pengingatMalam} />
+
+      <Grup judul={t.siaga.judul} id="judul-siaga" catatan={t.siaga.sub}>
+        <BarisGrup ikon={Smartphone} warnaIkon="#14b8a6" label={t.jamMeja.judul} sub={t.siaga.jadikanJamMeja} href="/app/jam-meja" />
+      </Grup>
 
       <Grup judul={t.rumah.judul} id="judul-rumah" catatan={t.rumah.ket}>
         <BarisGrup

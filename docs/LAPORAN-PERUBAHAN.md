@@ -3,6 +3,36 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P9): HP jadi jam meja yang bisa membangunkan
+
+**Baru**
+- **Mode Jam Meja:** buka Pengaturan, Mode Jam Meja (atau tombol Siapkan di spanduk Beranda), lalu
+  ketuk **Mulai siaga**. HP atau tablet jadi jam meja: jam besar redup berwarna hangat, pil "Siaga
+  untuk 05.00", layar tetap menyala, ketuk untuk terang 5 detik, geser ke atas untuk keluar (ditanya
+  dulu kalau alarm sudah dekat). Ada **Tes bunyi**.
+- Saat alarm berbunyi, layar alarm muncul di HP itu juga, langsung bersuara tanpa perlu diketuk lagi.
+  Sesudah Selamat pagi, HP kembali siaga.
+- **Koneksi putus?** Bunyi alarm dan suara omelan sudah tersimpan di HP, jadi alarm tetap berbunyi
+  tepat waktu. Soalnya muncul begitu koneksi kembali.
+- Peringatan kalau HP tidak dicas, koneksi putus, atau layar tidak bisa ditahan menyala.
+- HP yang siaga muncul di Beranda sebagai perangkat siaga.
+- **Pasang ke layar utama:** AntiKebo kini bisa dipasang seperti aplikasi (ikon sendiri, tanpa bilah
+  peramban), dengan panduan untuk iPhone, Android, dan laptop.
+
+**Keputusan**
+- K-80 sampai K-85 (`KEPUTUSAN.md`). Yang terasa pengguna: alarm saat koneksi putus tetap berbunyi
+  tapi baru bisa dimatikan dengan soal begitu koneksi kembali (K-83).
+
+**Masih butuh Chief**
+- K-07 masih menunggu.
+- **Wajib diuji di HP asli (L2):** iPhone dengan saklar senyap, layar tetap menyala, status dicas,
+  pasang ke layar utama.
+
+**Untuk teknisi**
+- `src/app/manifest.ts`, ikon `scripts/bangun-ikon.ts`, simpanan di `public/sw.js`, jadwal lokal
+  `src/lib/jam-meja/jadwal-lokal.ts`, pemutar bisa memakai konteks audio bersama.
+- Bukti: 608 tes vitest, 87 uji Playwright mode produksi (termasuk koneksi putus).
+
 ## 2026-10-07 (P8): Pasang alarm sendiri dan matikan dengan soal
 
 **Baru**

@@ -1,5 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
-import { aturTiruan, denganDb, hitung, masukSebagai, NUGI, nyalakanWorker, pantauGalat, tangkap } from "./bantu";
+import { expect, test } from "@playwright/test";
+import { asal, aturTiruan, bersihkan, bunyikanSekarang, buatLewatApi, denganDb, jawabHitungan, masukSebagai, NUGI, nyalakanWorker, pantauGalat, tangkap } from "./bantu";
 
 // P8 ujung ke ujung dengan worker SUNGGUHAN: lembar Ubah alarm (buat, ubah, nyala/mati, lewati,
 // hapus), uji alarm yang benar-benar berbunyi 1 menit kemudian, layar berbunyi dengan soal dari
@@ -31,50 +31,6 @@ test.afterAll(async ({ browser }) => {
 test.beforeEach(async () => {
   await aturTiruan(NUGI, { hak: "ok", izin: { kabar: true, suara: true } });
 });
-
-async function batalkanYangAktif() {
-  await denganDb(
-    (sql) =>
-      sql`update kejadian_alarm set status = 'dibatalkan' where status in ('berbunyi', 'ditunda', 'cek_bangun')
-          and pengguna_id = (select id from pengguna where agentbuff_sub = ${NUGI})`,
-  );
-}
-
-async function asal(page: Page) {
-  return new URL(page.url()).origin;
-}
-
-/** Mulai bersih: tidak ada alarm berbunyi dan tidak ada alarm tersimpan. */
-async function bersihkan(page: Page) {
-  await batalkanYangAktif();
-  const o = await asal(page);
-  const r = await page.request.get("/api/app/alarm");
-  for (const a of ((await r.json()) as { alarm: Array<{ id: string }> }).alarm) {
-    expect((await page.request.delete(`/api/app/alarm/${a.id}`, { headers: { Origin: o } })).status()).toBe(200);
-  }
-}
-
-async function buatLewatApi(page: Page, isi: Record<string, unknown>): Promise<string> {
-  const r = await page.request.post("/api/app/alarm", {
-    data: { jam: "23:58", soal: { jenis: "hitungan", tingkat: "ringan", benar: 1 }, spam: { kanal: [] }, ...isi },
-    headers: { Origin: await asal(page) },
-  });
-  expect(r.status()).toBe(201);
-  return ((await r.json()) as { alarm: { id: string } }).alarm.id;
-}
-
-/** Majukan kejadian `menunggu` alarm-alarm ini supaya berbunyi 2 detik lagi. */
-async function bunyikanSekarang(...alarmId: string[]) {
-  await denganDb((sql) => sql`update kejadian_alarm set jadwal_utc = now() + interval '2 seconds' where status = 'menunggu' and alarm_id in ${sql(alarmId)}`);
-}
-
-/** Jawab soal hitungan yang tampil lewat papan angka. */
-async function jawabHitungan(page: Page, salah = false) {
-  const teks = (await page.locator("section[aria-label] p.t-jam").first().innerText()).trim();
-  const jawaban = salah ? String(Number(hitung(teks)) + 1) : hitung(teks);
-  for (const a of jawaban) await page.getByRole("button", { name: a, exact: true }).click();
-  await page.getByRole("button", { name: "Kirim jawaban" }).click();
-}
 
 test("lembar Ubah alarm: buat, ubah, nyala/mati, lewati, hapus", async ({ page }) => {
   const galat = pantauGalat(page);

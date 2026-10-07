@@ -2,14 +2,15 @@
 
 ## Status terkini
 
-- **2026-10-07:** **P0 sampai P8 selesai**: kerangka + server tiruan (P0), rancangan semua layar
+- **2026-10-07:** **P0 sampai P9 selesai**: kerangka + server tiruan (P0), rancangan semua layar
   (P1), data alarm, pengulangan, libur, Komitmen (P2), penjadwal tepat detik, SSE, perangkat
   siaga, sambung PC (P3), soal, tunda, Masih bangun, Misi QR, anti curang (P4), 8 bunyi buatan
   sendiri, naskah 5 karakter, antrean suara lewat AgentBuff, pemutar web (P5), spam kanal, pesan
-  penutup, notifikasi web, pengingat malam, pesan uji (P6), rumah pintar Tuya (P7), Beranda dan
-  lembar alarm tersambung, layar alarm penuh dengan semua jenis soal, tunda, Selamat pagi + skor,
-  Masih bangun, dua alarm bersamaan (P8). Paket cloud berikutnya: **P9** (Mode Jam Meja dan PWA).
-  Paket laptop L1 (pintu AgentBuff) bisa jalan paralel; acuannya `tests/integrasi/tiruan-kontrak.test.ts`.
+  penutup, notifikasi web, pengingat malam, pesan uji (P6), rumah pintar Tuya (P7), Beranda, lembar
+  alarm, layar alarm penuh, Selamat pagi + skor, Masih bangun (P8), PWA dan Mode Jam Meja dengan
+  simpanan suara dan cadangan saat koneksi putus (P9). Paket cloud berikutnya: **P10** (aplikasi PC
+  Tauri). Paket laptop L1 (pintu AgentBuff) bisa jalan paralel; acuannya
+  `tests/integrasi/tiruan-kontrak.test.ts`.
 - Menunggu Chief: K-07 (`KEPUTUSAN.md`).
 
 (Perbarui bagian ini di akhir setiap sesi: tanggal, paket yang selesai, paket berikutnya.)

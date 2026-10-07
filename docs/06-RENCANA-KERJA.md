@@ -19,7 +19,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Selesai |
 | P7 | Rumah pintar Tuya | Cloud | Selesai |
 | P8 | Layar inti tersambung API | Cloud | Selesai |
-| P9 | Mode Jam Meja dan PWA | Cloud | Belum |
+| P9 | Mode Jam Meja dan PWA | Cloud | Selesai |
 | P10 | Aplikasi PC (Tauri) | Cloud | Belum |
 | P11 | Orientasi, Siaga, Riwayat, Pengaturan, Template | Cloud | Belum |
 | P12 | MCP paritas penuh + SKILL.md | Cloud | Belum |
@@ -407,11 +407,32 @@ Catatan untuk paket berikutnya:
 
 ## P9 Mode Jam Meja dan PWA
 
+**Status: selesai 2026-10-07.** Bukti di cloud: jaga (13 penjaga), tsc, lint, format, 608 tes
+vitest, build, 87 uji Playwright mode produksi (desktop + 390 px) dengan worker sungguhan, termasuk
+koneksi putus yang ditiru peramban. Di HP dan tablet asli **wajib diuji** (L2): bunyi saat saklar
+senyap iPhone (`audioSession`), layar tetap menyala (Wake Lock), status dicas, dan pemasangan ke layar
+utama di iPhone/Android.
+
 Rujukan: PRD H2; `10-SUARA.md` §3, §6.
 
-- [ ] Manifest, ikon, Service Worker (cache bunyi + klip 24 jam), panduan pasang per platform.
-- [ ] Jam Meja: Mulai siaga (audio + Wake Lock + layar penuh), jam redup, tes bunyi, detak,
-      pengatur waktu lokal, peringatan dicas/koneksi, iOS `audioSession`.
+- [x] Manifest, ikon, Service Worker (cache bunyi + klip 24 jam), panduan pasang per platform.
+      (`src/app/manifest.ts`, ikon dari `scripts/bangun-ikon.ts` ke `public/ikon/` dan
+      `src/app/apple-icon.png`; `public/sw.js` menyimpan bunyi + klip yang diminta Jam Meja dan
+      menyajikannya dari simpanan dulu, K-81; `src/components/app/panduan-pasang.tsx` untuk iPhone,
+      Android, dan laptop, dengan tombol Pasang langsung di Chrome/Edge.)
+- [x] Jam Meja: Mulai siaga (audio + Wake Lock + layar penuh), jam redup, tes bunyi, detak,
+      pengatur waktu lokal, peringatan dicas/koneksi, iOS `audioSession`. (`/app/jam-meja`,
+      `src/components/app/jam-meja.tsx`, `src/lib/jam-meja/jadwal-lokal.ts` dengan tes; alarm
+      berbunyi di halaman yang sama dengan konteks audio yang dibuka "Mulai siaga", K-82; cadangan
+      lokal saat koneksi putus, K-83; detak 30 detik, K-84; keluar dengan konfirmasi, K-85.)
+
+Catatan untuk paket berikutnya:
+- P10: aplikasi PC boleh memakai halaman web yang sama untuk jendela berbunyi; jadwal lokal dan soal
+  luring di Rust (K-47). Pola tenggang 5 detik sebelum berbunyi sendiri ada di `jadwal-lokal.ts`.
+- P11: tab Siaga (daftar perangkat, nama, terakhir terlihat, cabut, "Jadikan perangkat ini jam meja"
+  menuju `/app/jam-meja`); arahkan `hrefSiaga` spanduk Beranda ke tab itu. Orientasi langkah 3
+  memakai `PanduanPasang`, Jam Meja, dan izin notifikasi.
+- P13: periksa aksesibilitas layar siaga (kontras jam redup sengaja rendah; teks bantu tetap AA).
 
 ## P10 Aplikasi PC (Tauri)
 

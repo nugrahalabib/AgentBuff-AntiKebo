@@ -20,6 +20,8 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(process.env.APP_ORIGIN ?? "https://antikebo.agentbuff.id"),
     openGraph: { title: t.merek.namaPanjang, description: t.merek.janji, type: "website" },
     robots: { index: true, follow: true },
+    // Dipasang ke Layar Utama iPhone: tampil tanpa bilah Safari (PWA, P9).
+    appleWebApp: { capable: true, title: t.merek.nama, statusBarStyle: "black-translucent" },
   };
 }
 
