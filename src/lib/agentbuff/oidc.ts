@@ -64,7 +64,9 @@ export type IsiCookieOidc = {
 /** Jalur tujuan sesudah masuk: hanya jalur internal /app... (anti open redirect). */
 export function jalurLanjutAman(lanjut: string | null | undefined): string {
   if (!lanjut) return "/app";
-  if (!lanjut.startsWith("/app") || lanjut.startsWith("//") || lanjut.includes("\\")) return "/app";
+  if (lanjut.startsWith("//") || lanjut.includes("\\")) return "/app";
+  // Hanya halaman aplikasi sendiri: /app... dan "Sambungkan PC ini" (dibuka dari aplikasi PC).
+  if (!/^\/app(?:[/?#]|$)/.test(lanjut) && !/^\/sambung-pc(?:[?#]|$)/.test(lanjut)) return "/app";
   return lanjut.slice(0, 500);
 }
 

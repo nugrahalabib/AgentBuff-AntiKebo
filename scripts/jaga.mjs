@@ -88,7 +88,9 @@ function periksaServerOnly(sumber) {
 // ---------------------------------------------------------------------- RLS
 // Tabel milik pemilik = ber-kolom pengguna_id, KECUALI tabel global yang dibaca
 // tanpa konteks (sesi & status hak: dicari lewat hash/sub sebelum pemilik diketahui).
-const TABEL_GLOBAL = new Set(["sesi", "status_hak"]);
+// Tabel ber-pengguna_id yang SENGAJA global (dicari sebelum pemilik diketahui): sesi (hash sesi),
+// status_hak (cek hak), kode_sambung (kode sambung PC, P3).
+const TABEL_GLOBAL = new Set(["sesi", "status_hak", "kode_sambung"]);
 function tabelBerRuang(schemaTs) {
   const hasil = new Set();
   const re = /pgTable\(\s*"([a-z_]+)"[\s\S]*?\n\s*(?:\},\s*\(t\)|\}\);)/g;

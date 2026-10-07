@@ -43,12 +43,17 @@ cara kerja shila-wake (bunyi diputar program, bukan halaman), dibuat jauh lebih 
 
 1. Pengguna mengunduh dari tab Siaga (`/unduh/antikebo-pc-setup.exe`), memasang (panduan layar
    biru Windows bergambar: "Info selengkapnya", lalu "Tetap jalankan").
-2. Aplikasi terbuka, meminta kode sambung ke server (`POST /api/perangkat/kode`), lalu membuka
-   browser ke `https://antikebo.agentbuff.id/sambung-pc?kode=XXXX-XXXX`.
+2. Aplikasi terbuka, meminta kode sambung ke server (`POST /api/perangkat/kode` {nama, versi} →
+   {kode, rahasia, kedaluwarsa, tautan}), menampilkan kodenya, lalu membuka browser ke `tautan`
+   (`https://antikebo.agentbuff.id/sambung-pc?kode=XXXX-XXXX`). `rahasia` hanya disimpan di
+   memori aplikasi dan dipakai mengambil token (K-41).
 3. Di browser (sudah login AntiKebo), pengguna melihat "Sambungkan PC ini?" + nama PC, menekan
    **Sambungkan**.
-4. Aplikasi (menanti dengan polling 2 dtk, kode berlaku 10 menit) menerima token perangkat,
-   menyimpannya di Credential Manager. Selesai, browser menampilkan centang hijau.
+4. Aplikasi (menanti dengan polling 2 dtk ke `POST /api/perangkat/kode/ambil` {kode, rahasia},
+   kode berlaku 10 menit) menerima token perangkat SEKALI, menyimpannya di Credential Manager.
+   Selesai, browser menampilkan centang hijau. Sesudahnya semua panggilan memakai
+   `Authorization: Bearer <token>`: detak `POST /api/perangkat/detak`, jadwal
+   `GET /api/perangkat/jadwal`, SSE `GET /api/peristiwa`.
 5. Daftar periksa otomatis (lihat §7), lalu tes bunyi 5 detik: "Kamu dengar? Ya / Tidak".
 
 Putus sambung dari web (tab Siaga) mencabut token; aplikasi kembali ke layar "Sambungkan".

@@ -68,6 +68,9 @@ describe("Masuk dengan AgentBuff", () => {
     expect(jalurLanjutAman("/app/pengaturan")).toBe("/app/pengaturan");
     expect(jalurLanjutAman("https://jahat.example")).toBe("/app");
     expect(jalurLanjutAman("/app\\..\\x")).toBe("/app");
+    expect(jalurLanjutAman("/sambung-pc?kode=ABCD-EFGH")).toBe("/sambung-pc?kode=ABCD-EFGH");
+    expect(jalurLanjutAman("/appjahat")).toBe("/app");
+    expect(jalurLanjutAman("/sambung-pcx")).toBe("/app");
     const izin = new URL((await mulaiMasuk({ senyap: false, lanjut: null, mintaIzin: true })).url).searchParams;
     expect(izin.get("prompt")).toBe("consent");
     const senyap = new URL((await mulaiMasuk({ senyap: true, lanjut: null })).url).searchParams;

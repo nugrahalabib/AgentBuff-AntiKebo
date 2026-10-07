@@ -13,7 +13,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P0 | Kerangka dari template Tuya + server tiruan AgentBuff | Cloud | Selesai 2026-10-07 |
 | P1 | Prototipe desain semua layar (untuk dinilai Chief) | Cloud | Selesai 2026-10-07 |
 | P2 | Data, pengulangan, layanan alarm, template, Komitmen | Cloud | Selesai 2026-10-07 |
-| P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Belum |
+| P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Selesai 2026-10-07 |
 | P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Belum |
 | P5 | Suara dan bunyi | Cloud | Belum |
 | P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Belum |
@@ -152,17 +152,51 @@ Catatan untuk paket berikutnya:
 
 ## P3 Penjadwal, kejadian, SSE, perangkat siaga
 
+**Status: selesai 2026-10-07.** Bukti di Postgres 16 sungguhan (`tests/pg/penjadwal-pg.test.ts`,
+dijalankan CI dengan `WAJIB_PG_ASLI=1`): dua worker berebut 40 kejadian, terbagi 19/21 tanpa
+irisan; lima kejadian dibunyikan pewaktu + LISTEN dengan selisih tercatat 1 sampai 2 ms;
+`berhenti` sampai ke aliran SSE PC (token) dan web dalam 6 ms. PGlite: 21 tes penjadwal (klaim,
+terlewat, sekali, tunda, batas, langkah berulang, restart melanjutkan langkah yang ditinggal,
+jaring pengaman materialisasi, NOTIFY per pengguna, SSE + cabut, sambung PC, Jam Meja, jadwal 24
+jam, uji alarm). `deploy/uji-rls.sql` 28/28. Playwright: alur "Sambungkan PC ini?" penuh (masuk
+lalu kembali ke kode, sambungkan, token sekali pakai, detak, jadwal, putus) di desktop dan 390 px.
+Worker sungguhan menyala (`penjadwal menyala`) dan berhenti rapi.
+
 Rujukan: PRD C1, C5, C6, H1, H4, H5; arsitektur §4, §5.
 
-- [ ] Worker: pemicu tepat waktu, klaim `SKIP LOCKED`, langkah berulang, pulih, detak, operator.
-- [ ] SSE `/api/peristiwa` (sesi web dan token perangkat), peristiwa `jadwal`, `berbunyi`,
-      `berhenti`, `tunda`, `cek`, `klip_siap`.
-- [ ] Tabel `perangkat_siaga`, `kode_sambung`; API kode sambung, halaman `/sambung-pc`, detak,
-      jadwal 24 jam untuk perangkat, cabut perangkat.
-- [ ] Jenis langkah memakai antarmuka `Saluran` dengan implementasi tiruan (diisi P5 sampai P7).
+- [x] Worker: pemicu tepat waktu, klaim `SKIP LOCKED`, langkah berulang, pulih, detak, operator.
+      (`src/lib/penjadwal/{mesin,penjadwal,saluran}.ts`; pewaktu tepat + ketukan 1 dtk + LISTEN;
+      putaran kejadian terpisah dari putaran langkah supaya saluran lambat tidak menunda bunyi;
+      kejadian > 30 menit terlambat = terlewat; langkah macet > 2 menit diulang; jaring pengaman
+      materialisasi tiap 10 menit. Kabar operator bila detak basi: P13 bersama pemantau.)
+- [x] SSE `/api/peristiwa` (sesi web dan token perangkat), peristiwa `jadwal`, `berbunyi`,
+      `berhenti`, `tunda`, `cek`, `klip_siap`. (Ditambah `halo` berisi jam server, `cabut`,
+      `perangkat`. Dipicu pemicu DB, K-40. `klip_siap` dikirim P5.)
+- [x] Tabel `perangkat_siaga`, `kode_sambung`; API kode sambung, halaman `/sambung-pc`, detak,
+      jadwal 24 jam untuk perangkat, cabut perangkat. (Juga daftar, ganti nama, daftar Jam Meja
+      web; uji alarm PRD B9 sebagai layanan.)
+- [x] Jenis langkah memakai antarmuka `Saluran` dengan implementasi tiruan (diisi P5 sampai P7).
+      (Notifikasi, spam, Tuya, kabar terlewat = tiruan; batas berhenti sendiri PRD C4 = asli.)
 
 Selesai bila: tes integrasi membuktikan tepat waktu (selisih tercatat), tidak dobel saat dua worker
 berebut, restart di tengah alarm melanjutkan, berhenti terkirim ke semua perangkat ≤ 2 dtk.
+
+Catatan untuk paket berikutnya:
+- P4: soal benar memanggil `hentikanKejadian(tx, id, "bangun" | ...)` atau pindah ke `cek_bangun`
+  (tambahkan transisi di `mesin.ts`, jangan di tempat lain); tunda memakai `tundaKejadian`.
+  Penjawab sah: sesi pemilik atau token perangkat miliknya (`perangkatDariToken`).
+- P5/P6/P7: ganti saluran tiruan lewat `pasangSaluran` (atau ubah `SALURAN_BAWAAN`); bentuk
+  `Saluran` tetap. Spam per kanal memakai blok urutan 100000 per kanal. `klip_siap` = NOTIFY dari
+  pembuat klip.
+- P8/P11: rute uji alarm (`ujiAlarm`) dan `kejadianAktif` siap disambung; daftar perangkat sudah
+  di `/api/app/perangkat`. "Siap malam ini" sementara = siaga sekarang (K-42).
+- P9: Jam Meja mendaftar lewat `POST /api/app/perangkat`, detak `POST /api/perangkat/detak`
+  dengan `perangkatId` (sesi), jadwal `GET /api/perangkat/jadwal`, SSE `/api/peristiwa`.
+- P10: aplikasi PC memakai `POST /api/perangkat/kode` → buka `tautan` → polling
+  `POST /api/perangkat/kode/ambil` {kode, rahasia} tiap 2 dtk; lalu Bearer token untuk detak,
+  jadwal, SSE. Kunci dedup bunyi lokal = `kunci` item jadwal (`alarmId:tanggal`).
+- P12: kode galat MCP untuk perangkat mengikuti layanan (`tidak_ditemukan`, `masukan`).
+- P13: pemantau detak worker basi > 60 dtk dan kabar operator.
 
 ## P4 Soal, tunda, Masih bangun, Misi QR, anti curang
 

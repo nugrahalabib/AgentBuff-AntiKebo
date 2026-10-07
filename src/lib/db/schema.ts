@@ -6,8 +6,8 @@ import type { Pengulangan } from "@/lib/jadwal/pengulangan";
 // Skema AntiKebo. Nama tabel & kolom bahasa Indonesia snake_case, waktu timestamptz (UTC).
 // Setiap tabel ber-`pengguna_id` milik pemilik WAJIB punya RLS ENABLE+FORCE + kebijakan
 // di migrasi (dijaga scripts/jaga.mjs). Hanya skema di sini; SQL-nya di src/lib/db/migrasi.
-// P0 = tabel dasar; P2 = alarm, lewati, template, kejadian, langkah, preferensi. Perangkat siaga,
-// suara, kanal, Tuya menyusul (P3 sampai P7). Impor dari src/lib hanya `import type` (drizzle-kit
+// P0 = tabel dasar; P2 = alarm, lewati, template, kejadian, langkah, preferensi; P3 = perangkat
+// siaga, kode sambung. Suara, kanal, Tuya menyusul (P4 sampai P7). Impor dari src/lib hanya `import type` (drizzle-kit
 // memuat berkas ini tanpa alias jalur).
 
 const citext = customType<{ data: string }>({ dataType: () => "citext" });
@@ -266,4 +266,58 @@ export const langkahKejadian = pgTable(
     diubah: waktu("diubah").notNull().defaultNow(),
   },
   (t) => [uniqueIndex("langkah_kejadian_unik").on(t.kejadianId, t.jenis, t.urutan), index("langkah_jatuh_tempo_idx").on(t.status, t.jatuhTempoUtc)],
+);
+
+// ------------------------------------------------------------ perangkat siaga (P3)
+
+/** Kemampuan dan keadaan yang dilaporkan perangkat lewat detak. */
+export type KemampuanPerangkat = { dicas?: boolean | null; baterai?: number | null; suara?: boolean | null; layarMenyala?: boolean | null };
+
+/**
+ * Perangkat yang membunyikan alarm (PRD H1): aplikasi PC (`pc`, token perangkat) dan Mode Jam Meja
+ * (`web`, sesi peramban). Token perangkat hanya disimpan hash-nya; dicari lewat hash sebelum
+ * pemilik diketahui (kebijakan RLS khusus, pola token MCP).
+ */
+export const perangkatSiaga = pgTable(
+  "perangkat_siaga",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    jenis: text("jenis").notNull(), // pc | web
+    nama: text("nama").notNull(),
+    tokenHash: char("token_hash", { length: 64 }),
+    versiAplikasi: text("versi_aplikasi"),
+    terakhirTerlihat: waktu("terakhir_terlihat"),
+    kemampuan: jsonb("kemampuan").$type<KemampuanPerangkat>().notNull().default({}),
+    /** Perangkat menyatakan memegang jadwal lokal sampai waktu ini. */
+    siapSampai: waktu("siap_sampai"),
+    dicabutPada: waktu("dicabut_pada"),
+    dibuat: dibuat(),
+  },
+  (t) => [uniqueIndex("perangkat_token_unik").on(t.tokenHash), index("perangkat_pengguna_idx").on(t.penggunaId)],
+);
+
+/**
+ * Kode sambung PC (berlaku 10 menit). Tabel GLOBAL tanpa RLS (seperti `sesi`): aplikasi PC
+ * mencarinya lewat hash kode + hash rahasia tunggu sebelum pemilik diketahui. Token perangkat
+ * TIDAK pernah disimpan di sini; dibuat saat diambil dan langsung disimpan hash-nya.
+ */
+export const kodeSambung = pgTable(
+  "kode_sambung",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kodeHash: char("kode_hash", { length: 64 }).notNull(),
+    rahasiaHash: char("rahasia_hash", { length: 64 }).notNull(),
+    namaPerangkat: text("nama_perangkat").notNull(),
+    versiAplikasi: text("versi_aplikasi"),
+    /** menunggu | disetujui | diambil */
+    status: text("status").notNull().default("menunggu"),
+    penggunaId: uuid("pengguna_id").references(() => pengguna.id),
+    perangkatId: uuid("perangkat_id").references(() => perangkatSiaga.id),
+    kedaluwarsa: waktu("kedaluwarsa").notNull(),
+    dibuat: dibuat(),
+  },
+  (t) => [uniqueIndex("kode_sambung_hash_unik").on(t.kodeHash)],
 );

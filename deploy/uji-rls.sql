@@ -22,6 +22,8 @@ INSERT INTO kejadian_alarm (id, pengguna_id, alarm_id, jadwal_utc, tanggal_lokal
   ('00000000-0000-4000-8000-0000000000d4', '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000c3', '2030-01-01 22:00+00', '2030-01-02', '05:00', 'Bangun');
 INSERT INTO langkah_kejadian (pengguna_id, kejadian_id, jenis, jatuh_tempo_utc) VALUES
   ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000d4', 'uji', '2030-01-01 22:00+00');
+INSERT INTO perangkat_siaga (pengguna_id, jenis, nama, token_hash) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', 'pc', 'PC A', repeat('e', 64));
 
 DO $$
 DECLARE n int;
@@ -36,6 +38,7 @@ BEGIN
   SELECT (SELECT count(*) FROM alarm) + (SELECT count(*) FROM lewati_alarm) + (SELECT count(*) FROM template_alarm)
        + (SELECT count(*) FROM kejadian_alarm) + (SELECT count(*) FROM langkah_kejadian) INTO n;
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: data alarm terbaca tanpa konteks'; END IF;
+  SELECT count(*) INTO n FROM perangkat_siaga; IF n <> 0 THEN RAISE EXCEPTION 'RLS: perangkat terbaca tanpa konteks'; END IF;
 
   -- Konteks B: tidak melihat, mengubah, atau menghapus milik A.
   PERFORM set_config('app.pengguna_id', '00000000-0000-4000-8000-0000000000b2', true);
@@ -54,6 +57,8 @@ BEGIN
   SELECT (SELECT count(*) FROM alarm) + (SELECT count(*) FROM lewati_alarm) + (SELECT count(*) FROM template_alarm)
        + (SELECT count(*) FROM kejadian_alarm) + (SELECT count(*) FROM langkah_kejadian) INTO n;
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: B melihat data alarm A'; END IF;
+  UPDATE perangkat_siaga SET dicabut_pada = now();
+  GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B mencabut perangkat A'; END IF;
   UPDATE alarm SET aktif = false;
   GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B mematikan alarm A'; END IF;
   DELETE FROM kejadian_alarm;
@@ -73,13 +78,18 @@ BEGIN
   SELECT (SELECT count(*) FROM alarm) + (SELECT count(*) FROM lewati_alarm) + (SELECT count(*) FROM template_alarm)
        + (SELECT count(*) FROM kejadian_alarm) + (SELECT count(*) FROM langkah_kejadian) INTO n;
   IF n <> 5 THEN RAISE EXCEPTION 'RLS: A tidak melihat data alarmnya'; END IF;
+  SELECT count(*) INTO n FROM perangkat_siaga; IF n <> 1 THEN RAISE EXCEPTION 'RLS: A tidak melihat perangkatnya'; END IF;
 
   -- Hash token: tepat satu baris terlihat tanpa konteks pemilik; hash lain nol.
   PERFORM set_config('app.pengguna_id', '', true);
   PERFORM set_config('app.token_hash', repeat('c', 64), true);
   SELECT count(*) INTO n FROM token_mcp;  IF n <> 1 THEN RAISE EXCEPTION 'RLS: pencarian token lewat hash gagal'; END IF;
+  SELECT count(*) INTO n FROM perangkat_siaga; IF n <> 0 THEN RAISE EXCEPTION 'RLS: hash token MCP membuka perangkat'; END IF;
+  PERFORM set_config('app.token_hash', repeat('e', 64), true);
+  SELECT count(*) INTO n FROM perangkat_siaga; IF n <> 1 THEN RAISE EXCEPTION 'RLS: pencarian perangkat lewat hash gagal'; END IF;
   PERFORM set_config('app.token_hash', repeat('d', 64), true);
   SELECT count(*) INTO n FROM token_mcp;  IF n <> 0 THEN RAISE EXCEPTION 'RLS: hash salah tetap membuka token'; END IF;
+  SELECT count(*) INTO n FROM perangkat_siaga; IF n <> 0 THEN RAISE EXCEPTION 'RLS: hash salah tetap membuka perangkat'; END IF;
   PERFORM set_config('app.token_hash', '', true);
   RESET ROLE;
 
@@ -98,11 +108,11 @@ BEGIN
   SELECT count(*) INTO n FROM pg_class c JOIN pg_namespace s ON s.oid = c.relnamespace
     WHERE s.nspname = 'public' AND c.relkind = 'r'
       AND EXISTS (SELECT 1 FROM pg_attribute a WHERE a.attrelid = c.oid AND a.attname = 'pengguna_id' AND NOT a.attisdropped)
-      AND c.relname NOT IN ('sesi', 'status_hak')
+      AND c.relname NOT IN ('sesi', 'status_hak', 'kode_sambung')
       AND NOT (c.relrowsecurity AND c.relforcerowsecurity);
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: ada tabel milik pemilik tanpa ENABLE+FORCE'; END IF;
 
-  RAISE NOTICE 'uji RLS: 22/22 lulus';
+  RAISE NOTICE 'uji RLS: 28/28 lulus';
 END $$;
 
 ROLLBACK;

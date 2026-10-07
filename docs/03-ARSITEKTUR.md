@@ -87,7 +87,12 @@ perangkat tidak basi; perangkat juga menarik ulang tiap 5 menit.
 ## 5. Waktu nyata ke perangkat
 
 - Satu jalur SSE `/api/peristiwa` untuk web dan PC (PC memakai klien SSE di Rust), peristiwa:
-  `jadwal`, `berbunyi`, `soal`, `tunda`, `berhenti`, `cek`, `klip_siap`.
+  `halo` (jam server, untuk koreksi selisih jam perangkat), `jadwal`, `berbunyi`, `soal`, `tunda`,
+  `berhenti`, `cek`, `klip_siap`, `cabut` (perangkat diputus: aliran ditutup), `perangkat` (web).
+  Sumbernya pemicu DB yang mengirim NOTIFY `antikebo_peristiwa` berisi id saja (K-40).
+- Urutan kunci: layanan mengunci baris pengguna lalu alarm lalu kejadian; worker mengunci kejadian
+  (SKIP LOCKED) lalu alarm dengan SKIP LOCKED. Worker tidak pernah menunggu kunci layanan, jadi
+  tidak ada kebuntuan; kejadian yang alarmnya sedang diubah dicoba lagi di ketukan berikutnya.
 - Detak perangkat `POST /api/perangkat/detak` tiap 30 dtk (PC) atau 30 dtk (Jam Meja aktif).
   Perangkat dianggap siaga bila detak < 2 menit.
 - Autentikasi: web pakai sesi; PC pakai token perangkat (Bearer, hash di `perangkat_siaga`).
