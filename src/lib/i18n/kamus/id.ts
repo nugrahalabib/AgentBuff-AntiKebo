@@ -358,6 +358,7 @@ export const id = {
       jam_tidak_sah: "jam harus format 24 jam, contoh 05:30",
       tanggal_tidak_sah: "tanggalnya tidak ada di kalender",
       zona_tidak_sah: "zona waktu tidak dikenal",
+      kode_qr_tidak_ada: "kode QR yang dipilih tidak ditemukan",
       umum: "{isian} tidak sah",
     },
     komitmen: {
@@ -394,6 +395,23 @@ export const id = {
     gagal: "Belum bisa menyambungkan. Coba lagi.",
   },
   uji: { judul: "Uji alarm" },
+  jawab: {
+    tidakBerbunyi: "Alarm ini sedang tidak berbunyi.",
+    tundaHabis: "Jatah tunda sudah habis. Jawab soalnya untuk mematikan alarm.",
+    soalBerganti: "Soalnya sudah berganti. Coba soal yang baru.",
+    belumWaktunya: "Belum waktunya. Tunggu pertanyaan Masih bangun muncul.",
+    lewatBatas: "Waktunya lewat. Alarm berbunyi lagi, jawab soal barunya.",
+    kalimat: ["Aku bangun sekarang juga", "Hari ini aku menang melawan kasur", "Kasur bukan tempat kerja", "Bangun dulu baru mengeluh", "Pagi ini aku tepat waktu"],
+  },
+  kodeQr: {
+    batas: "Paling banyak {n} kode QR. Hapus yang tidak dipakai dulu.",
+    dipakai: "Kode ini masih dipakai alarm {judul}. Ganti soal alarmnya dulu.",
+    tidakAda: "Kode QR tidak ditemukan.",
+    judulCetak: "Kode bangun: {nama}",
+    petunjuk: "Tempel kode ini di {nama}, jauh dari kasur. Saat alarm berbunyi, pindai kode ini dengan HP untuk mematikannya.",
+    cetak: "Cetak",
+    kembali: "Kembali",
+  },
   prototipe: {
     judul: "Prototipe layar",
     sub: "Data contoh, belum tersambung. Hanya tampil di mode pengembangan.",

@@ -30,6 +30,8 @@ export type HasilLangkah = {
   gagal?: boolean;
   /** Akhiri kejadian (batas waktu PRD C4). */
   akhiri?: "tidak_bangun";
+  /** "Masih bangun?" tidak diketuk sampai batasnya: alarm kembali penuh (PRD E2). */
+  bunyikanLagi?: true;
 };
 
 export interface Saluran {
@@ -81,6 +83,16 @@ export const saluranKabarTerlewatTiruan: Saluran = {
   saatTunda: "lanjut",
   rencana: () => [],
   rencanaTerlewat: (_isi, sekarang) => [{ jatuhTempo: sekarang }],
+  async jalankan() {
+    return { hasil: { tiruan: true } };
+  },
+};
+
+/** Saat "Masih bangun?" tampil: notifikasi + satu pesan kanal (P6). */
+export const saluranCekTampilTiruan: Saluran = {
+  jenis: "cek_tampil",
+  saatTunda: "lanjut",
+  rencana: () => [],
   async jalankan() {
     return { hasil: { tiruan: true } };
   },

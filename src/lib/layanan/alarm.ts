@@ -8,6 +8,7 @@ import { isi as isiTeks } from "@/lib/i18n";
 import { cocok, kejadianBerikutnya, SkemaTanggal, tanggalSekaliBerikutnya, type Kejadian } from "@/lib/jadwal/pengulangan";
 import { catatAudit } from "./audit";
 import { GalatLayanan, pesanMasukan, type Sumber } from "./dasar";
+import { pastikanKodeQrMilik } from "./kode-qr";
 import { jamTampil, konteksPengguna, type KonteksPengguna } from "./konteks";
 import { cariTemplate } from "./template";
 
@@ -240,6 +241,7 @@ export async function buatAlarm(penggunaId: string, masukan: unknown, sumber: Su
     const tpl = opsi.template ? await cariTemplate(tx, k, opsi.template) : null;
     const dasar: Partial<IsiAlarm> = { ...BAWAAN_SISTEM, ...k.bawaan, agendaJudul: k.t.alarmBaru.judulBawaan, agendaDetail: null, tuya: [], aktif: true };
     const isiBaru = rakit([dasar, { pengulangan: { jenis: "sekali" } }, tpl?.isi ?? {}, m], k, k.zona, sekarang);
+    await pastikanKodeQrMilik(tx, k, isiBaru.soal.kodeQr);
     tolakBila(k, isiBaru, hitungBerikutnya(isiBaru, k.zona, [], sekarang));
     const [a] = await tx
       .insert(schema.alarm)
@@ -260,6 +262,7 @@ export async function ubahAlarm(penggunaId: string, id: string, masukan: unknown
     const m = periksaMasukan(masukan, k);
     await pastikanTidakBerbunyi(tx, k, a.id);
     const isiBaru = rakit([isiDariBaris(a), m], k, a.zona, sekarang);
+    await pastikanKodeQrMilik(tx, k, isiBaru.soal.kodeQr);
     const berikutnya = hitungBerikutnya(isiBaru, a.zona, await daftarLewati(tx, a.id), sekarang);
     await tegakkanKomitmen(tx, k, a, sekarang, "ubah", isiBaru, berikutnya?.utc ?? null);
     tolakBila(k, isiBaru, berikutnya);

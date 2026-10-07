@@ -2,11 +2,11 @@
 
 ## Status terkini
 
-- **2026-10-07:** **P0 sampai P3 selesai**: kerangka + server tiruan (P0), rancangan semua layar
-  di `src/components/layar/*` (P1), data alarm, pengulangan, libur, Komitmen (P2), penjadwal tepat
-  detik, SSE, perangkat siaga, sambung PC (P3). Paket cloud berikutnya: **P4** (soal, tunda, Masih
-  bangun, Misi QR, anti curang). Paket laptop L1 (pintu AgentBuff) bisa jalan paralel; acuannya
-  `tests/integrasi/tiruan-kontrak.test.ts`.
+- **2026-10-07:** **P0 sampai P4 selesai**: kerangka + server tiruan (P0), rancangan semua layar
+  (P1), data alarm, pengulangan, libur, Komitmen (P2), penjadwal tepat detik, SSE, perangkat
+  siaga, sambung PC (P3), soal, tunda, Masih bangun, Misi QR, anti curang (P4). Paket cloud
+  berikutnya: **P5** (suara dan bunyi). Paket laptop L1 (pintu AgentBuff) bisa jalan paralel;
+  acuannya `tests/integrasi/tiruan-kontrak.test.ts`.
 - Menunggu Chief: K-07 (`KEPUTUSAN.md`).
 
 (Perbarui bagian ini di akhir setiap sesi: tanggal, paket yang selesai, paket berikutnya.)

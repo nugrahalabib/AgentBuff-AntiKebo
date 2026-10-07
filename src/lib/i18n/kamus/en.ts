@@ -354,6 +354,7 @@ export const en: Kamus = {
       jam_tidak_sah: "time must be 24 hour format, for example 05:30",
       tanggal_tidak_sah: "that date doesn't exist on the calendar",
       zona_tidak_sah: "unknown time zone",
+      kode_qr_tidak_ada: "the selected QR code was not found",
       umum: "{isian} is not valid",
     },
     komitmen: {
@@ -390,6 +391,23 @@ export const en: Kamus = {
     gagal: "Couldn't connect yet. Try again.",
   },
   uji: { judul: "Test alarm" },
+  jawab: {
+    tidakBerbunyi: "This alarm is not ringing right now.",
+    tundaHabis: "No snoozes left. Answer the challenge to turn the alarm off.",
+    soalBerganti: "The challenge has changed. Try the new one.",
+    belumWaktunya: "Not yet. Wait for the Still awake question to appear.",
+    lewatBatas: "Too late. The alarm is ringing again, answer the new challenge.",
+    kalimat: ["I am getting up right now", "Today I beat my bed", "My bed is not my office", "Get up first, complain later", "This morning I am on time"],
+  },
+  kodeQr: {
+    batas: "You can have at most {n} QR codes. Delete one you don't use first.",
+    dipakai: "This code is still used by the alarm {judul}. Change that alarm's challenge first.",
+    tidakAda: "QR code not found.",
+    judulCetak: "Wake code: {nama}",
+    petunjuk: "Stick this code at {nama}, far from your bed. When the alarm rings, scan it with your phone to turn it off.",
+    cetak: "Print",
+    kembali: "Back",
+  },
   prototipe: {
     judul: "Screen prototypes",
     sub: "Sample data, not connected. Only shown in development mode.",
