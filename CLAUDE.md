@@ -116,7 +116,7 @@ perlu diulang: `bash scripts/siapkan-lokal.sh` (idempoten, tidak pernah menimpa 
 | `pnpm db:migrate` | Migrasi aditif sebagai `antikebo_migrasi` |
 | `node scripts/jaga.mjs` | Penjaga (juga dijalankan `pnpm build`) |
 | `pnpm tsc` / `pnpm lint` / `pnpm format:cek` | Tipe, lint, format |
-| `pnpm test` | Unit + integrasi (PGlite, peran tanpa BYPASSRLS, server tiruan) |
+| `pnpm test` | Unit + integrasi (PGlite, peran tanpa BYPASSRLS, server tiruan) + `tests/pg` (penjadwal di Postgres pengembangan; dilewati bila DB tidak ada, wajib di CI) |
 | `pnpm build` | Penjaga + build Next |
 | `pnpm test:e2e` | Playwright; memakai `pnpm dev` (atau `E2E_PRODUKSI=1` = `pnpm start` sesudah build) |
 | `E2E_PRODUKSI=1 SIMPAN_TANGKAPAN=1 pnpm test:e2e` | Tangkapan layar desktop + 390 px, terang + gelap, ke `docs/tangkapan/` (diabaikan git) |

@@ -1,11 +1,13 @@
 import { lt } from "drizzle-orm";
-import { db, schema } from "@/lib/db";
+import { db, klienSql, schema } from "@/lib/db";
 import { periksaEnv } from "@/lib/env";
 import { log } from "@/lib/log";
+import { lengkapiMaterialisasi } from "@/lib/penjadwal/mesin";
+import { Penjadwal } from "@/lib/penjadwal/penjadwal";
 
-// Worker AntiKebo (proses terpisah, peran DB antikebo_worker). P0: detak + bersih-bersih.
-// Penjadwal kejadian (tepat detik, SKIP LOCKED, LISTEN/NOTIFY, pulih) dibangun di P3,
-// antrean suara di P5, spam kanal di P6 (docs/03-ARSITEKTUR.md §4 sampai §7).
+// Worker AntiKebo (proses terpisah, peran DB antikebo_worker): penjadwal kejadian (tepat detik,
+// SKIP LOCKED, LISTEN/NOTIFY, pulih; P3), detak, bersih-bersih. Antrean suara (P5), spam kanal
+// (P6), Tuya (P7) masuk sebagai saluran langkah (docs/03-ARSITEKTUR.md §4 sampai §8).
 // Setiap putaran berbatas waktu; satu putaran menggantung tidak boleh mengunci yang lain.
 
 // Pengembangan: satu .env.local untuk web dan worker; worker memakai peran antikebo_worker.
@@ -60,14 +62,33 @@ async function bersihBersih(): Promise<string> {
   return `${d.length} audit lama dihapus`;
 }
 
+const penjadwal = new Penjadwal({
+  db,
+  dengar: async (cb) => {
+    const l = await klienSql().listen("antikebo_peristiwa", cb);
+    return () => l.unlisten();
+  },
+});
+
 putaran("utama", DETAK_MS, async () => "hidup");
 putaran("bersih", 6 * 60 * 60_000, bersihBersih);
+// Jaring pengaman invarian "alarm aktif = satu kejadian menunggu".
+putaran("materialisasi", 10 * 60_000, async () => `${await db().transaction((tx) => lengkapiMaterialisasi(tx, new Date()))} dipulihkan`);
+penjadwal
+  .mulai()
+  .then(() => log.info("penjadwal menyala"))
+  .catch((e) => {
+    log.error({ err: (e as Error)?.message }, "penjadwal gagal menyala");
+    process.exit(1);
+  });
 log.info("worker AntiKebo menyala");
 
 for (const sinyal of ["SIGTERM", "SIGINT"] as const) {
   process.on(sinyal, () => {
     for (const p of pengatur) clearInterval(p);
-    log.info({ sinyal }, "worker AntiKebo berhenti");
-    process.exit(0);
+    void penjadwal.berhenti().finally(() => {
+      log.info({ sinyal }, "worker AntiKebo berhenti");
+      process.exit(0);
+    });
   });
 }

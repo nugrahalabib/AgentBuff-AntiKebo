@@ -1,4 +1,24 @@
-import { test, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+export const TIRUAN = "http://127.0.0.1:3199";
+export const NUGI = "ab_tiruan_nugi";
+
+/** Atur akun di server tiruan AgentBuff (hak, izin). */
+export async function aturTiruan(sub: string, isi: Record<string, unknown>) {
+  const r = await fetch(`${TIRUAN}/_tiruan/pengguna`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sub, ...isi }) });
+  expect(r.ok).toBeTruthy();
+}
+
+/** Masuk dengan AgentBuff lewat layar pilih akun server tiruan. */
+export async function masukSebagai(page: Page, nama: string, izin: { kabar: boolean; suara: boolean } = { kabar: true, suara: true }, mulai = "/masuk") {
+  await page.goto(mulai);
+  if (mulai === "/masuk") await page.getByRole("link", { name: "Masuk dengan AgentBuff" }).click();
+  await expect(page.getByRole("heading", { name: "Masuk ke AntiKebo" })).toBeVisible();
+  await page.getByLabel(nama).check();
+  await page.getByLabel("Kirim pesan lewat agenmu").setChecked(izin.kabar);
+  await page.getByLabel("Buat suara memakai pengaturan suaramu").setChecked(izin.suara);
+  await page.getByRole("button", { name: "Lanjutkan" }).click();
+}
 
 /**
  * Tangkapan layar untuk PR (SIMPAN_TANGKAPAN=1): terang + gelap, ke docs/tangkapan/<folder>

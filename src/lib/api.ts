@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { sesiSaatIni, type Pengguna, type Sesi } from "@/lib/auth/sesi";
 import { env } from "@/lib/env";
+import { GalatLayanan, type KodeGalat } from "@/lib/layanan/dasar";
+import { log } from "@/lib/log";
 
 // Pembantu rute API aplikasi: galat {galat, pesan} + kode HTTP tepat, CSRF
 // lewat Origin/Sec-Fetch-Site untuk mutasi, batas laju 300/menit/pengguna.
@@ -52,4 +54,27 @@ export async function bacaJson<T>(req: Request, batasByte = 16_384): Promise<T |
 /** IP klien di balik NPM (X-Real-IP), hanya untuk batas laju. */
 export function ipKlien(req: Request): string {
   return req.headers.get("x-real-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "?";
+}
+
+const STATUS_GALAT: Record<KodeGalat, number> = {
+  tidak_ditemukan: 404,
+  masukan: 400,
+  batas_laju: 429,
+  perlu_izin: 403,
+  perlu_perangkat: 409,
+  komitmen_terkunci: 409,
+  sedang_berbunyi: 409,
+};
+
+/** Galat layanan jadi jawaban {galat, pesan} dengan kode HTTP tepat; galat lain dicatat dan disamarkan. */
+export function dariGalat(e: unknown): NextResponse {
+  if (e instanceof GalatLayanan) return galat(STATUS_GALAT[e.kode], e.kode, e.message, e.tambahan);
+  log.error({ err: (e as Error)?.message }, "galat tak terduga di rute API");
+  return galat(500, "galat", "Ada yang tidak beres. Coba lagi sebentar lagi.");
+}
+
+/** Bearer token dari header Authorization, atau null. */
+export function bearer(req: Request): string | null {
+  const h = req.headers.get("authorization");
+  return h?.startsWith("Bearer ") ? h.slice(7).trim() : null;
 }

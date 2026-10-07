@@ -1,5 +1,5 @@
-# CI AntiKebo: penjaga, tipe, lint, format, tes (unit + integrasi PGlite + kontrak tiruan),
-# migrasi + uji RLS terhadap Postgres 16 sungguhan, build, dan uji peramban ujung ke ujung
+# CI AntiKebo: penjaga, tipe, lint, format, migrasi, tes (unit + integrasi PGlite + kontrak tiruan
+# + penjadwal di Postgres 16 sungguhan), uji RLS terhadap Postgres 16, build, dan uji peramban ujung ke ujung
 # terhadap server tiruan AgentBuff. Tidak memakai rahasia apa pun: semua nilai dibuat acak
 # oleh scripts/siapkan-lokal.sh di mesin CI.
 name: CI
@@ -59,11 +59,15 @@ jobs:
       - name: Format (prettier)
         run: pnpm format:cek
 
-      - name: Tes unit + integrasi (vitest)
-        run: pnpm test
-
       - name: Basis data, peran tanpa BYPASSRLS, migrasi
         run: bash scripts/siapkan-lokal.sh
+
+      # Termasuk tests/pg (dua worker berebut, ketepatan waktu, berhenti < 2 dtk) terhadap
+      # Postgres 16 di atas; WAJIB_PG_ASLI=1 = gagal, bukan dilewati, bila DB tidak terjangkau.
+      - name: Tes unit + integrasi (vitest)
+        run: pnpm test
+        env:
+          WAJIB_PG_ASLI: "1"
 
       - name: Uji RLS terhadap Postgres 16 sungguhan
         run: psql -h 127.0.0.1 -U postgres -d antikebo -v ON_ERROR_STOP=1 -q -f deploy/uji-rls.sql

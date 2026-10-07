@@ -126,3 +126,26 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
   sudah lewat, melewati satu-satunya tanggal). Alasan: invarian "alarm aktif = tepat satu kejadian
   menunggu" tidak boleh punya pengecualian. Menyalakan lagi alarm sekali yang sudah lewat memakai
   kemunculan jam itu berikutnya, seperti jam weker.
+- **K-40 (2026-10-07, P3) Peristiwa waktu nyata dipicu DB.** Pemicu di `kejadian_alarm`, `alarm`,
+  dan `perangkat_siaga` mengirim NOTIFY ke satu kanal `antikebo_peristiwa` berisi id saja
+  (pengguna, jenis, kejadian, perangkat). Web menyebarkannya ke SSE, worker memakainya untuk
+  memasang ulang pewaktu. Alasan: setiap jalur (web, MCP, worker, aplikasi PC) pasti mengabari
+  tanpa harus ingat memanggil fungsi kabar; isi tetap dibaca lewat API ber-RLS.
+- **K-41 (2026-10-07, P3) Sambung PC = kode + rahasia tunggu, token dibuat saat diambil.** Aplikasi
+  PC menerima kode (8 huruf tanpa 0/O/1/I, 10 menit) dan rahasia 256 bit; pengguna menyetujui kode
+  di peramban; token perangkat dibuat dan diantar SEKALI kepada pemegang rahasia, hanya hash yang
+  disimpan. `kode_sambung` tabel global tanpa RLS (hanya hash, dicari sebelum pemilik diketahui),
+  dikecualikan di penjaga `rls` dan `uji-rls.sql` seperti `sesi`.
+- **K-42 (2026-10-07, P3) Siaga = detak < 2 menit.** Jam Meja (web) memakai sesi peramban, tanpa
+  token perangkat. "Siap malam ini" sementara sama dengan siaga sekarang; P11 boleh memperhalus
+  (mis. memakai `siap_sampai` dari PC) bila uji L2 menunjukkan perlu.
+- **K-43 (2026-10-07, P3) Kejadian terlambat > 30 menit dicatat terlewat** (dengan langkah kabar),
+  dan kejadian berikutnya dihitung dari SEKARANG, bukan dari jadwal yang terlewat, supaya server
+  yang mati berhari-hari tidak menumpuk kabar terlewat untuk tiap hari.
+- **K-44 (2026-10-07, P3) Uji alarm (PRD B9) versi singkat:** 1 menit lagi, soal Ringan 1 kali,
+  tanpa tunda dan tanpa Komitmen, berhenti sendiri sesudah 5 menit, spam dan rumah pintar hanya
+  bila dicentang, tidak menggeser jadwal asli, satu uji aktif per pengguna.
+- **K-45 (2026-10-07, P3) Tes Postgres sungguhan ikut `pnpm test`** (`tests/pg`, memakai DB
+  pengembangan dari `.env.local`, data uji dihapus lagi). Dilewati bila DB tidak ada, kecuali
+  `WAJIB_PG_ASLI=1` (CI menyiapkan DB sebelum tes). Alasan: PGlite satu koneksi tidak bisa
+  membuktikan SKIP LOCKED dan LISTEN lintas koneksi.

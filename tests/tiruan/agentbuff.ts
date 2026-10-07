@@ -620,6 +620,11 @@ export async function mulaiAgentBuffTiruan(opsi: OpsiTiruan): Promise<AgentBuffT
       const u = new URL(req.url ?? "/", "http://tiruan");
       const jalur = u.pathname;
       if (jalur.startsWith("/_tiruan/")) return await layaniKendali(req, res, jalur, u.searchParams);
+      // Peramban meminta favicon saat menampilkan layar pilih akun; jangan jadi galat konsol di uji.
+      if (jalur === "/favicon.ico") {
+        res.writeHead(204, { "Cache-Control": "max-age=86400" });
+        return res.end();
+      }
       if (keadaan.gangguan) return kirimJson(res, 503, { error: "gangguan_tiruan" });
       if (req.method === "GET" && jalur === "/masuk/.well-known/openid-configuration") return kirimJson(res, 200, metadata());
       if (req.method === "GET" && jalur === "/masuk/jwks") return kirimJson(res, 200, { keys: [jwkPublik] });

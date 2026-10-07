@@ -1,31 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
-import { tangkap as tangkapLayar } from "./bantu";
+import { aturTiruan, masukSebagai, NUGI, tangkap as tangkapLayar } from "./bantu";
 
 // P0 ujung ke ujung: halaman depan, /masuk, Masuk dengan AgentBuff lewat server tiruan
 // (OIDC sungguhan: PKCE, id_token ES256, cek hak ketat), izin kabar/suara, beku, keluar.
 // SIMPAN_TANGKAPAN=1 menyimpan tangkapan layar ke docs/tangkapan/p0 (diabaikan git; dilampirkan di PR).
 
-const TIRUAN = "http://127.0.0.1:3199";
-const NUGI = "ab_tiruan_nugi";
-
 test.describe.configure({ mode: "serial" });
 
-async function aturTiruan(sub: string, isi: Record<string, unknown>) {
-  const r = await fetch(`${TIRUAN}/_tiruan/pengguna`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sub, ...isi }) });
-  expect(r.ok).toBeTruthy();
-}
-
 const tangkap = (page: Page, nama: string) => tangkapLayar(page, "p0", nama);
-
-async function masukSebagai(page: Page, nama: string, izin: { kabar: boolean; suara: boolean } = { kabar: true, suara: true }) {
-  await page.goto("/masuk");
-  await page.getByRole("link", { name: "Masuk dengan AgentBuff" }).click();
-  await expect(page.getByRole("heading", { name: "Masuk ke AntiKebo" })).toBeVisible();
-  await page.getByLabel(nama).check();
-  await page.getByLabel("Kirim pesan lewat agenmu").setChecked(izin.kabar);
-  await page.getByLabel("Buat suara memakai pengaturan suaramu").setChecked(izin.suara);
-  await page.getByRole("button", { name: "Lanjutkan" }).click();
-}
 
 test.beforeEach(async () => {
   await aturTiruan(NUGI, { hak: "ok", izin: { kabar: true, suara: true } });

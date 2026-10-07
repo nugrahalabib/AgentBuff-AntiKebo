@@ -3,6 +3,41 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P3): Alarm benar-benar berbunyi tepat waktu dan perangkat bisa disambung
+
+**Baru**
+- **Penjadwal tepat detik.** Pada jam alarm, server langsung menandai alarm berbunyi dan mengabari
+  semua perangkat. Di uji dengan Postgres sungguhan, selisihnya 1 sampai 2 milidetik.
+- **Tidak pernah dobel.** Dua worker yang berebut alarm yang sama tidak membunyikannya dua kali.
+- **Tahan restart.** Kalau server mati di tengah alarm berbunyi, worker baru melanjutkan alarm yang
+  sama. Kalau server mati lebih dari 30 menit, alarm dicatat terlewat dan kamu dikabari.
+- **Berhenti serentak.** Begitu alarm berhenti, PC dan peramban menerima kabarnya dalam hitungan
+  milidetik (syaratnya 2 detik).
+- **Sambungkan PC ini.** Aplikasi PC cukup membuka halaman "Sambungkan PC ini?", kamu cek kodenya
+  sama, tekan Sambungkan, selesai. Kalau belum masuk, kamu masuk dulu lalu langsung kembali ke
+  halaman itu. PC bisa diputus dari web kapan saja.
+- **Perangkat siaga** (PC dan Jam Meja) mengirim detak dan menyimpan salinan jadwal 24 jam ke
+  depan, supaya tetap bisa berbunyi walau internet putus.
+- **Uji alarm:** bunyi 1 menit lagi dengan soal ringan untuk mencoba semuanya. (Tombolnya di P8.)
+- **Batas berhenti sendiri** bekerja: kalau diatur, alarm berhenti sesudah X menit dan dicatat
+  "tidak bangun".
+
+**Keputusan**
+- K-40 sampai K-45 (`KEPUTUSAN.md`).
+
+**Masih butuh Chief**
+- K-07 masih menunggu.
+
+**Untuk teknisi**
+- Tabel `perangkat_siaga` (RLS + cari lewat hash token), `kode_sambung` (global, hanya hash);
+  pemicu NOTIFY `antikebo_peristiwa`; SSE `/api/peristiwa`; API `/api/perangkat/{kode,kode/ambil,
+  detak,jadwal}` dan `/api/app/perangkat`.
+- Mesin status kejadian di satu modul (`src/lib/penjadwal/mesin.ts`), penjadwal di worker
+  (`penjadwal.ts`), saluran langkah tiruan untuk notifikasi, spam, Tuya (diisi P5 sampai P7).
+- Bug yang ketemu dan diperbaiki saat uji: langkah yang direncanakan ulang sesudah tunda bentrok
+  nomor urut dengan langkah lama, jadi notifikasi tidak lanjut sesudah tunda habis.
+- Bukti: 237 tes vitest (termasuk 3 tes Postgres sungguhan), 54 uji Playwright, uji RLS 28/28.
+
 ## 2026-10-07 (P2): Otak alarm: pengulangan, lewati, libur, template, Mode Komitmen
 
 **Baru**
