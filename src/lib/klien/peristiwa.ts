@@ -6,7 +6,7 @@ import type { JenisPeristiwa } from "@/lib/peristiwa";
 export type DataPeristiwa = { k: string | null; d: string | null; waktuServer?: string };
 type Peta = Partial<Record<JenisPeristiwa | "halo", (d: DataPeristiwa) => void>>;
 
-const JENIS: ReadonlyArray<JenisPeristiwa | "halo"> = ["halo", "jadwal", "berbunyi", "berhenti", "tunda", "cek", "klip_siap", "perangkat"];
+const JENIS: ReadonlyArray<JenisPeristiwa | "halo"> = ["halo", "jadwal", "berbunyi", "berhenti", "tunda", "cek", "klip_siap", "perangkat", "cabut"];
 
 /**
  * Langganan SSE `/api/peristiwa` (arsitektur §5). Peristiwa hanya berisi id; isi dibaca ulang lewat

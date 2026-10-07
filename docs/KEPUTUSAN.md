@@ -363,3 +363,40 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
 - **K-95 (2026-10-07, P10) Catatan diagnosa PC:** `antikebo.log` (paling besar 1 MB, diputar) di folder
   data aplikasi berisi kejadian penting (mulai, SSE, berbunyi, berhenti, omelan) tanpa token,
   rahasia, atau isi soal; dipakai menelusuri uji manual L2.
+- **K-96 (2026-10-07, P11) "Siap malam ini" = siaga (detak < 2 menit) + `siapSampai` perangkat sampai
+  alarm berikutnya.** Perangkat yang tidak mengirim `siapSampai` (suara belum tersimpan semua) =
+  belum siap; tanpa alarm aktif cukup siaga. Satu aturan (`src/lib/tampilan/siap.ts`) dipakai tab
+  Siaga dan spanduk Beranda. Menggantikan aturan sementara K-42 ("siap = siaga sekarang").
+- **K-97 (2026-10-07, P11) Riwayat "perangkat yang berbunyi" (PRD K1) = perangkat siaga saat alarm mulai
+  berbunyi**, dicatat worker ke `kejadian_alarm.perangkat_berbunyi` (salinan id, nama, jenis) di
+  transaksi klaim. Bukti bunyi keluar dari speaker tiap perangkat tidak ada di server, jadi layar
+  menulis "Perangkat siaga saat berbunyi", bukan "berbunyi di". Perangkat yang menghentikan
+  (`selesai_oleh` + `perangkat_selesai`) dan hasil aksi rumah pintar (`tuya_pra`, `tuya`:
+  dijalankan, offline, gagal) ikut di rincian. Isi soal dan jawaban tidak pernah tampil di Riwayat.
+- **K-98 (2026-10-07, P11) Riwayat dan skor hanya dari kejadian sungguhan yang selesai** (bangun,
+  cek bangun, tidak bangun, terlewat); uji, dibatalkan, dan yang masih berjalan tidak masuk. Hari
+  beruntun dihitung dari 1 tahun terakhir. Ekspor CSV memakai kolom dalam bahasa pengguna, BOM
+  UTF-8 (Excel), dan sel yang diawali `= + - @` diberi kutip tunggal (cegah injeksi rumus).
+- **K-99 (2026-10-07, P11) Hapus semua data (PRD A5):** konfirmasi ketik `HAPUS` (`DELETE` di bahasa
+  Inggris). Ditolak selama alarm berbunyi dan selama jendela Mode Komitmen (kalau tidak, hapus data
+  jadi jalan pintas mematikan alarm terkunci). Semua baris milik pengguna dihapus (termasuk kunci
+  Tuya, perangkat siaga, klip suara, token agen, catatan aktivitas), semua sesi dicabut, baris
+  `pengguna` tetap dengan `dihapus_pada` dan preferensi kembali bawaan, kecuali bahasa dan zona.
+  Masuk lagi = akun bersih mulai dari perkenalan. Peramban ikut dibersihkan (klip Jam Meja,
+  langganan notifikasi).
+- **K-100 (2026-10-07, P11) Perkenalan pertama (PRD J):** Beranda mengarahkan ke `/app/orientasi`
+  selama `orientasi_selesai` kosong (halaman lain tetap bisa dibuka, jadi tombol "Pasang di PC
+  ini", "Jam meja", dan "Sambungkan rumah" boleh meninggalkan perkenalan). Nama panggilan diisi
+  nama depan dari AgentBuff; langkah 1 dan 2 wajib, 3 sampai 6 bisa "Nanti". Langkah terakhir
+  menandai selesai lalu membunyikan alarm uji 1 menit lagi dengan bawaan pengguna. Contoh karakter
+  memakai suara peramban (pratinjau gaya), sama dengan lembar alarm.
+- **K-101 (2026-10-07, P11) Bawaan alarm baru diatur di satu lembar** (karakter, suara AgentBuff, bunyi,
+  soal, tunda, Komitmen, Masih bangun, libur, batas waktu); kanal spam bawaan tetap di bagian Kanal
+  pesan (dipakai juga pengingat malam) dan tidak dikirim lembar bawaan supaya tidak saling timpa.
+  Template di Pengaturan hanya buatan pengguna (ganti nama, hapus); template bawaan selalu ada di
+  lembar alarm baru. Baris "Suara" rancangan P1 (§4.10) digabung ke lembar bawaan (suara
+  AgentBuff + dengar contoh + bunyi), karena suara memang bagian bawaan alarm (PRD M). Baris Agen
+  (token MCP) menyusul di P12, Privasi di P13.
+- **K-102 (2026-10-07, P11) Akun tiruan keempat "Sari Pengguna Baru" (aktif)** untuk uji yang harus mulai
+  dari nol (perkenalan, pengaturan, hapus data, Siaga, Riwayat) supaya data Nugi untuk uji lain tidak
+  tersentuh.

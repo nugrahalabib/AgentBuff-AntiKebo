@@ -1,7 +1,8 @@
-import { and, eq, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import { isiDariBaris } from "@/lib/alarm/baris";
 import { barisDari, schema, type Tx } from "@/lib/db";
 import { materialisasi } from "@/lib/layanan/alarm";
+import { SIAGA_MS } from "@/lib/layanan/perangkat";
 import {
   saluranCekTampilTiruan,
   saluranKabarTerlewatTiruan,
@@ -158,9 +159,20 @@ export async function klaimJatuhTempo(tx: Tx, sekarang: Date, batas = 20): Promi
       for (const s of saluran) if (s.rencanaTerlewat) await tulisRencana(tx, baru, s, s.rencanaTerlewat(isi, sekarang, baru), sekarang);
       hasil.push({ kejadian: baru, hasil: "terlewat" });
     } else {
+      // Perangkat yang siaga saat ini (detak < 2 menit) dicatat untuk Riwayat (PRD K1).
+      const perangkatBerbunyi = await tx
+        .select({ id: schema.perangkatSiaga.id, nama: schema.perangkatSiaga.nama, jenis: schema.perangkatSiaga.jenis })
+        .from(schema.perangkatSiaga)
+        .where(
+          and(
+            eq(schema.perangkatSiaga.penggunaId, k.penggunaId),
+            isNull(schema.perangkatSiaga.dicabutPada),
+            gte(schema.perangkatSiaga.terakhirTerlihat, new Date(sekarang.getTime() - SIAGA_MS)),
+          ),
+        );
       [baru] = await tx
         .update(schema.kejadianAlarm)
-        .set({ status: "berbunyi", berbunyiPada: sekarang, terlambatDtk: Math.round(terlambatMs / 1000), isi, diubah: sekarang })
+        .set({ status: "berbunyi", berbunyiPada: sekarang, terlambatDtk: Math.round(terlambatMs / 1000), isi, perangkatBerbunyi, diubah: sekarang })
         .where(eq(schema.kejadianAlarm.id, id))
         .returning();
       if (isi) for (const s of saluranBerbunyi()) await tulisRencana(tx, baru, s, s.rencana(isi, sekarang, baru), sekarang);

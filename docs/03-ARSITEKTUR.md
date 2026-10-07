@@ -33,7 +33,7 @@ Nama tabel/kolom bahasa Indonesia, `snake_case`, waktu `timestamptz` (UTC). Semu
 | `alarm` | jam lokal, zona, `pengulangan` (JSON zod), `agenda_judul`, `agenda_detail`, `karakter`, `suara_id`, `bunyi`, `soal` (JSON), `tunda` (JSON), `spam` (JSON: kanal + jeda + batas waktu), `tuya` (JSON aturan), `komitmen` (bool), `masih_bangun` (JSON), `libur_nasional` (bool), aktif |
 | `lewati_alarm` | tanggal lokal dilewati |
 | `template_alarm` | nama, isi alarm (JSON), bawaan/buatan |
-| `kejadian_alarm` | satu baris per bunyi: `jadwal_utc`, status (`menunggu`, `berbunyi`, `ditunda`, `cek_bangun`, `bangun`, `tidak_bangun`, `terlewat`, `dibatalkan`), jumlah tunda, waktu bangun, soal terakhir, terlambat (dtk), `uji` (bool) |
+| `kejadian_alarm` | satu baris per bunyi: `jadwal_utc`, status (`menunggu`, `berbunyi`, `ditunda`, `cek_bangun`, `bangun`, `tidak_bangun`, `terlewat`, `dibatalkan`), jumlah tunda, waktu bangun, soal terakhir, terlambat (dtk), `uji` (bool), siapa yang menghentikan (`selesai_oleh`, `perangkat_selesai`), perangkat siaga saat mulai berbunyi (`perangkat_berbunyi`, K-97) |
 | `langkah_kejadian` | langkah terjadwal per kejadian (`jatuh_tempo_utc`, jenis, parameter, status, hasil), unik `(kejadian_id, jenis, urutan)` |
 | `kiriman_kanal` | per pesan spam: kanal, status, alasan, id kiriman AgentBuff |
 | `soal_kejadian` | jenis, tingkat, soal tampil (tanpa jawaban), hash jawaban + garam, percobaan, benar beruntun |

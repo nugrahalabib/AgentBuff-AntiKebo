@@ -3,6 +3,53 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P11): Perkenalan, Siaga, Riwayat, Pengaturan lengkap, Template
+
+**Baru**
+- **Perkenalan pertama.** Sesudah masuk pertama kali, Kebo menyapa dan mengajak 6 langkah singkat:
+  nama panggilan (sudah terisi nama depanmu dari AgentBuff), pilih karakter (bisa dengar contoh),
+  siapkan perangkat (otomatis menyarankan aplikasi PC di Windows, Jam Meja di HP, plus izin
+  notifikasi dan pasang ke layar utama), pilih kanal spam, rumah pintar, lalu alarm uji 1 menit
+  lagi. Langkah 3 sampai 6 bisa "Nanti". Bisa diulang dari Pengaturan.
+- **Tab Siaga.** Semua perangkat yang membunyikan alarm (PC dan Jam Meja): terlihat kapan, dicas
+  atau tidak, baterai, dan **Siap malam ini** (menyala, tersambung, dan suara alarm berikutnya sudah
+  tersimpan). Bisa ganti nama dan putuskan perangkat. Spanduk Beranda menuju tab ini.
+- **Tab Riwayat.** Skor hari ini, hari beruntun, rata-rata sampai bangun, total tunda, grafik 7
+  dan 30 hari, dan daftar kejadian. Ketuk satu kejadian untuk rinciannya: jam berbunyi dan soal
+  terjawab, soal yang dipakai (tanpa isi soal), pesan kanal yang terkirim, perangkat yang siaga saat
+  berbunyi, siapa yang menghentikan, dan hasil rumah pintar. **Ekspor CSV** untuk dibuka di Excel.
+- **Pengaturan lengkap.** Nama panggilan, zona waktu (cari, atau pakai zona perangkat ini), bahasa,
+  jam tidur, tema; **bawaan alarm baru** (karakter, suara, bunyi, soal, tunda, Komitmen, Masih
+  bangun, libur nasional, batas waktu); kelola template dan kode QR (buat, cetak, ganti nama,
+  hapus); daftar perangkat siaga; ulangi perkenalan.
+- **Hapus semua data.** Ketik HAPUS untuk memastikan. Semua alarm, riwayat, template, kode QR,
+  perangkat, suara omelan, rumah pintar (termasuk kunci Tuya), dan token agen dihapus, lalu kamu
+  keluar dari semua perangkat. Akun AgentBuff dan pembelianmu tetap. Tidak bisa dipakai saat alarm
+  berbunyi atau selama Mode Komitmen aktif.
+- **Template di lembar alarm.** Alarm baru bisa dimulai dari template (5 bawaan + buatanmu), dan
+  alarm mana pun bisa disimpan sebagai template.
+
+**Diubah**
+- Tab bawah dan bilah samping kini lengkap: Alarm, Siaga, Riwayat, Pengaturan.
+- "Siap malam ini" di Beranda kini benar-benar memeriksa suara alarm berikutnya sudah tersimpan di
+  perangkat, bukan sekadar perangkatnya menyala.
+
+**Keputusan**
+- K-96 sampai K-102 (siap malam ini, perangkat di Riwayat, isi Riwayat dan CSV, hapus data,
+  perkenalan, bawaan alarm baru, akun uji Sari). Lihat `KEPUTUSAN.md`.
+
+**Masih butuh Chief**
+- Tidak ada keputusan baru. K-07 (hak berakhir) masih menunggu.
+
+**Untuk teknisi**
+- Migrasi `0008_riwayat.sql`: kolom `kejadian_alarm.perangkat_berbunyi` (diisi worker saat klaim).
+- Rute baru: `/api/app/riwayat` (+ `/[id]`, `/csv`), `/api/app/template` (+ `/[id]`),
+  `/api/app/alarm/[id]/template`, `/api/app/hapus-data`; halaman `/app/siaga`, `/app/riwayat`,
+  `/app/orientasi`. Layanan `riwayat.ts`, `hapus-data.ts`.
+- Akun tiruan keempat **Sari Pengguna Baru** (aktif) untuk uji yang mulai dari nol. Helper e2e
+  `masukSebagai` menandai perkenalan selesai kecuali `{ orientasi: true }`.
+- Alat MCP untuk Riwayat, template, preferensi, dan hapus data dikerjakan di P12 (paritas).
+
 ## 2026-10-07 (P10): AntiKebo untuk PC, alarm yang tidak bisa ditutup
 
 **Baru**

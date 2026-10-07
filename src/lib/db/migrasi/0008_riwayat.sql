@@ -1,0 +1,1 @@
+ALTER TABLE "kejadian_alarm" ADD COLUMN "perangkat_berbunyi" jsonb DEFAULT '[]'::jsonb NOT NULL;

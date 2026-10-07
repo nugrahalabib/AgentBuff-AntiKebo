@@ -207,7 +207,8 @@ export async function detakPerangkat(penggunaId: string, perangkatId: string, ma
         terakhirTerlihat: sekarang,
         ...(h.data.versi ? { versiAplikasi: h.data.versi } : {}),
         ...(h.data.kemampuan ? { kemampuan: { ...p.kemampuan, ...h.data.kemampuan } as KemampuanPerangkat } : {}),
-        ...(h.data.siapSampai ? { siapSampai: new Date(h.data.siapSampai) } : {}),
+        // Tidak dikirim = belum siap (mis. suara belum tersimpan semua): jangan pakai nilai lama.
+        siapSampai: h.data.siapSampai ? new Date(h.data.siapSampai) : null,
       })
       .where(eq(schema.perangkatSiaga.id, p.id))
       .returning();
@@ -224,6 +225,8 @@ export type PerangkatTampil = {
   /** Detak < 2 menit. */
   siaga: boolean;
   kemampuan: KemampuanPerangkat;
+  /** Perangkat menyatakan memegang jadwal + suara sampai saat ini (detak `siapSampai`). */
+  siapSampai: Date | null;
 };
 
 export function tampilPerangkat(p: BarisPerangkat, sekarang: Date): PerangkatTampil {
@@ -235,6 +238,7 @@ export function tampilPerangkat(p: BarisPerangkat, sekarang: Date): PerangkatTam
     terakhirTerlihat: p.terakhirTerlihat,
     siaga: !!p.terakhirTerlihat && sekarang.getTime() - p.terakhirTerlihat.getTime() < SIAGA_MS,
     kemampuan: p.kemampuan,
+    siapSampai: p.siapSampai,
   };
 }
 

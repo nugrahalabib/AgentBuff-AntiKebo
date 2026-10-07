@@ -4,6 +4,7 @@ import {
   Bell,
   Bot,
   Check,
+  ChevronLeft,
   Globe,
   Languages,
   Lamp,
@@ -13,17 +14,19 @@ import {
   Monitor,
   Moon,
   Palette,
+  Play,
   QrCode,
   RotateCcw,
   Shield,
   SlidersHorizontal,
   Smartphone,
+  Square,
   Trash2,
   User,
   Volume2,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Saklar, Tombol } from "@/components/ui/dasar";
 import { BarisGrup, Grup } from "@/components/ui/grup";
 import { Kebo } from "@/components/ui/kebo";
@@ -31,6 +34,7 @@ import { Logo } from "@/components/ui/ikon";
 import { cn } from "@/lib/cn";
 import { isi } from "@/lib/i18n";
 import { useKamus } from "@/lib/i18n/klien";
+import { useDengarContoh } from "@/lib/klien/dengar";
 import { DAFTAR_KARAKTER, WARNA_KARAKTER, type IdKarakter } from "@/lib/tampilan/jenis";
 
 /** Pengaturan lengkap (docs/04-DESAIN.md §4.10): daftar bergrup gaya iOS. */
@@ -96,26 +100,77 @@ export function LayarPengaturan({
   );
 }
 
-/** Orientasi (docs/04-DESAIN.md §4.11): satu ide per halaman, titik kemajuan, "Nanti" di langkah opsional. */
-export function LayarOrientasi({ langkah: awal = 0, nama: namaAwal = "" }: { langkah?: number; nama?: string }) {
-  const { t } = useKamus();
+/** Isi yang disimpan per langkah orientasi. */
+export type IsiOrientasi = { nama: string; karakter: IdKarakter };
+
+/**
+ * Orientasi (docs/04-DESAIN.md §4.11, PRD J): satu ide per halaman, titik kemajuan, "Nanti" di
+ * langkah opsional (3 sampai 6). Presentasional: isi langkah perangkat, kanal, dan rumah lewat slot;
+ * penyimpanan lewat `simpan` (false = tetap di langkah ini) dan `selesai` (uji = bunyikan alarm uji).
+ */
+export function LayarOrientasi({
+  langkah: awal = 0,
+  nama: namaAwal = "",
+  karakter: karakterAwal = "pelatih_tentara",
+  perangkat,
+  kanal,
+  rumah,
+  simpan,
+  selesai,
+  ubahLangkah,
+  proses = false,
+  galat = null,
+}: {
+  langkah?: number;
+  nama?: string;
+  karakter?: IdKarakter;
+  perangkat?: ReactNode;
+  kanal?: ReactNode;
+  rumah?: ReactNode;
+  simpan?: (langkah: number, isi: IsiOrientasi) => Promise<boolean>;
+  selesai?: (uji: boolean) => void;
+  ubahLangkah?: (langkah: number) => void;
+  proses?: boolean;
+  galat?: string | null;
+}) {
+  const { t, b } = useKamus();
   const O = t.orientasi;
   const [langkah, setLangkah] = useState(awal);
   const [nama, setNama] = useState(namaAwal);
-  const [karakter, setKarakter] = useState<IdKarakter>("pelatih_tentara");
+  const [karakter, setKarakter] = useState<IdKarakter>(karakterAwal);
+  const { diputar, dengar } = useDengarContoh(b);
   const total = 6;
-  const opsional = langkah >= 2 && langkah <= 4;
+  const terakhir = langkah === total - 1;
+  const opsional = langkah >= 2;
+
+  const pindah = (l: number) => {
+    setLangkah(l);
+    ubahLangkah?.(l);
+  };
+  const lanjut = async () => {
+    if (terakhir) return selesai?.(true);
+    if (simpan && !(await simpan(langkah, { nama: nama.trim(), karakter }))) return;
+    pindah(langkah + 1);
+  };
+  const nanti = () => (terakhir ? selesai?.(false) : pindah(langkah + 1));
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-[520px] flex-col px-5 pt-[max(24px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-1.5" role="img" aria-label={isi(O.langkahKe, { ke: langkah + 1, dari: total })}>
-          {Array.from({ length: total }, (_, i) => (
-            <span key={i} className={cn("h-2 rounded-full transition-all", i === langkah ? "w-6 bg-grafit" : "w-2 bg-label-3/40")} />
-          ))}
+      <div className="flex min-h-11 items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          {langkah > 0 ? (
+            <button type="button" onClick={() => pindah(langkah - 1)} aria-label={t.umum.kembali} className="tekan -ml-2 grid size-11 place-items-center rounded-full text-label-2">
+              <ChevronLeft size={22} />
+            </button>
+          ) : null}
+          <div className="flex gap-1.5" role="img" aria-label={isi(O.langkahKe, { ke: langkah + 1, dari: total })}>
+            {Array.from({ length: total }, (_, i) => (
+              <span key={i} className={cn("h-2 rounded-full transition-all", i === langkah ? "w-6 bg-grafit" : "w-2 bg-label-3/40")} />
+            ))}
+          </div>
         </div>
         {opsional ? (
-          <Tombol varian="polos" ukuran="kecil" onClick={() => setLangkah(langkah + 1)}>
+          <Tombol varian="polos" ukuran="kecil" disabled={proses} onClick={nanti}>
             {O.nanti}
           </Tombol>
         ) : null}
@@ -130,6 +185,9 @@ export function LayarOrientasi({ langkah: awal = 0, nama: namaAwal = "" }: { lan
             <input
               value={nama}
               onChange={(e) => setNama(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && nama.trim()) void lanjut();
+              }}
               maxLength={30}
               placeholder={O.namaContoh}
               aria-label={O.namaContoh}
@@ -140,41 +198,63 @@ export function LayarOrientasi({ langkah: awal = 0, nama: namaAwal = "" }: { lan
           <>
             <h1 className="t-judul-1">{O.karakterJudul}</h1>
             <ul role="radiogroup" aria-label={O.karakterJudul} className="mt-6 grid w-full grid-cols-2 gap-2.5">
-              {DAFTAR_KARAKTER.filter((k) => k !== "kustom").map((id) => (
-                <li key={id}>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={karakter === id}
-                    onClick={() => setKarakter(id)}
-                    className={cn("tekan flex w-full flex-col items-start rounded-[20px] p-4 text-left", karakter === id ? "kaca-kuat ring-2 ring-toska-isi" : "kaca")}
-                  >
-                    <span aria-hidden className="size-8 rounded-[10px]" style={{ background: WARNA_KARAKTER[id] }} />
-                    <span className="mt-2 text-[15px] font-semibold">{t.karakter[id].nama}</span>
-                    <span className="t-keterangan text-label-2">{isi(t.karakter[id].contoh, { nama: nama.trim() || O.kamu })}</span>
-                  </button>
-                </li>
-              ))}
+              {DAFTAR_KARAKTER.filter((k) => k !== "kustom").map((id) => {
+                const contoh = isi(t.karakter[id].contoh, { nama: nama.trim() || O.kamu });
+                return (
+                  <li key={id} className="relative">
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={karakter === id}
+                      onClick={() => setKarakter(id)}
+                      className={cn(
+                        "tekan flex h-full w-full flex-col items-start rounded-[20px] p-4 pb-14 text-left",
+                        karakter === id ? "kaca-kuat outline-2 outline-toska-isi" : "kaca",
+                      )}
+                    >
+                      <span aria-hidden className="size-8 rounded-[10px]" style={{ background: WARNA_KARAKTER[id] }} />
+                      <span className="mt-2 text-[15px] font-semibold">{t.karakter[id].nama}</span>
+                      <span className="t-keterangan text-label-2">{contoh}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => dengar(id, contoh)}
+                      aria-label={isi(t.ubah.dengar, { nama: t.karakter[id].nama })}
+                      className="tekan absolute bottom-3 left-4 grid size-9 place-items-center rounded-full bg-grafit text-grafit-label"
+                    >
+                      {diputar === id ? <Square size={13} fill="currentColor" /> : <Play size={15} fill="currentColor" />}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           </>
         ) : langkah === 2 ? (
           <>
             <h1 className="t-judul-1">{O.perangkatJudul}</h1>
-            <div className="mt-6 flex w-full flex-col gap-2.5">
-              <Tombol ukuran="besar">
-                <Monitor size={19} />
-                {t.siaga.pasangPc}
-              </Tombol>
-              <Tombol ukuran="besar" varian="kaca">
-                <Smartphone size={19} />
-                {t.siaga.jadikanJamMeja}
-              </Tombol>
-            </div>
+            {perangkat ?? (
+              <div className="mt-6 flex w-full flex-col gap-2.5">
+                <Tombol ukuran="besar">
+                  <Monitor size={19} />
+                  {t.siaga.pasangPc}
+                </Tombol>
+                <Tombol ukuran="besar" varian="kaca">
+                  <Smartphone size={19} />
+                  {t.siaga.jadikanJamMeja}
+                </Tombol>
+              </div>
+            )}
           </>
         ) : langkah === 3 ? (
-          <h1 className="t-judul-1">{O.kanalJudul}</h1>
+          <>
+            <h1 className="t-judul-1">{O.kanalJudul}</h1>
+            {kanal}
+          </>
         ) : langkah === 4 ? (
-          <h1 className="t-judul-1">{O.rumahJudul}</h1>
+          <>
+            <h1 className="t-judul-1">{O.rumahJudul}</h1>
+            {rumah}
+          </>
         ) : (
           <>
             <Kebo pose="kaget" ukuran={130} />
@@ -184,8 +264,13 @@ export function LayarOrientasi({ langkah: awal = 0, nama: namaAwal = "" }: { lan
         )}
       </div>
 
-      <Tombol ukuran="besar" className="w-full" onClick={() => setLangkah(Math.min(total - 1, langkah + 1))} disabled={langkah === 0 && !nama.trim()}>
-        {langkah === total - 1 ? O.ujiTombol : O.lanjut}
+      {galat ? (
+        <p role="alert" data-pesan-galat className="t-subjudul mb-3 text-center text-bahaya">
+          {galat}
+        </p>
+      ) : null}
+      <Tombol ukuran="besar" className="w-full" onClick={() => void lanjut()} disabled={proses || (langkah === 0 && !nama.trim())}>
+        {proses ? t.umum.menyimpan : terakhir ? O.ujiTombol : O.lanjut}
       </Tombol>
     </main>
   );

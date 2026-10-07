@@ -9,7 +9,19 @@ import { useKamus } from "@/lib/i18n/klien";
 import type { RingkasPerangkat } from "@/lib/tampilan/jenis";
 
 /** Tab Siaga (docs/04-DESAIN.md §4.7): perangkat yang membunyikan alarm + cara menambah. */
-export function LayarSiaga({ perangkat, hrefUnduh, hrefJamMeja, putus }: { perangkat: RingkasPerangkat[]; hrefUnduh: string; hrefJamMeja: string; putus?: (id: string) => void }) {
+export function LayarSiaga({
+  perangkat,
+  hrefUnduh,
+  hrefJamMeja,
+  putus,
+  ubahNama,
+}: {
+  perangkat: RingkasPerangkat[];
+  hrefUnduh: string;
+  hrefJamMeja: string;
+  putus?: (id: string) => void;
+  ubahNama?: (id: string) => void;
+}) {
   const { t } = useKamus();
   const S = t.siaga;
   return (
@@ -30,6 +42,9 @@ export function LayarSiaga({ perangkat, hrefUnduh, hrefJamMeja, putus }: { peran
                 <span className="t-kepala block truncate">{p.nama}</span>
                 <span className="t-keterangan block text-label-2">
                   {S.jenis[p.jenis]} · {isi(S.terakhirTerlihat, { waktu: p.terakhirTerlihat })}
+                  {p.dicas === true ? ` · ${S.dicas}` : null}
+                  {p.dicas === false ? <span className="text-waspada"> · {S.tidakDicas}</span> : null}
+                  {typeof p.baterai === "number" ? ` · ${isi(S.baterai, { n: Math.round(p.baterai) })}` : null}
                 </span>
                 <span
                   className={cn(
@@ -41,15 +56,23 @@ export function LayarSiaga({ perangkat, hrefUnduh, hrefJamMeja, putus }: { peran
                   {p.siapMalamIni ? S.siapMalamIni : S.belumSiap}
                 </span>
               </span>
-              <Tombol varian="polos" ukuran="kecil" onClick={() => putus?.(p.id)}>
-                {S.putus}
-              </Tombol>
+              <span className="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center">
+                {ubahNama ? (
+                  <Tombol varian="polos" ukuran="kecil" aria-label={`${S.gantiNama}: ${p.nama}`} onClick={() => ubahNama(p.id)}>
+                    {S.gantiNama}
+                  </Tombol>
+                ) : null}
+                <Tombol varian="polos" ukuran="kecil" aria-label={`${S.putus}: ${p.nama}`} onClick={() => putus?.(p.id)}>
+                  {S.putus}
+                </Tombol>
+              </span>
             </li>
           ))}
         </ul>
       ) : (
         <p className="kaca rounded-[22px] p-5 text-[15px] text-label-2">{S.kosong}</p>
       )}
+      {perangkat.length ? <p className="t-keterangan -mt-3 px-1 text-label-2">{S.siapKet}</p> : null}
 
       <div className="flex flex-col gap-2.5 sm:flex-row">
         <TautanTombol href={hrefUnduh} ukuran="besar" className="sm:flex-1">

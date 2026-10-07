@@ -10,7 +10,7 @@ import { kamusServer } from "@/lib/i18n/server";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { robots: { index: false } };
 
-type Props = { searchParams: Promise<{ alasan?: string; galat?: string }> };
+type Props = { searchParams: Promise<{ alasan?: string; galat?: string; info?: string }> };
 
 export default async function Masuk({ searchParams }: Props) {
   const [{ t }, s, q] = await Promise.all([kamusServer(), sesiSaatIni(), searchParams]);
@@ -18,6 +18,7 @@ export default async function Masuk({ searchParams }: Props) {
   const M = t.masuk;
   const pesanAlasan = q.alasan ? (M.alasan[q.alasan as keyof typeof M.alasan] ?? M.alasan.tidak_diketahui) : null;
   const pesanGalat = q.galat ? (M.galat[q.galat as keyof typeof M.galat] ?? M.galat.umum) : null;
+  const pesanInfo = q.info === "dihapus" ? M.info.dihapus : null;
   const perbaiki = q.alasan ? tautanPerpanjang(q.alasan, process.env.AGENTBUFF_ORIGIN ?? "https://agentbuff.id", process.env.AGENTBUFF_PRODUCT_KEY ?? "antikebo") : null;
 
   return (
@@ -28,6 +29,12 @@ export default async function Masuk({ searchParams }: Props) {
         </div>
         <h1 className="t-judul-1 mt-6">{t.merek.nama}</h1>
         <p className="t-subjudul mt-2 text-label-2">{M.sub}</p>
+
+        {pesanInfo && !pesanAlasan && !pesanGalat ? (
+          <p role="status" className="mt-6 rounded-[18px] bg-toska-isi/15 px-4 py-3 text-left text-[15px] text-label">
+            {pesanInfo}
+          </p>
+        ) : null}
 
         {pesanAlasan || pesanGalat ? (
           <div role="alert" data-pesan-galat className="mt-6 rounded-[18px] bg-waspada-isi/15 px-4 py-3 text-left text-[15px] text-label">

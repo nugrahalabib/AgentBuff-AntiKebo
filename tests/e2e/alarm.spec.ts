@@ -60,7 +60,7 @@ test("lembar Ubah alarm: buat, ubah, nyala/mati, lewati, hapus", async ({ page }
   await lembar.getByRole("radiogroup", { name: "Tingkat soal" }).getByRole("radio", { name: "Berat" }).click();
   await lembar.getByRole("group", { name: "Jatah tunda" }).getByRole("button", { name: "Tambah" }).click();
   await tangkap(page, "p8", "ubah-alarm", { setinggiHalaman: false });
-  await lembar.getByRole("button", { name: "Simpan" }).click();
+  await lembar.getByRole("button", { name: "Simpan", exact: true }).click();
   // Suara omelan dibuat worker; bila klip yang sama sudah ada (uji sebelumnya), langsung siap.
   await expect(page.getByText(/^Alarm tersimpan\.( Suara omelan sedang dibuat\.)?$/)).toBeVisible();
   await expect(lembar).toHaveCount(0);
@@ -77,7 +77,7 @@ test("lembar Ubah alarm: buat, ubah, nyala/mati, lewati, hapus", async ({ page }
   await expect(ubah.getByText("Hari kerja", { exact: true })).toBeVisible();
   await expect(ubah.getByRole("group", { name: "Jatah tunda" }).locator("output")).toHaveText("3");
   await ubah.getByRole("textbox", { name: "Mau bangun buat apa?" }).fill("Presentasi klien besar");
-  await ubah.getByRole("button", { name: "Simpan" }).click();
+  await ubah.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(ubah).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Alarm berikutnya" }).getByText("Presentasi klien besar")).toBeVisible();
 
@@ -87,11 +87,11 @@ test("lembar Ubah alarm: buat, ubah, nyala/mati, lewati, hapus", async ({ page }
   await kedua.getByRole("textbox", { name: "Mau bangun buat apa?" }).fill("Kuliah pagi");
   // Galat dari server tampil di lembar dengan kalimat ramah; lembar tetap terbuka.
   await kedua.getByRole("radio", { name: "Kustom" }).click();
-  await kedua.getByRole("button", { name: "Simpan" }).click();
+  await kedua.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(kedua.getByRole("alert")).toHaveText(/karakter Kustom butuh paling sedikit satu kalimat pribadi/);
   await kedua.getByRole("button", { name: "Tambah kalimat" }).click();
   await kedua.getByRole("textbox", { name: "Kalimat 1" }).fill("Kuliah jam tujuh, jangan bolos lagi!");
-  await kedua.getByRole("button", { name: "Simpan" }).click();
+  await kedua.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(kedua).toHaveCount(0);
   const saklar = page.getByRole("switch", { name: "Nyalakan Kuliah pagi" });
   await expect(saklar).toHaveAttribute("aria-checked", "true");

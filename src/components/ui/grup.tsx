@@ -36,6 +36,7 @@ export function BarisGrup({
   href,
   kanan,
   bahaya,
+  onClick,
 }: {
   ikon?: LucideIcon;
   warnaIkon?: string;
@@ -45,6 +46,8 @@ export function BarisGrup({
   href?: string;
   kanan?: ReactNode;
   bahaya?: boolean;
+  /** Baris yang membuka lembar (bukan pindah halaman). */
+  onClick?: () => void;
 }) {
   const isi = (
     <>
@@ -55,7 +58,7 @@ export function BarisGrup({
       </span>
       {nilai ? <span className="max-w-[45%] truncate text-[15px] text-label-2">{nilai}</span> : null}
       {kanan}
-      {href ? <ChevronRight size={18} className="shrink-0 text-label-3" /> : null}
+      {href || onClick ? <ChevronRight size={18} className="shrink-0 text-label-3" /> : null}
     </>
   );
   return (
@@ -64,6 +67,10 @@ export function BarisGrup({
         <Link href={href} className="tekan flex min-h-[52px] items-center gap-3 px-4 py-2.5 hover:bg-kaca-isi">
           {isi}
         </Link>
+      ) : onClick ? (
+        <button type="button" onClick={onClick} className="tekan flex min-h-[52px] w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-kaca-isi">
+          {isi}
+        </button>
       ) : (
         <div className="flex min-h-[52px] items-center gap-3 px-4 py-2.5">{isi}</div>
       )}

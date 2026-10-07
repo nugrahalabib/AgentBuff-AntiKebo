@@ -76,3 +76,21 @@ export function alarmPalingDulu(daftar: readonly AlarmKlien[]): AlarmKlien | nul
   }
   return pilih;
 }
+
+/** Template untuk lembar alarm baru (PRD B10): nama tampil + isi sebagian. */
+export type TemplateKlien = { id: string; nama: string; keterangan: string | null; bawaan: boolean; isi: Partial<Record<string, unknown>> };
+
+const BERSARANG = ["soal", "tunda", "spam", "masihBangun"] as const;
+
+/**
+ * Terapkan isi template ke form lembar alarm baru: isian bersarang (soal, tunda, spam, Masih
+ * bangun) digabung, sisanya diganti. Sama dengan cara server merakit alarm dari template.
+ */
+export function terapkanTemplate(form: FormAlarm, isi: Partial<Record<string, unknown>>): FormAlarm {
+  const hasil: Record<string, unknown> = { ...form };
+  for (const [k, v] of Object.entries(isi)) {
+    if (v === undefined) continue;
+    hasil[k] = (BERSARANG as readonly string[]).includes(k) && v && typeof v === "object" ? { ...(form[k as (typeof BERSARANG)[number]] as object), ...(v as object) } : v;
+  }
+  return hasil as FormAlarm;
+}

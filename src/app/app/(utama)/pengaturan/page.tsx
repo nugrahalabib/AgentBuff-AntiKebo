@@ -1,14 +1,18 @@
-import { Check, CircleAlert, House, Monitor, Smartphone } from "lucide-react";
+import { Check, CircleAlert, House, Monitor, MonitorSmartphone, Smartphone } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { PengaturanKanal, PengaturanNotifikasi, PengaturanPengingat } from "@/components/app/pengaturan-kanal";
+import { GrupAlarm, GrupKamu, GrupLainnya } from "@/components/app/pengaturan-lengkap";
 import { TombolKeluar } from "@/components/app/tombol-keluar";
 import { TautanTombol } from "@/components/ui/dasar";
 import { BarisGrup, Grup } from "@/components/ui/grup";
 import { sesiSaatIni } from "@/lib/auth/sesi";
 import { isi } from "@/lib/i18n";
 import { kamusServer } from "@/lib/i18n/server";
+import { daftarKodeQr } from "@/lib/layanan/kode-qr";
+import { daftarPerangkat } from "@/lib/layanan/perangkat";
 import { ambilPreferensi } from "@/lib/layanan/preferensi";
+import { daftarTemplate } from "@/lib/layanan/template";
 import { statusRumah } from "@/lib/layanan/tuya";
 import { kunciPublikVapid } from "@/lib/push";
 
@@ -19,7 +23,11 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.pengaturan.judul };
 }
 
-/** Pengaturan: akun, izin AgentBuff, kanal pesan + notifikasi + pengingat malam (P6), keluar. Pengaturan lengkap (PRD M) di P11. */
+/**
+ * Pengaturan lengkap (PRD M, docs/04-DESAIN.md §4.10): akun dan izin, Kamu (nama, zona, bahasa, jam
+ * tidur, tema), bawaan alarm baru, template, kode QR, kanal + notifikasi + pengingat malam,
+ * perangkat siaga, rumah pintar, ulangi perkenalan, hapus data, keluar. Token agen di P12, privasi di P13.
+ */
 export default async function HalamanPengaturan() {
   const s = await sesiSaatIni();
   if (!s) redirect("/masuk");
@@ -30,7 +38,13 @@ export default async function HalamanPengaturan() {
     { label: P.izinSuara, diberi: s.pengguna.izinSuara },
   ];
   const kurang = izin.some((i) => !i.diberi);
-  const [pref, rumah] = await Promise.all([ambilPreferensi(s.pengguna.id), statusRumah(s.pengguna.id)]);
+  const [pref, rumah, template, kodeQr, perangkat] = await Promise.all([
+    ambilPreferensi(s.pengguna.id),
+    statusRumah(s.pengguna.id),
+    daftarTemplate(s.pengguna.id),
+    daftarKodeQr(s.pengguna.id),
+    daftarPerangkat(s.pengguna.id),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,11 +83,36 @@ export default async function HalamanPengaturan() {
         ) : null}
       </section>
 
+      <GrupKamu
+        awal={{
+          nama: pref.nama,
+          namaPanggilan: pref.namaPanggilan,
+          zonaWaktu: pref.zonaWaktu,
+          bahasa: pref.bahasa,
+          jamTidur: pref.jamTidur,
+          tema: pref.tema,
+          bawaan: pref.bawaan,
+        }}
+      />
+      <GrupAlarm
+        bawaan={pref.bawaan}
+        nama={pref.namaPanggilan ?? pref.nama ?? t.orientasi.kamu}
+        template={template.filter((x) => !x.bawaan).map((x) => ({ id: x.id, nama: x.nama }))}
+        kodeQr={kodeQr.map((x) => ({ id: x.id, nama: x.nama, dipakai: x.dipakai }))}
+      />
+
       <PengaturanKanal spamBawaan={pref.bawaan.spam} />
       <PengaturanNotifikasi kunciPublik={kunciPublikVapid()} />
       <PengaturanPengingat nyala={pref.pengingatMalam} />
 
-      <Grup judul={t.siaga.judul} id="judul-siaga" catatan={t.siaga.sub}>
+      <Grup judul={t.pengaturanLengkap.perangkat} id="judul-siaga" catatan={t.siaga.sub}>
+        <BarisGrup
+          ikon={MonitorSmartphone}
+          warnaIkon="#0f766e"
+          label={t.pengaturanLengkap.perangkatSiaga}
+          nilai={isi(t.pengaturanLengkap.jumlahPerangkat, { n: perangkat.length })}
+          href="/app/siaga"
+        />
         <BarisGrup ikon={Smartphone} warnaIkon="#14b8a6" label={t.jamMeja.judul} sub={t.siaga.jadikanJamMeja} href="/app/jam-meja" />
         <BarisGrup ikon={Monitor} warnaIkon="#4338ca" label={t.unduh.judul} sub={t.unduh.sub} href="/app/unduh-pc" />
       </Grup>
@@ -87,6 +126,8 @@ export default async function HalamanPengaturan() {
           href="/app/rumah"
         />
       </Grup>
+
+      <GrupLainnya />
 
       <TombolKeluar />
     </div>

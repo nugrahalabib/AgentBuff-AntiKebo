@@ -231,6 +231,12 @@ export async function ambilAlarm(penggunaId: string, id: string, opsi: Opsi = {}
 }
 
 /** Alarm yang paling dulu berbunyi (PRD B7), atau null. */
+/** Jadwal terdekat dari daftar alarm (untuk "Siap malam ini" perangkat siaga), atau null. */
+export function alarmBerikutnyaUtc(daftar: readonly Pick<AlarmLengkap, "aktif" | "berikutnya">[]): Date | null {
+  const t = daftar.filter((a) => a.aktif && a.berikutnya).map((a) => a.berikutnya!.utc.getTime());
+  return t.length ? new Date(Math.min(...t)) : null;
+}
+
 export async function alarmBerikutnya(penggunaId: string, opsi: Opsi = {}): Promise<AlarmLengkap | null> {
   const sekarang = opsi.sekarang ?? new Date();
   return denganPengguna(penggunaId, async (tx) => {
