@@ -150,7 +150,7 @@ export function LayarUnduhPc({ hrefUnduh, ukuranMb, sha256, versi }: { hrefUnduh
                     >
                       {W.jalankan}
                     </span>
-                    <span className="rounded-[4px] bg-white/20 px-2 py-1 text-[12px] whitespace-nowrap">{W.jangan}</span>
+                    <span className="rounded-[4px] bg-white/10 px-2 py-1 text-[12px] whitespace-nowrap">{W.jangan}</span>
                   </div>
                 ) : null}
               </div>

@@ -256,6 +256,39 @@ test("bacaan keadaan lama yang tiba belakangan tidak mengembalikan layar berbuny
   expect(galat).toEqual([]);
 });
 
+test("akses beku: pengaturan dibekukan, alarm tetap berbunyi dan berhenti lewat soal (K-109)", async ({ page }) => {
+  test.setTimeout(120_000);
+  const galat = pantauGalat(page);
+  await masukSebagai(page, "Nugi Pratama");
+  await expect(page).toHaveURL(/\/app$/);
+  await bersihkan(page);
+  const id = await buatLewatApi(page, { agendaJudul: "Berangkat kerja", masihBangun: { aktif: false } });
+  try {
+    await aturTiruan(NUGI, { hak: "akses_berakhir" });
+    await page.goto("/api/hak/periksa");
+    await expect(page.getByRole("heading", { name: "Akses dibekukan sementara" })).toBeVisible();
+    await expect(page.getByText("Alarm yang sudah terpasang tetap berbunyi")).toBeVisible();
+    // Mengubah alarm ditolak selama beku.
+    const ubah = await page.request.patch(`/api/app/alarm/${id}`, { data: { aktif: false }, headers: { Origin: await asal(page) } });
+    expect(ubah.status()).toBe(403);
+    // Alarm yang sudah terpasang tetap berbunyi: pengawas di layar beku membuka layar alarm.
+    await bunyikanSekarang(id);
+    await expect(page).toHaveURL(/\/app\/bunyi\//, { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Berangkat kerja" })).toBeVisible();
+    await jawabHitungan(page);
+    await expect(page.getByRole("heading", { name: "Selamat pagi, Nugi!" })).toBeVisible();
+    const [k] = await denganDb((sql) => sql<{ status: string }[]>`select status from kejadian_alarm where alarm_id = ${id} and status <> 'menunggu'`);
+    expect(k.status).toBe("bangun");
+    // Halaman pengaturan tetap beku.
+    await page.goto("/app/pengaturan");
+    await expect(page.getByRole("heading", { name: "Akses dibekukan sementara" })).toBeVisible();
+    expect(galat).toEqual([]);
+  } finally {
+    await aturTiruan(NUGI, { hak: "ok" });
+    await page.goto("/api/hak/periksa");
+  }
+});
+
 test("soal ingat angka, ketik kalimat, dan Misi QR saat kamera ditolak (diganti hitungan berat 3 kali)", async ({ page }) => {
   test.setTimeout(150_000);
   const galat = pantauGalat(page);

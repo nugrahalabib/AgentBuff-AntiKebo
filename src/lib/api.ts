@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import { cekHak } from "@/lib/agentbuff/status";
+import { tautanPerpanjang } from "@/lib/agentbuff/tautan-beku";
 import { sesiSaatIni, type Pengguna, type Sesi } from "@/lib/auth/sesi";
 import { env } from "@/lib/env";
+import { kamusServer } from "@/lib/i18n/server";
+import { PembatasLaju } from "@/lib/keamanan/laju";
 import { GalatLayanan, type KodeGalat } from "@/lib/layanan/dasar";
 import { log } from "@/lib/log";
 
@@ -17,27 +21,41 @@ export function asalSama(req: Request): boolean {
   return req.headers.get("sec-fetch-site") === "same-origin";
 }
 
-const jendela = new Map<string, { mulai: number; n: number }>();
+const laju = new PembatasLaju();
 export function lolosLaju(kunci: string, batas = 300, ms = 60_000): boolean {
-  const kini = Date.now();
-  const w = jendela.get(kunci);
-  if (!w || kini - w.mulai > ms) {
-    jendela.set(kunci, { mulai: kini, n: 1 });
-    if (jendela.size > 50_000) jendela.clear();
-    return true;
-  }
-  w.n += 1;
-  return w.n <= batas;
+  return laju.tunggu(kunci, batas, ms) === 0;
 }
 
 type Konteks = { sesi: Sesi; pengguna: Pengguna };
 
-/** Pastikan permintaan mutasi: asal sama + sesi sah + dalam batas laju. */
-export async function mutasiPengguna(req: Request): Promise<Konteks | NextResponse> {
+/** Sesi untuk rute baca (GET): sesi sah + batas laju baca 600/menit/pengguna (arsitektur §11). */
+export async function sesiBaca(): Promise<Konteks | NextResponse> {
+  const s = await sesiSaatIni();
+  if (!s) return galat(401, "belum_masuk", "Sesi berakhir. Silakan masuk lagi.");
+  if (!lolosLaju(`b:${s.pengguna.id}`, 600)) return galat(429, "terlalu_sering", "Terlalu banyak permintaan. Coba lagi sebentar lagi.");
+  return s;
+}
+
+/**
+ * Pastikan permintaan mutasi: asal sama + sesi sah + dalam batas laju + hak AgentBuff aktif (K-07:
+ * saat beku, mengubah dikunci). `bolehBeku` hanya untuk aksi privasi dan keamanan yang tetap hak
+ * pengguna walau beku: hapus semua data, cabut token agen, putuskan perangkat, notifikasi.
+ */
+export async function mutasiPengguna(req: Request, opsi: { bolehBeku?: boolean } = {}): Promise<Konteks | NextResponse> {
   if (!asalSama(req)) return galat(403, "asal_ditolak", "Permintaan ditolak.");
   const s = await sesiSaatIni();
   if (!s) return galat(401, "belum_masuk", "Sesi berakhir. Silakan masuk lagi.");
   if (!lolosLaju(`u:${s.pengguna.id}`)) return galat(429, "terlalu_sering", "Terlalu banyak permintaan. Coba lagi sebentar lagi.");
+  if (!opsi.bolehBeku) {
+    const hak = await cekHak({ id: s.pengguna.id, agentbuffSub: s.pengguna.agentbuffSub });
+    if (!hak.aktif) {
+      const { t } = await kamusServer();
+      return galat(403, "akses_beku", t.beku.ubahDitolak, {
+        alasan: hak.alasan,
+        perpanjang: tautanPerpanjang(hak.alasan, env("AGENTBUFF_ORIGIN"), env("AGENTBUFF_PRODUCT_KEY")),
+      });
+    }
+  }
   return s;
 }
 

@@ -107,7 +107,8 @@ test("Riwayat: statistik, grafik 7/30 hari, rincian kejadian, ekspor CSV", async
 
   await page.goto("/app/riwayat");
   await expect(page.getByRole("heading", { name: "Riwayat", level: 1 })).toBeVisible();
-  await expect(page.getByText("2 hari beruntun")).toBeVisible();
+  await expect(page.getByRole("term").filter({ hasText: "Hari beruntun" })).toBeVisible();
+  await expect(page.getByRole("definition").first()).toHaveText("2");
   await expect(page.getByText("Total tunda")).toBeVisible();
   await page.getByRole("radiogroup", { name: "Skor bangun" }).getByRole("radio", { name: "30 hari" }).click();
   await expect(page.getByRole("radiogroup", { name: "Skor bangun" }).getByRole("radio", { name: "30 hari" })).toHaveAttribute("aria-checked", "true");

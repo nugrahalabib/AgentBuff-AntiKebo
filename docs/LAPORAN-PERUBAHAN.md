@@ -3,6 +3,60 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P13): Privasi, aksesibilitas, keamanan, dan aturan saat akses berakhir
+
+**Baru**
+- **Halaman Privasi dan Ketentuan** (`/privasi`, `/ketentuan`), bisa dibuka tanpa masuk, dalam bahasa
+  Indonesia dan Inggris: data apa yang disimpan dan berapa lama, pihak lain yang terlibat (AgentBuff,
+  agen AI-mu, Tuya, layanan notifikasi), kuki, hakmu (lihat, unduh, ubah, cabut, hapus), dan
+  pernyataan "bukan jaminan". Tautannya ada di halaman depan, layar Masuk, dan Pengaturan > Privasi.
+- **Riwayat: tombol "Lihat tabel"** menampilkan skor per hari sebagai tabel angka.
+- **Saat akses AgentBuff berakhir** (aturan K-07 kini benar-benar berjalan): alarm yang sudah
+  terpasang tetap berbunyi selama 3 hari dan tetap berhenti lewat soal seperti biasa; kamu diberi
+  kabar begitu akses berakhir (notifikasi + kanal chat) lengkap dengan jam alarm berhenti, dan malam
+  sebelum alarm pertama yang tidak lagi berbunyi kamu diberi tahu terang-terangan, walau pengingat
+  malam dimatikan. Sesudah diperpanjang, alarm kembali berbunyi sendiri.
+
+**Diperbaiki**
+- Saat akses dibekukan, layar alarm berbunyi dan Jam Meja ikut terkunci, padahal alarm tetap berbunyi:
+  soal tidak bisa dijawab di web. Kini jalur bangun tidak pernah dibekukan.
+- Saat akses dibekukan, perubahan lewat aplikasi web ternyata masih diterima. Kini ditolak dengan
+  penjelasan; hapus semua data, cabut token agen, putuskan perangkat, dan notifikasi tetap boleh.
+- Mode Komitmen kini juga mencegah memutus perangkat siaga, memutus rumah pintar, dan mematikan
+  lapisan darurat sampai alarmnya berbunyi (di web, PC, dan lewat agen).
+- Aksesibilitas: lembar langsung memegang fokus saat terbuka, Esc mengembalikan fokus ke tombolnya;
+  soal angka bisa langsung diketik dari papan ketik; pilihan bergaya tombol (tema, soal, karakter,
+  zona) bisa dipindah dengan panah; tombol Masuk tidak lagi melebar di layar 320 px; kontras tombol
+  kecil di panduan layar biru dan teks di layar siaga Jam Meja dinaikkan (tetap redup untuk malam).
+- Membuat token manual baru tidak lagi bisa macet; jumlahnya dibatasi 10.
+
+**Diubah**
+- Batas laju kini berlaku di semua rute (baca, SSE, jadwal perangkat, klip suara, periksa hak) dan
+  untuk agen dihitung per pengguna, bukan per token. Pembatasnya tidak bisa lagi dikosongkan dengan
+  membanjiri id palsu.
+- Teks layar beku dan jawaban agen saat akses dibekukan kini menyebut alarm tetap berbunyi 3 hari.
+
+**Keputusan**
+- K-109 sampai K-115 (jalur bangun tidak dibekukan, aturan beku, aksesibilitas, batas laju, Komitmen
+  untuk perangkat dan rumah, halaman legal, anggaran performa). Lihat `KEPUTUSAN.md`.
+
+**Masih butuh Chief**
+- K-07: angka tenggang 3 hari (sudah berjalan sebagai rekomendasi, mudah diubah).
+- K-114a: nama badan hukum pengendali data dan tinjauan ahli hukum atas Privasi dan Ketentuan.
+
+**Untuk teknisi**
+- Migrasi `0010_beku.sql`: `status_hak.beku_sejak`, `beku_dikabari` (+ isi awal untuk yang sudah beku).
+- Modul murni `src/lib/agentbuff/aturan-beku.ts` + contoh emas `tests/emas/beku.json`; layanan
+  `src/lib/layanan/beku.ts` (sapuan hak + kabar, putaran worker `hak` tiap 5 menit);
+  `src/components/app/gerbang-hak.tsx`; `mutasiPengguna(req, { bolehBeku })`; `sesiBaca()`.
+- `src/lib/keamanan/laju.ts` (`PembatasLaju`, `idSah`); `src/lib/layanan/komitmen-aktif.ts`;
+  `src/lib/klien/radio.ts` (`gerakRadio`).
+- Uji baru: `tests/integrasi/beku.test.ts`, `keamanan.test.ts`, `tests/unit/aturan-beku.test.ts`,
+  `laju.test.ts`, `log.test.ts`, `tests/e2e/aksesibilitas.spec.ts` (`@axe-core/playwright`),
+  `anggaran.spec.ts`.
+- Bahan portal: `integrasi-portal/` (listing id/en, draf skrip bukti). Naskah uji pembaca layar di
+  perangkat asli: `docs/AKSESIBILITAS.md`.
+
 ## 2026-10-07 (P12): Semua bisa lewat chat agen
 
 **Baru**

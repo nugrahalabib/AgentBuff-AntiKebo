@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { gerakRadio } from "@/lib/klien/radio";
 
 type Varian = "utama" | "kaca" | "polos" | "bahaya";
 type Ukuran = "besar" | "sedang" | "kecil";
@@ -76,7 +77,7 @@ export function Saklar({
 /** Kontrol tersegmen gaya iOS. */
 export function Segmen<T extends string>({ pilihan, nilai, ubah, label }: { pilihan: Array<{ nilai: T; label: string }>; nilai: T | null; ubah: (v: T) => void; label: string }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex gap-1 rounded-[14px] bg-kaca-isi p-1">
+    <div role="radiogroup" onKeyDown={gerakRadio} aria-label={label} className="flex gap-1 rounded-[14px] bg-kaca-isi p-1">
       {pilihan.map((p) => (
         <button
           key={p.nilai}

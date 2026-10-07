@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { GerbangHak } from "@/components/app/gerbang-hak";
 import { OrientasiHidup } from "@/components/app/orientasi";
 import { PengawasAlarm } from "@/components/app/pengawas-alarm";
 import { sesiSaatIni } from "@/lib/auth/sesi";
@@ -21,7 +22,7 @@ export default async function HalamanOrientasi() {
   if (!s) redirect("/masuk");
   const [pref, rumah] = await Promise.all([ambilPreferensi(s.pengguna.id), statusRumah(s.pengguna.id)]);
   return (
-    <>
+    <GerbangHak>
       <PengawasAlarm />
       <OrientasiHidup
         nama={pref.namaPanggilan ?? (pref.nama ?? "").trim().split(/\s+/)[0] ?? ""}
@@ -31,6 +32,6 @@ export default async function HalamanOrientasi() {
         kunciPublik={kunciPublikVapid()}
         rumahTersambung={rumah.tersambung}
       />
-    </>
+    </GerbangHak>
   );
 }

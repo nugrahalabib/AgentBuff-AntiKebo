@@ -9,7 +9,12 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
   dikunci, alarm yang sudah ada tetap berbunyi 3 hari masa tenggang, pemberitahuan H-3 dan malam
   sebelum alarm berhenti. Alasan: alarm yang tiba-tiba diam bisa membuat orang telat kerja atau
   kuliah, lebih parah dari aplikasi biasa yang sekadar terkunci. Sampai dijawab, kode memakai
-  rekomendasi ini di satu modul aturan supaya mudah diubah.
+  rekomendasi ini di satu modul aturan supaya mudah diubah (dijalankan sejak P13, lihat K-110 dan
+  `src/lib/agentbuff/aturan-beku.ts`).
+- **K-114a (2026-10-07, P13) Pengendali data dan tinjauan hukum.** Halaman Privasi dan Ketentuan menyebut
+  "AntiKebo di Marketplace AgentBuff" dan kontak support@agentbuff.id tanpa nama badan hukum.
+  Rekomendasi: Chief mengisi nama badan hukum pengendali data dan meminta tinjauan ahli hukum sebelum
+  terbit (naskah sudah sesuai kenyataan sistem). Sampai dijawab, naskah tetap seperti sekarang.
 
 ## Sudah diputuskan
 
@@ -424,3 +429,49 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
 - **K-108 (2026-10-07, P12) Alat tambahan di luar daftar awal** karena ada aksi webnya:
   `save_alarm_as_template`, `test_notification`, `set_home_emergency`, `get_event_detail`;
   `regenerate_voice` mengantre ulang naskah suara yang gagal (layanan `buatUlangSuara`).
+
+- **K-109 (2026-10-07, P13) Jalur bangun tidak pernah dibekukan.** Layar berbunyi, "Masih bangun?",
+  Selamat pagi, dan Jam Meja tetap terbuka saat akses beku atau AgentBuff tak terjangkau; gerbang hak
+  (`GerbangHak`) hanya di kerangka aplikasi dan perkenalan, dan pengawas alarm tetap jalan di layar
+  beku. Alasan: dulu layout `/app` memblokir layar berbunyi padahal penjadwal tetap membunyikan alarm,
+  sehingga pengguna web tidak bisa menjawab soal untuk menghentikannya.
+- **K-110 (2026-10-07, P13) Rekomendasi K-07 kini benar-benar dijalankan** (sebelumnya baru tertulis):
+  `status_hak.beku_sejak` dicatat dari jawaban "tidak berhak" pertama (migrasi `0010_beku`), tenggang
+  72 jam di satu modul murni (`src/lib/agentbuff/aturan-beku.ts`, contoh emas `tests/emas/beku.json`).
+  Selama beku: API web menolak perubahan (`403 akses_beku`), kecuali hapus semua data, cabut token agen,
+  putuskan perangkat, dan notifikasi (hak privasi dan keamanan); alarm yang sudah terpasang tetap
+  berbunyi sampai akhir tenggang, lalu ditahan penjadwal (kejadian `dibatalkan`, tidak masuk Riwayat,
+  kejadian berikutnya tetap disiapkan) dan disaring dari jadwal perangkat siaga. Worker memeriksa hak
+  pemilik yang punya alarm dalam 48 jam (basi 6 jam bila aktif, 1 jam bila beku), mengirim kabar sekali
+  saat beku terdeteksi (notifikasi + kanal bawaan, dengan jam berhenti di zona pengguna), dan malam
+  sebelum alarm pertama yang ditahan mengirim peringatan tegas walau pengingat malam dimatikan.
+  AgentBuff tak terjangkau tidak pernah membekukan (K-12). Angka 3 hari tetap menunggu Chief (K-07).
+- **K-111 (2026-10-07, P13) Perbaikan aksesibilitas dari audit axe** (0 pelanggaran WCAG 2.2 AA di semua
+  halaman, kedua tema): grafik Riwayat = gambar dekoratif + tabel angka yang bisa dibuka ("Lihat
+  tabel"); daftar statistik Riwayat label + nilai; semua kelompok radio buatan sendiri mendukung panah
+  dan Home/End (`gerakRadio`); lembar memindah fokus ke dirinya saat terbuka (bukan ke isian pertama,
+  supaya papan ketik HP tidak muncul); soal angka menerima ketikan begitu layar alarm tampil; layar
+  siaga Jam Meja tetap redup tetapi jam minimal 3:1 dan teks bantu 4,5:1. Naskah uji pembaca layar di
+  perangkat asli: `docs/AKSESIBILITAS.md`.
+- **K-112 (2026-10-07, P13) Pembatas laju bersama dan batas untuk semua rute.** `PembatasLaju`
+  (`src/lib/keamanan/laju.ts`) membuang jendela basi lalu yang tertua saat penuh, tidak pernah
+  dikosongkan sekaligus (dulu banjir kunci acak bisa menghapus semua batas). Batas baru: rute baca
+  600/menit/pengguna, SSE 60/menit, jadwal perangkat 120, klip 300, periksa hak 10, jawab soal 120 per
+  pengguna (selain 30 per kejadian), detak 120 per pengguna; id dari klien divalidasi (uuid) sebelum
+  jadi kunci batas. MCP dibatasi per PENGGUNA, bukan per token (120 perintah, 40 perubahan, 300
+  permintaan per menit), token manual maksimal 10. MCP tidak dibatasi per IP karena agen AgentBuff
+  semua pengguna bisa berbagi alamat IP; token 256 bit tidak bisa ditebak. Redaksi log diperluas
+  (token bersarang, rahasia, langganan push). Pembungkus `rute()` yang tidak dipakai dihapus.
+- **K-113 (2026-10-07, P13) Mode Komitmen juga mengunci aksi di luar alarm yang melemahkannya**: memutus
+  perangkat siaga, memutus rumah pintar, dan mematikan lapisan darurat ditolak selama jendela kunci
+  (web, PC, dan MCP; `commitment_locked` dengan `reason` `disconnect_device`, `disconnect_home`,
+  `emergency_off`). Memperkuat tetap boleh. Melengkapi K-34.
+- **K-114 (2026-10-07, P13) Halaman legal publik** `/privasi` dan `/ketentuan` (tanpa masuk, naskah di kamus
+  `legal` id/en, berlaku 7 Oktober 2026), ditautkan dari halaman depan, Masuk, dan Pengaturan > Privasi.
+  Isinya mengikuti kenyataan sistem (data apa, pihak lain, kuki, retensi, hak pengguna, bukan jaminan,
+  Komitmen, aplikasi PC belum bertanda tangan). Kontak: support@agentbuff.id.
+- **K-115 (2026-10-07, P13) Anggaran performa diukur di build produksi** (`tests/e2e/anggaran.spec.ts`,
+  cache dingin per halaman): JS awal ≤ 300 KB terkirim, CLS < 0,1, LCP < 2,5 dtk di mesin uji (FCP
+  dipakai bila peramban tidak melaporkan LCP; angka 0 tidak pernah lulus). Hasil P13: JS awal 156
+  sampai 223 KB, CLS 0, LCP paling lama 0,4 dtk. Angka di HP asli dengan jaringan lambat tetap wajib
+  diukur di produksi (L3).

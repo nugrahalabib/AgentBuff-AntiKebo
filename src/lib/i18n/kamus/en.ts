@@ -78,9 +78,10 @@ export const en: Kamus = {
   },
   beku: {
     judul: "Access paused for now",
-    isi: "Your alarms and settings are still saved. Reactivate access to continue.",
+    isi: "Alarms you already set keep ringing for 3 days and stop with the challenge as usual. Reactivate access to change alarms or settings.",
     tombol: "Reactivate",
     periksa: "Check again",
+    ubahDitolak: "AntiKebo access is paused, so alarms and settings can't be changed yet. Alarms you already set still ring.",
   },
   izin: {
     judul: "AgentBuff permissions incomplete",
@@ -189,7 +190,7 @@ export const en: Kamus = {
     rumah: "Smart home",
     rumahSambung: "Connect your home lights",
     lanjutan: "Advanced",
-    komitmen: "Commitment mode",
+    komitmen: "Commitment Mode",
     komitmenKet: "Can't be deleted or pushed later after bedtime.",
     masihBangun: "Still awake?",
     masihBangunKet: "Checked {n} minutes after waking.",
@@ -422,6 +423,11 @@ export const en: Kamus = {
     beruntun: "{n}-day streak",
     rata: "Average time to wake",
     totalTunda: "Total snoozes",
+    hariBeruntun: "Streak days",
+    lihatTabel: "Show table",
+    lihatGrafik: "Show chart",
+    kolomHari: "Day",
+    kolomSkor: "Score",
     grafik: "Wake score",
     hari7: "7 days",
     hari30: "30 days",
@@ -451,7 +457,7 @@ export const en: Kamus = {
     kiriman: "Channel messages",
     kirimanKosong: "No channel messages.",
     kirimanStatus: { terkirim: "sent", gagal: "failed", ditunda: "delayed" },
-    kirimanJenis: { spam: "Spam", penutup: "Closing", cek: "Still awake", terlewat: "Missed", pengingat: "Reminder", uji: "Test" },
+    kirimanJenis: { spam: "Spam", penutup: "Closing", cek: "Still awake", terlewat: "Missed", pengingat: "Reminder", uji: "Test", beku: "Access ended" },
     dihentikan: "Stopped via",
     oleh: { sesi: "web or phone", perangkat: "PC app", luring: "PC app offline", batas: "time limit reached" },
     csv: {
@@ -481,6 +487,7 @@ export const en: Kamus = {
     kodeQr: "QR codes",
     agen: "Agent",
     privasi: "Privacy",
+    privasiKet: "What is stored, the terms, and why it is not a guarantee",
     hapusData: "Delete all data",
     ulangOrientasi: "Replay the intro",
     tema: "Theme",
@@ -684,6 +691,7 @@ export const en: Kamus = {
     otomatis: "automatic",
     berakhir: "expires {tanggal}",
     labelWajib: "Give the token a label.",
+    tokenPenuh: "You can have at most 10 manual tokens. Revoke one you don't use first.",
     tidakAda: "Token not found.",
     barisKet: "MCP connection, activity, manual tokens",
   },
@@ -769,7 +777,7 @@ export const en: Kamus = {
     langkahKunci:
       'How to make a key: open {url} on a laptop/computer (the QR can\'t be scanned from the same phone screen); choose "SmartLife APP" or "Tuya APP" (or sign in with Google if the app account uses Google, the SAME account); scan the QR from the app on the phone (Me tab, scan icon top right, then Confirm); on the Hey Tuya page tap "Toolbox" then "API Key"; create a new key (any name, e.g. AgentBuff); copy the key starting with "sk-", then paste it in chat (connect_home) or at {rumah}.',
     aksesAktif: "AntiKebo access is active.",
-    aksesBeku: "AntiKebo access is frozen; alarms and settings are kept safe.",
+    aksesBeku: "AntiKebo access is paused: alarms and settings can't be changed, data stays safe. Alarms already set keep ringing for 3 days after access ended.",
     izinKurang: "AgentBuff permissions not granted yet: {isi}. Send the user this link to grant them: {tautan}",
     izinLengkap: "Permissions to send messages and make scolding voices are granted.",
     izinKabar: "send messages through the agent",
@@ -781,7 +789,8 @@ export const en: Kamus = {
     rumahOpsional: "Smart home (optional) is not connected; if the user wants lights or AC to help wake them:",
     pengecualian: "That can only be done on the AntiKebo screen: {tautan}",
     terlaluBanyak: "Too many commands. Try again in {n} seconds.",
-    aksesDibekukan: "AntiKebo access is frozen because the AgentBuff subscription or product purchase is not active. Alarms and settings are kept safe.",
+    aksesDibekukan:
+      "AntiKebo access is paused because the AgentBuff subscription or product purchase is not active. Data stays safe, and alarms already set keep ringing for 3 days after access ended.",
     argumenSalah: "Invalid arguments: {isi}",
     masihDiproses: "The same command is still being processed. Try again shortly.",
   },
@@ -821,6 +830,9 @@ export const en: Kamus = {
       komitmen_mati: "Commitment Mode is on until {jam}. It can't be turned off right now.",
       lemahkan: "Commitment Mode is on until {jam}. The challenge, snooze, and check can't be made easier right now.",
       jamTidur: "Commitment Mode is on until {jam}. Bedtime and time zone can be changed after the alarm rings.",
+      putusPerangkat: "Commitment Mode is on until {jam}. Standby devices can't be disconnected before the alarm rings.",
+      putusRumah: "Commitment Mode is on until {jam}. The smart home can't be disconnected before the alarm rings.",
+      daruratMati: "Commitment Mode is on until {jam}. The emergency layer can't be turned off before the alarm rings.",
     },
   },
   template: {
@@ -1044,6 +1056,168 @@ export const en: Kamus = {
       pengaturan: "Settings",
       orientasi: "Onboarding",
       pc: "PC app",
+    },
+  },
+  legal: {
+    berlaku: "Effective 7 October 2026",
+    kembali: "Back",
+    privasi: "Privacy",
+    ketentuan: "Terms",
+    kontak: "Questions: support@agentbuff.id",
+    halamanPrivasi: {
+      judul: "Privacy policy",
+      ringkas: "In short: AntiKebo keeps only what it needs to wake you up. No ads, no selling data, no AI inside AntiKebo, and you can delete everything at any time.",
+      bagian: [
+        {
+          judul: "Who uses your data",
+          isi: [
+            "AntiKebo is an app on the AgentBuff Marketplace. This policy covers the antikebo.agentbuff.id site, the AntiKebo app for PC, and the AntiKebo tools your AgentBuff agent uses.",
+            "Questions or requests about your data can be sent to support@agentbuff.id.",
+          ],
+        },
+        {
+          judul: "Data from your AgentBuff account",
+          isi: [
+            "When you sign in with AgentBuff, AntiKebo receives your AgentBuff account number, name, email, and profile photo. Your password never reaches AntiKebo.",
+            "AntiKebo also asks AgentBuff whether you bought AntiKebo and whether your account is active.",
+          ],
+        },
+        {
+          judul: "Data you enter",
+          isi: [
+            "Alarms: time, repeat, agenda title and note, character, voice, challenge, snooze, personal lines, reminder channels, and smart home rules.",
+            "Templates, wake-up QR code names, nickname, time zone, language, bedtime, theme, and new alarm defaults.",
+          ],
+        },
+        {
+          judul: "What is recorded while an alarm runs",
+          isi: [
+            "When the alarm rang and when you woke up, how many times you snoozed, your wake score, challenge type and level with right or wrong, which devices rang and which one stopped it, reminder message status, and smart home results.",
+            "Challenge answers are not stored in readable form. Only a random fingerprint used to check answers is kept.",
+          ],
+        },
+        {
+          judul: "Devices, notifications, and agents",
+          isi: [
+            "For standby devices (PC, phone, tablet) we keep the name, type, and when it was last seen. Device tokens and agent tokens are stored only as one-way fingerprints.",
+            "Browser notification addresses and smart home keys are stored encrypted.",
+            "Agent commands that carry a reference number are kept for 30 days so the same command never runs twice.",
+          ],
+        },
+        {
+          judul: "Other parties involved",
+          isi: [
+            "AgentBuff: sign-in, purchase checks, sending reminder messages to your own chat channels connected to your agent, and making scolding voices. Scolding text is sent to your own AgentBuff to be turned into speech. AntiKebo never holds your voice API key.",
+            "Your AI agent: when your AgentBuff agent uses AntiKebo tools, the data it asks for (for example your alarm list) is sent to that agent and processed by the AI provider you chose in AgentBuff.",
+            "Tuya, only if you connect a smart home: light or AC commands are sent to Tuya using your own account.",
+            "Your browser's built-in notification service (for example Google, Apple, or Mozilla) delivers the notifications you allow.",
+          ],
+        },
+        {
+          judul: "What we don't do",
+          isi: [
+            "No ads and no ad trackers. Your data is not sold.",
+            "No AI inside AntiKebo. Scripts, challenges, and reminder messages are made with fixed rules.",
+            "System logs never contain keys, private message content, or challenge answers.",
+          ],
+        },
+        {
+          judul: "Cookies",
+          isi: [
+            "AntiKebo uses only necessary cookies: a session cookie to keep you signed in, a temporary cookie during sign-in with AgentBuff, and a language cookie. No ad or analytics cookies.",
+          ],
+        },
+        {
+          judul: "How long data is kept",
+          isi: [
+            "Your account, alarms, and settings are kept while you use AntiKebo. Alarm history is kept until you delete it; the History screen shows the last 30 days.",
+            "Account activity records are kept for 90 days. Voice clips that are no longer used are deleted automatically.",
+            "If your AgentBuff access ends, your data stays until you delete it.",
+            "Server backups are made regularly and kept for at most 14 days.",
+          ],
+        },
+        {
+          judul: "Your rights over your data",
+          isi: [
+            "See and download: the History screen, including CSV export.",
+            "Change: everything is in Settings and the alarm sheet.",
+            "Revoke access: revoke agent tokens on the Agent page, disconnect devices in Standby, disconnect the smart home in Smart home.",
+            "Delete: Settings, Delete all data. Data is removed from the server right away; backups follow within 14 days.",
+          ],
+        },
+        {
+          judul: "Security",
+          isi: [
+            "Each user's data is separated inside the database itself, so one account can't read another's. Keys and secrets are stored encrypted, and every connection uses HTTPS.",
+          ],
+        },
+        {
+          judul: "Changes to this policy",
+          isi: ["If this policy changes, the effective date above is updated."],
+        },
+      ],
+    },
+    halamanKetentuan: {
+      judul: "Terms of use",
+      ringkas: "In short: AntiKebo tries hard to wake you up, but it is not a guarantee. Use it fairly, and for very important things set a backup alarm too.",
+      bagian: [
+        {
+          judul: "About AntiKebo",
+          isi: ["AntiKebo is an anti-oversleep alarm from the AgentBuff Marketplace. By using AntiKebo you agree to these terms and to the AgentBuff Terms & Conditions."],
+        },
+        {
+          judul: "Not a guarantee",
+          isi: [
+            "AntiKebo helps you wake up, but it is not a guarantee. For very important things, set a backup alarm too.",
+            "An alarm may not be heard if the device is off or out of battery, the volume is low or silent mode is on, the PC is fully shut down, or the phone closes the browser tab in the background.",
+            "Every device has its own battery-saving rules. Try a test alarm on your device before relying on it.",
+            "Scolding voices and reminder messages depend on AgentBuff and chat services. If they fail, the alarm sound still plays.",
+          ],
+        },
+        {
+          judul: "Access and purchase",
+          isi: [
+            "You need an active AgentBuff account that has bought AntiKebo (Rp29,000 one-time payment).",
+            "Payments, receipts, and refunds are handled by AgentBuff under the AgentBuff Terms & Conditions. Payment issues: support@agentbuff.id.",
+            "If your AgentBuff account is not active, AntiKebo settings are paused. Alarms you already set keep ringing for 3 days and stop with the challenge as usual; after that they stop ringing until your access is active again, and you are told the night before. Your data stays saved.",
+          ],
+        },
+        {
+          judul: "Commitment Mode",
+          isi: [
+            "When Commitment Mode is on, from bedtime until the alarm time that alarm can't be deleted, turned off, skipped, moved later, or made weaker, not even through your agent. Think before turning it on.",
+          ],
+        },
+        {
+          judul: "Reminder messages and smart home",
+          isi: [
+            "Reminder messages go only to your own chat channels connected to your AgentBuff agent.",
+            "Smart home commands turn on your own devices. Make sure devices like an AC, heater, or plug are safe to switch on remotely.",
+          ],
+        },
+        {
+          judul: "The PC app",
+          isi: [
+            "The PC app is not digitally signed yet, so Windows shows the blue “Windows protected your PC” screen on first install. Download only from antikebo.agentbuff.id and check the SHA-256 fingerprint on the download page.",
+          ],
+        },
+        {
+          judul: "Fair use",
+          isi: [
+            "Don't try to break into, overload, or game AntiKebo, including looking for ways to stop an alarm without solving the challenge, and don't use AntiKebo to bother other people.",
+          ],
+        },
+        {
+          judul: "Limitation of liability",
+          isi: [
+            "AntiKebo is provided as is. To the extent the law allows, we are not liable for losses from waking up late or alarms that are not heard, including because of device conditions, networks, or outages of other services.",
+          ],
+        },
+        {
+          judul: "Changes to these terms",
+          isi: ["If these terms change, the effective date above is updated."],
+        },
+      ],
     },
   },
 };

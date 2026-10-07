@@ -1,4 +1,4 @@
-import { bearer, galat } from "@/lib/api";
+import { bearer, galat, lolosLaju } from "@/lib/api";
 import { sesiSaatIni } from "@/lib/auth/sesi";
 import { perangkatDariToken } from "@/lib/layanan/perangkat";
 import { ambilKlip } from "@/lib/layanan/suara";
@@ -14,6 +14,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ hash: string }>
   if (token) penggunaId = (await perangkatDariToken(token))?.penggunaId ?? null;
   else penggunaId = (await sesiSaatIni())?.pengguna.id ?? null;
   if (!penggunaId) return galat(401, "belum_masuk", "Sesi berakhir. Silakan masuk lagi.");
+  if (!lolosLaju(`klip:${penggunaId}`, 300)) return galat(429, "terlalu_sering", "Terlalu sering.");
   const k = await ambilKlip(penggunaId, hash);
   if (!k) return galat(404, "tidak_ditemukan", "Klip tidak ditemukan.");
   return new Response(new Uint8Array(k.audio), {

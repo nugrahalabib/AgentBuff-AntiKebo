@@ -5,7 +5,7 @@ import { hapusSemuaData } from "@/lib/layanan/hapus-data";
 
 /** Hapus semua data (PRD A5), dengan konfirmasi ketik. Semua sesi dicabut; kuki sesi dihapus. */
 export async function POST(req: Request) {
-  const k = await mutasiPengguna(req);
+  const k = await mutasiPengguna(req, { bolehBeku: true });
   if (k instanceof NextResponse) return k;
   try {
     await hapusSemuaData(k.pengguna.id, await bacaJson(req, 1_024), "web");

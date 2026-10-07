@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto";
 import { and, asc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { z } from "zod";
+import { alarmDitahan } from "@/lib/agentbuff/aturan-beku";
 import { isiDariBaris } from "@/lib/alarm/baris";
 import { jendelaKunci } from "@/lib/alarm/komitmen";
 import { db, denganHashToken, denganPengguna, schema, type Tx } from "@/lib/db";
@@ -269,6 +270,8 @@ export async function ubahNamaPerangkat(penggunaId: string, id: string, nama: un
 export async function cabutPerangkat(penggunaId: string, id: string, sumber: Sumber, sekarang = new Date()): Promise<void> {
   await denganPengguna(penggunaId, async (tx) => {
     const p = await ambilPerangkat(tx, penggunaId, id);
+    const { tolakSelamaKomitmen } = await import("./komitmen-aktif");
+    await tolakSelamaKomitmen(tx, await konteksPengguna(tx, penggunaId), sekarang, "putus_perangkat");
     await tx.update(schema.perangkatSiaga).set({ dicabutPada: sekarang, tokenHash: null }).where(eq(schema.perangkatSiaga.id, p.id));
     await catatAudit(penggunaId, { sumber, jenis: "perangkat", ringkasan: `Perangkat diputus: ${p.nama}`, detail: { perangkatId: p.id } }, tx);
   });
@@ -408,6 +411,12 @@ export async function salinanJadwal(penggunaId: string, sekarang = new Date()): 
         });
       }
     }
-    return { nama: k.namaSapaan, bahasa: k.bahasa, kejadian: [...hasil.values()].sort((x, y) => x.jadwalUtc.localeCompare(y.jadwalUtc)) };
+    // Masa tenggang beku habis (K-07): perangkat juga tidak membunyikan alarm yang ditahan server.
+    const [hak] = await tx
+      .select({ aktif: schema.statusHak.aktif, bekuSejak: schema.statusHak.bekuSejak })
+      .from(schema.statusHak)
+      .where(eq(schema.statusHak.penggunaId, penggunaId));
+    const daftar = [...hasil.values()].filter((x) => x.uji || x.status !== "menunggu" || !alarmDitahan(hak, new Date(x.jadwalUtc)));
+    return { nama: k.namaSapaan, bahasa: k.bahasa, kejadian: daftar.sort((x, y) => x.jadwalUtc.localeCompare(y.jadwalUtc)) };
   });
 }

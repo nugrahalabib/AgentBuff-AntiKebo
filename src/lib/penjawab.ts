@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { asalSama, bearer, galat, lolosLaju } from "@/lib/api";
 import { sesiSaatIni } from "@/lib/auth/sesi";
+import { idSah } from "@/lib/keamanan/laju";
 import type { Penjawab } from "@/lib/layanan/jawab";
 import { perangkatDariToken } from "@/lib/layanan/perangkat";
 
@@ -11,6 +12,8 @@ import { perangkatDariToken } from "@/lib/layanan/perangkat";
  * Batas laju 30 per menit per kejadian per penjawab (arsitektur §9).
  */
 export async function penjawabDari(req: Request, kejadianId: string, mutasi: boolean): Promise<Penjawab | NextResponse> {
+  // Id dari jalur diperiksa bentuknya dulu: tidak pernah jadi kunci batas laju atau kueri bila palsu.
+  if (!idSah(kejadianId)) return galat(404, "tidak_ditemukan", "Alarm tidak ditemukan.");
   const token = bearer(req);
   let p: Penjawab;
   if (token) {
@@ -23,6 +26,8 @@ export async function penjawabDari(req: Request, kejadianId: string, mutasi: boo
     if (!s) return galat(401, "belum_masuk", "Sesi berakhir. Silakan masuk lagi.");
     p = { penggunaId: s.pengguna.id, perangkatId: null, oleh: "sesi" };
   }
-  if (mutasi && !lolosLaju(`jawab:${kejadianId}:${p.perangkatId ?? p.penggunaId}`, 30)) return galat(429, "terlalu_sering", "Pelan-pelan. Coba lagi sebentar lagi.");
+  const pelan = () => galat(429, "terlalu_sering", "Pelan-pelan. Coba lagi sebentar lagi.");
+  if (!lolosLaju(`${mutasi ? "jawabU" : "soalU"}:${p.penggunaId}`, mutasi ? 120 : 300)) return pelan();
+  if (mutasi && !lolosLaju(`jawab:${kejadianId}:${p.perangkatId ?? p.penggunaId}`, 30)) return pelan();
   return p;
 }

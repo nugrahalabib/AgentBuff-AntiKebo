@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { dariGalat, galat, mutasiPengguna } from "@/lib/api";
-import { sesiSaatIni } from "@/lib/auth/sesi";
+import { dariGalat, mutasiPengguna, sesiBaca } from "@/lib/api";
 import { daftarPerangkatRumah, sinkronkanPengguna } from "@/lib/layanan/tuya";
 
 export const dynamic = "force-dynamic";
 
 /** Perangkat per ruangan + status online + aksi alarm yang didukung (PRD I2). */
 export async function GET() {
-  const s = await sesiSaatIni();
-  if (!s) return galat(401, "belum_masuk", "Sesi berakhir. Silakan masuk lagi.");
+  const s = await sesiBaca();
+  if (s instanceof NextResponse) return s;
   try {
     return NextResponse.json(await daftarPerangkatRumah(s.pengguna.id), { headers: { "Cache-Control": "no-store" } });
   } catch (e) {

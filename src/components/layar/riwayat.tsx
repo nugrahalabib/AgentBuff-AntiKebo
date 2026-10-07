@@ -73,7 +73,7 @@ export function LayarRiwayat({
           </span>
         </Cincin>
         <dl className="grid w-full flex-1 grid-cols-1 gap-2.5 sm:grid-cols-1">
-          <Statistik ikon={<Flame size={18} strokeWidth={1.75} />} label={isi(R.beruntun, { n: beruntun })} />
+          <Statistik ikon={<Flame size={18} strokeWidth={1.75} />} label={R.hariBeruntun} nilai={String(beruntun)} />
           <Statistik ikon={<Clock size={18} strokeWidth={1.75} />} label={R.rata} nilai={rataMenit === null ? R.belumAda : isi(t.pagi.menit, { n: rataMenit })} />
           <Statistik ikon={<Hourglass size={18} strokeWidth={1.75} />} label={R.totalTunda} nilai={String(totalTunda)} />
         </dl>
@@ -96,7 +96,12 @@ export function LayarRiwayat({
             />
           </div>
         </div>
-        <GrafikSkor nilai={skor30.slice(-n)} label={labelHari.slice(-n)} judul={R.grafik} />
+        <GrafikSkor
+          nilai={skor30.slice(-n)}
+          label={labelHari.slice(-n)}
+          judul={R.grafik}
+          teks={{ tabel: R.lihatTabel, grafik: R.lihatGrafik, hari: R.kolomHari, skor: R.kolomSkor }}
+        />
       </section>
 
       <section aria-labelledby="judul-kejadian" className="flex flex-col gap-2">
@@ -162,12 +167,17 @@ export function LayarRiwayat({
   );
 }
 
-function Statistik({ ikon, label, nilai }: { ikon: React.ReactNode; label: string; nilai?: string }) {
+function Statistik({ ikon, label, nilai }: { ikon: React.ReactNode; label: string; nilai: string }) {
+  // dl > div hanya boleh berisi dt dan dd: ikon ikut di dalam dt (dekoratif).
   return (
     <div className="flex items-center gap-3 rounded-[16px] bg-kaca-isi px-4 py-2.5">
-      <span className="text-label-2">{ikon}</span>
-      <dt className="flex-1 text-[15px] font-semibold">{label}</dt>
-      {nilai ? <dd className="t-angka text-[17px] font-semibold">{nilai}</dd> : null}
+      <dt className="flex flex-1 items-center gap-3 text-[15px] font-semibold">
+        <span aria-hidden className="text-label-2">
+          {ikon}
+        </span>
+        {label}
+      </dt>
+      <dd className="t-angka text-[17px] font-semibold">{nilai}</dd>
     </div>
   );
 }
@@ -177,8 +187,21 @@ const ATAS = 16;
 const BAWAH = 26;
 
 /** Grafik batang skor 0..100. Satu seri, satu sumbu. */
-function GrafikSkor({ nilai, label, judul }: { nilai: Array<number | null>; label: string[]; judul: string }) {
+function GrafikSkor({
+  nilai,
+  label,
+  judul,
+  teks,
+}: {
+  nilai: Array<number | null>;
+  label: string[];
+  judul: string;
+  teks: { tabel: string; grafik: string; hari: string; skor: string };
+}) {
   const [sorot, setSorot] = useState<number | null>(null);
+  // Tampilan tabel (WCAG 1.1.1): angka yang sama dengan grafik, bisa dibuka siapa saja dan
+  // selalu tersedia untuk pembaca layar. Grafiknya sendiri hanya gambar (disembunyikan dari pembaca layar).
+  const [tabel, setTabel] = useState(false);
   const lebar = 640;
   const kiri = 30;
   const slot = (lebar - kiri) / nilai.length;
@@ -187,80 +210,108 @@ function GrafikSkor({ nilai, label, judul }: { nilai: Array<number | null>; labe
   const terakhir = nilai.length - 1;
   const jarangLabel = nilai.length > 10;
 
+  const isiTabel = (
+    <table className={tabel ? "w-full text-[15px]" : "sr-only"}>
+      <caption className={tabel ? "sr-only" : undefined}>{judul}</caption>
+      <thead>
+        <tr className="text-left text-label-2">
+          <th scope="col" className="py-1.5 font-semibold">
+            {teks.hari}
+          </th>
+          <th scope="col" className="py-1.5 text-right font-semibold">
+            {teks.skor}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {nilai.map((v, i) => (
+          <tr key={i} className="border-t border-pemisah">
+            <th scope="row" className="py-1.5 text-left font-normal">
+              {label[i]}
+            </th>
+            <td className="t-angka py-1.5 text-right font-semibold">{v ?? "-"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+
   return (
     <div className="relative">
-      <svg viewBox={`0 0 ${lebar} ${TINGGI}`} className="h-auto w-full overflow-visible" role="img" aria-label={judul}>
-        {[0, 50, 100].map((g) => (
-          <g key={g}>
-            <line x1={kiri} x2={lebar} y1={y(g)} y2={y(g)} stroke="var(--grafik-garis)" strokeWidth={1} />
-            <text x={kiri - 8} y={y(g) + 4} textAnchor="end" className="fill-label-2 text-[12px]">
-              {g}
-            </text>
-          </g>
-        ))}
-        {nilai.map((v, i) => {
-          const cx = kiri + slot * i + slot / 2;
-          const tampilLabel = !jarangLabel || i % 5 === terakhir % 5;
-          return (
-            <g key={i}>
-              {v === null ? (
-                <circle cx={cx} cy={y(0) - 3} r={2.5} fill="var(--grafik-garis)" />
-              ) : (
-                <path
-                  d={batang(cx - tebal / 2, y(v), tebal, y(0) - y(v))}
-                  fill="var(--grafik)"
-                  opacity={sorot === null || sorot === i ? 1 : 0.55}
-                  style={{ transition: "opacity 0.15s" }}
-                />
-              )}
-              {/* Sasaran sentuh/arah selebar slot, lebih besar dari batangnya. */}
-              <rect
-                x={kiri + slot * i}
-                y={ATAS}
-                width={slot}
-                height={TINGGI - ATAS - BAWAH}
-                fill="transparent"
-                tabIndex={v === null ? -1 : 0}
-                aria-label={`${label[i]}: ${v ?? "-"}`}
-                onPointerEnter={() => setSorot(i)}
-                onPointerLeave={() => setSorot(null)}
-                onFocus={() => setSorot(i)}
-                onBlur={() => setSorot(null)}
-              />
-              {tampilLabel ? (
-                <text x={cx} y={TINGGI - 6} textAnchor="middle" className="fill-label-2 text-[12px]">
-                  {label[i]}
-                </text>
-              ) : null}
-              {i === terakhir && v !== null ? (
-                <text x={cx} y={y(v) - 6} textAnchor="middle" className="fill-label text-[12px] font-semibold">
-                  {v}
-                </text>
-              ) : null}
-            </g>
-          );
-        })}
-      </svg>
-      {sorot !== null && nilai[sorot] !== null ? (
-        <div
-          role="status"
-          className="kaca-kuat pointer-events-none absolute top-0 rounded-[12px] px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap"
-          style={{ left: `${((kiri + slot * sorot + slot / 2) / lebar) * 100}%`, transform: "translateX(-50%)" }}
+      <div className="mb-2 flex justify-end">
+        <button
+          type="button"
+          aria-pressed={tabel}
+          onClick={() => setTabel((x) => !x)}
+          className="tekan inline-flex min-h-11 items-center rounded-full px-3 text-[14px] font-semibold text-aksen"
         >
-          {label[sorot]} · {nilai[sorot]}
-        </div>
-      ) : null}
-      <table className="sr-only">
-        <caption>{judul}</caption>
-        <tbody>
-          {nilai.map((v, i) => (
-            <tr key={i}>
-              <th scope="row">{label[i]}</th>
-              <td>{v ?? "-"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          {tabel ? teks.grafik : teks.tabel}
+        </button>
+      </div>
+      {tabel ? (
+        isiTabel
+      ) : (
+        <>
+          <svg viewBox={`0 0 ${lebar} ${TINGGI}`} className="h-auto w-full overflow-visible" aria-hidden="true">
+            {[0, 50, 100].map((g) => (
+              <g key={g}>
+                <line x1={kiri} x2={lebar} y1={y(g)} y2={y(g)} stroke="var(--grafik-garis)" strokeWidth={1} />
+                <text x={kiri - 8} y={y(g) + 4} textAnchor="end" className="fill-label-2 text-[12px]">
+                  {g}
+                </text>
+              </g>
+            ))}
+            {nilai.map((v, i) => {
+              const cx = kiri + slot * i + slot / 2;
+              const tampilLabel = !jarangLabel || i % 5 === terakhir % 5;
+              return (
+                <g key={i}>
+                  {v === null ? (
+                    <circle cx={cx} cy={y(0) - 3} r={2.5} fill="var(--grafik-garis)" />
+                  ) : (
+                    <path
+                      d={batang(cx - tebal / 2, y(v), tebal, y(0) - y(v))}
+                      fill="var(--grafik)"
+                      opacity={sorot === null || sorot === i ? 1 : 0.55}
+                      style={{ transition: "opacity 0.15s" }}
+                    />
+                  )}
+                  {/* Sasaran sentuh/arah selebar slot, lebih besar dari batangnya. */}
+                  <rect
+                    x={kiri + slot * i}
+                    y={ATAS}
+                    width={slot}
+                    height={TINGGI - ATAS - BAWAH}
+                    fill="transparent"
+                    onPointerEnter={() => setSorot(i)}
+                    onPointerLeave={() => setSorot(null)}
+                  />
+                  {tampilLabel ? (
+                    <text x={cx} y={TINGGI - 6} textAnchor="middle" className="fill-label-2 text-[12px]">
+                      {label[i]}
+                    </text>
+                  ) : null}
+                  {i === terakhir && v !== null ? (
+                    <text x={cx} y={y(v) - 6} textAnchor="middle" className="fill-label text-[12px] font-semibold">
+                      {v}
+                    </text>
+                  ) : null}
+                </g>
+              );
+            })}
+          </svg>
+          {sorot !== null && nilai[sorot] !== null ? (
+            <div
+              aria-hidden
+              className="kaca-kuat pointer-events-none absolute top-0 rounded-[12px] px-3 py-1.5 text-[13px] font-semibold whitespace-nowrap"
+              style={{ left: `${((kiri + slot * sorot + slot / 2) / lebar) * 100}%`, transform: "translateX(-50%)" }}
+            >
+              {label[sorot]} · {nilai[sorot]}
+            </div>
+          ) : null}
+          {isiTabel}
+        </>
+      )}
     </div>
   );
 }

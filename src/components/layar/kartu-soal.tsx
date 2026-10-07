@@ -101,19 +101,35 @@ function IsiAngka({ soal, kirim, umpan, proses }: { soal: SoalLayar; kirim: (j: 
     const h = setTimeout(() => setTersembunyi(true), soal.tampil.sembunyiSetelahMs ?? 3_000);
     return () => clearTimeout(h);
   }, [ingat, soal.tampil.sembunyiSetelahMs]);
+  const bisaKirim = jawaban.length > 0 && (!ingat || tersembunyi);
   const kirimJawaban = () => {
-    if (!jawaban || proses) return;
+    if (!bisaKirim || proses) return;
     kirim(jawaban);
     setJawaban("");
   };
+  // Papan ketik langsung bekerja begitu layar alarm tampil, tanpa perlu memindah fokus dulu:
+  // angka, hapus, dan Enter (Enter tidak ikut "menekan" tombol angka yang sedang terfokus).
+  const tombolTerbaru = useRef<(e: KeyboardEvent) => void>(() => {});
+  useEffect(() => {
+    tombolTerbaru.current = (e) => {
+      const el = e.target as HTMLElement | null;
+      if (e.ctrlKey || e.metaKey || e.altKey || (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)))) return;
+      if (/^\d$/.test(e.key)) setJawaban((j) => (j + e.key).slice(0, maks));
+      else if (e.key === "Backspace") setJawaban((j) => j.slice(0, -1));
+      else if (e.key === "Enter") {
+        e.preventDefault();
+        kirimJawaban();
+      } else return;
+      e.preventDefault();
+    };
+  });
+  useEffect(() => {
+    const f = (e: KeyboardEvent) => tombolTerbaru.current(e);
+    window.addEventListener("keydown", f);
+    return () => window.removeEventListener("keydown", f);
+  }, []);
   return (
-    <div
-      onKeyDown={(e) => {
-        if (/^\d$/.test(e.key)) setJawaban((j) => (j + e.key).slice(0, maks));
-        else if (e.key === "Backspace") setJawaban((j) => j.slice(0, -1));
-        else if (e.key === "Enter") kirimJawaban();
-      }}
-    >
+    <div>
       {ingat ? (
         <>
           <p className="text-center text-[15px] font-semibold text-white/75">{tersembunyi ? T.ingatKetik : T.ingatLihat}</p>
@@ -136,7 +152,7 @@ function IsiAngka({ soal, kirim, umpan, proses }: { soal: SoalLayar; kirim: (j: 
           kirim={kirimJawaban}
           labelHapus={T.hapus}
           labelKirim={T.kirim}
-          bisaKirim={jawaban.length > 0 && (!ingat || tersembunyi)}
+          bisaKirim={bisaKirim}
           nonaktif={proses}
         />
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Bot, Globe, Languages, Moon, Palette, Printer, QrCode, RotateCcw, SlidersHorizontal, Trash2, User } from "lucide-react";
+import { Bookmark, Bot, Globe, Languages, Moon, Palette, Printer, QrCode, RotateCcw, Shield, SlidersHorizontal, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Bagian, Baris, PilihBunyi, PilihKarakter, PilihKodeQr, PilihSuara, PilihanPil, type DataSuara } from "@/components/layar/ubah-alarm";
@@ -15,6 +15,7 @@ import { useKamus } from "@/lib/i18n/klien";
 import { panggilApi } from "@/lib/klien/api";
 import { bersihkanPeramban } from "@/lib/klien/bersihkan";
 import { jamLokal, type FormAlarm } from "@/lib/tampilan/alarm-klien";
+import { gerakRadio } from "@/lib/klien/radio";
 
 /**
  * Pengaturan lengkap (PRD M, docs/04-DESAIN.md §4.10): daftar bergrup; tiap baris membuka lembar
@@ -230,7 +231,7 @@ function PilihZona({ nilai, ubah }: { nilai: string; ubah: (z: string) => void }
         </Tombol>
       ) : null}
       <input value={cari} onChange={(e) => setCari(e.target.value)} placeholder={P.zonaCari} aria-label={P.zonaCari} className={kelasInput} />
-      <ul role="radiogroup" aria-label={P.zona} className="flex max-h-[42dvh] flex-col gap-1 overflow-y-auto">
+      <ul role="radiogroup" onKeyDown={gerakRadio} aria-label={P.zona} className="flex max-h-[42dvh] flex-col gap-1 overflow-y-auto">
         {hasil.length ? (
           hasil.map((z) => (
             <li key={z}>
@@ -734,6 +735,7 @@ export function GrupLainnya() {
     <>
       <Grup judul={P.lainnya} id="g-lainnya">
         <BarisGrup ikon={Bot} warnaIkon="#0f766e" label={P.agen} sub={t.agen.barisKet} href="/app/agen" />
+        <BarisGrup ikon={Shield} warnaIkon="#16a34a" label={P.privasi} sub={P.privasiKet} href="/privasi" />
         <BarisGrup ikon={RotateCcw} warnaIkon="#64748b" label={P.ulangOrientasi} sub={P.ulangOrientasiKet} href="/app/orientasi?ulang=1" />
         <BarisGrup
           ikon={Trash2}

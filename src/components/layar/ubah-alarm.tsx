@@ -15,6 +15,7 @@ import { terapkanTemplate, type FormAlarm, type TemplateKlien } from "@/lib/tamp
 import { DAFTAR_BUNYI, DAFTAR_KARAKTER, WARNA_KARAKTER, type KanalTampil, type StatusSuara } from "@/lib/tampilan/jenis";
 import { EditorPengulangan } from "./ubah-pengulangan";
 import { EditorAturanRumah, type DataRumah } from "./ubah-rumah";
+import { gerakRadio } from "@/lib/klien/radio";
 
 export type DataKanal = { status: "memuat" } | { status: "ada"; kanal: KanalTampil[] } | { status: "izin"; pesan: string } | { status: "galat"; pesan: string };
 export type DataKodeQr = { status: "memuat" } | { status: "ada"; kode: Array<{ id: string; nama: string }> };
@@ -393,7 +394,7 @@ export function Bagian({ judul, keterangan, children }: { judul: string; keteran
 /** Pilihan tunggal berbentuk pil yang boleh turun baris (pilihan panjang di layar HP). */
 export function PilihanPil<T extends string>({ label, nilai, ubah, pilihan }: { label: string; nilai: T; ubah: (v: T) => void; pilihan: Array<{ nilai: T; label: string }> }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1.5">
+    <div role="radiogroup" onKeyDown={gerakRadio} aria-label={label} className="flex flex-wrap gap-1.5">
       {pilihan.map((p) => (
         <button
           key={p.nilai}
@@ -500,7 +501,7 @@ export function PilihKarakter({ nilai, ubah, nama }: { nilai: FormAlarm["karakte
   const { diputar, dengar: putar } = useDengarContoh(b);
   const dengar = (id: FormAlarm["karakter"]) => putar(id, isi(t.karakter[id].contoh, { nama }));
   return (
-    <div role="radiogroup" aria-label={U.karakter} className="tanpa-gulir -mx-6 flex snap-x gap-2.5 overflow-x-auto px-6 pb-1">
+    <div role="radiogroup" onKeyDown={gerakRadio} aria-label={U.karakter} className="tanpa-gulir -mx-6 flex snap-x gap-2.5 overflow-x-auto px-6 pb-1">
       {DAFTAR_KARAKTER.map((id) => {
         const K = t.karakter[id];
         const dipilih = nilai === id;

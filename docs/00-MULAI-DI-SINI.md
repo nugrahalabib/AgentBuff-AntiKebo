@@ -2,21 +2,21 @@
 
 ## Status terkini
 
-- **2026-10-07:** **P0 sampai P12 selesai**: kerangka + server tiruan (P0), rancangan semua layar
-  (P1), data alarm, pengulangan, libur, Komitmen (P2), penjadwal tepat detik, SSE, perangkat
-  siaga, sambung PC (P3), soal, tunda, Masih bangun, Misi QR, anti curang (P4), 8 bunyi buatan
-  sendiri, naskah 5 karakter, antrean suara lewat AgentBuff, pemutar web (P5), spam kanal, pesan
-  penutup, notifikasi web, pengingat malam, pesan uji (P6), rumah pintar Tuya (P7), Beranda, lembar
-  alarm, layar alarm penuh, Selamat pagi + skor, Masih bangun (P8), PWA dan Mode Jam Meja dengan
-  simpanan suara dan cadangan saat koneksi putus (P9), aplikasi PC Tauri dengan jendela alarm
-  terkunci, soal luring, penjaga, halaman unduh, dan CI Windows yang membangun pemasang (P10),
-  perkenalan 6 langkah, tab Siaga, Riwayat + rincian + CSV, Pengaturan lengkap, template, kode QR,
-  dan hapus semua data (P11), 48 alat MCP dengan penjaga paritas, idempotensi, halaman Agen, dan
-  `skill/SKILL.md` (P12).
-  Paket cloud berikutnya: **P13** (mutu, keamanan, aksesibilitas, Inggris, legal).
-  Paket laptop L1 (pintu AgentBuff) bisa jalan paralel; acuannya
-  `tests/integrasi/tiruan-kontrak.test.ts`. Uji PC Windows asli menunggu L2 (`09-APLIKASI-PC.md` §9).
-- Menunggu Chief: K-07 (`KEPUTUSAN.md`).
+- **2026-10-07:** **Semua paket cloud (P0 sampai P13) selesai**: kerangka + server tiruan (P0),
+  rancangan semua layar (P1), data alarm, pengulangan, libur, Komitmen (P2), penjadwal tepat detik,
+  SSE, perangkat siaga, sambung PC (P3), soal, tunda, Masih bangun, Misi QR, anti curang (P4), bunyi,
+  naskah karakter, antrean suara lewat AgentBuff (P5), spam kanal, notifikasi web, pengingat malam
+  (P6), rumah pintar Tuya (P7), layar inti tersambung API (P8), PWA dan Mode Jam Meja (P9), aplikasi
+  PC Tauri (P10), perkenalan, Siaga, Riwayat, Pengaturan lengkap, hapus data (P11), 48 alat MCP dengan
+  penjaga paritas dan halaman Agen (P12), lalu mutu (P13): halaman Privasi dan Ketentuan, audit
+  aksesibilitas axe 0 pelanggaran + papan ketik, aturan beku K-07 benar-benar dijalankan (tenggang 3
+  hari, kabar, jalur bangun tidak pernah dibekukan), batas laju di semua rute, Komitmen mengunci putus
+  perangkat/rumah, anggaran performa, dan bahan `integrasi-portal/`.
+  Berikutnya: paket **laptop** L1 (pintu kanal, pesan, suara di AgentBuff), L2 (rilis uji, uji PC dan
+  HP asli, naskah pembaca layar `AKSESIBILITAS.md` §2), L3 (gerbang rilis, terbitkan). Acuan L1:
+  `tests/integrasi/tiruan-kontrak.test.ts`.
+- Menunggu Chief: K-07 (angka tenggang beku), K-114a (badan hukum pengendali data, tinjauan hukum)
+  (`KEPUTUSAN.md`).
 
 (Perbarui bagian ini di akhir setiap sesi: tanggal, paket yang selesai, paket berikutnya.)
 
@@ -37,6 +37,8 @@
 | `10-SUARA.md` | Bunyi alarm, karakter omelan, pola jeda 3 detik, pembuatan suara | P5, P9, P10 |
 | `11-ALAT-MCP.md` | Alat MCP paritas penuh, pengecualian, `SKILL.md` | P12 |
 | `GERBANG-RILIS.md` | Syarat sebelum dijual | P13, L3 |
+| `AKSESIBILITAS.md` | Bukti audit aksesibilitas otomatis + naskah uji pembaca layar di perangkat asli | P13, L2 |
+| `../integrasi-portal/` | Bahan listing id/en dan draf skrip bukti untuk sesi laptop | L2, L3 |
 | `KEPUTUSAN.md` | Keputusan dan yang menunggu Chief | Saat ragu dan saat memutuskan hal baru |
 | `LAPORAN-PERUBAHAN.md` | Catatan perubahan untuk Chief | Akhir setiap sesi |
 | `../referensi/README.md` | Isi folder referensi | Sebelum menyalin dari template |

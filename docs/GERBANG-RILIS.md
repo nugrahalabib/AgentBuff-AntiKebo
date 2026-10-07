@@ -11,12 +11,12 @@ AntiKebo baru boleh diterbitkan bila semua butir hijau dan buktinya tercatat. Ac
 | 4 | **Jam Meja di HP asli:** iPhone (saklar senyap, layar redup) dan Android (layar redup, tab di latar, baterai) diuji; listing hanya menjanjikan yang terbukti | Catatan di `KEPUTUSAN.md` | Belum |
 | 5 | **Suara:** klip dibuat lewat pintu AgentBuff asli untuk pengguna tanpa kunci (suara gratis) dan dengan kunci penyedia; cadangan suara perangkat jalan saat pintu gagal | Skrip bukti + rekaman | Belum |
 | 6 | **Spam kanal:** pesan sampai di Telegram dan WhatsApp asli lewat bot agen, jeda dipatuhi, berhenti saat bangun | Bukti kanal asli | Belum |
-| 7 | **Anti curang:** tidak ada jalur mematikan/menunda/menjawab tanpa sesi atau token perangkat; jawaban tidak bocor; Komitmen ditegakkan di web, PC, MCP | Guard `jaga` + tes + tinjauan | Belum |
+| 7 | **Anti curang:** tidak ada jalur mematikan/menunda/menjawab tanpa sesi atau token perangkat; jawaban tidak bocor; Komitmen ditegakkan di web, PC, MCP | Guard `jaga` + tes + tinjauan | Cloud: lulus (penjaga `jalur-alarm` dan `paritas`, `tests/integrasi/jawab.test.ts`, `keamanan.test.ts`, tinjauan keamanan P13: batas laju di semua rute, Komitmen juga mengunci putus perangkat/rumah, K-112, K-113); di produksi wajib diuji (L3) |
 | 8 | **MCP:** paritas penuh (guard), 401 token salah/dicabut, `access_frozen`, `commitment_locked`, idempotensi | Skrip bukti MCP | Cloud: lulus (penjaga `paritas`, `tests/integrasi/mcp*.test.ts`, `tests/e2e/agen.spec.ts`); di produksi wajib diuji (L3) |
-| 9 | **Aksesibilitas:** 0 kegagalan kontras dan axe semua halaman kedua tema, 320 px, teks 200%, keyboard, pembaca layar 5 alur | Laporan audit | Belum |
+| 9 | **Aksesibilitas:** 0 kegagalan kontras dan axe semua halaman kedua tema, 320 px, teks 200%, keyboard, pembaca layar 5 alur | Laporan audit | Cloud: lulus (`tests/e2e/aksesibilitas.spec.ts`: axe 0 pelanggaran di 22 layar kedua tema, 320 dan 640 px, lima alur papan ketik; `docs/AKSESIBILITAS.md`); pembaca layar di perangkat asli wajib diuji (L2) |
 | 10 | **Contoh emas:** pengulangan, soal (TS dan Rust), skor, urutan putar suara | Tes hijau di CI | Belum |
 | 11 | **Deploy aman:** cadangan + hitung baris + gerbang RLS + tes pulih | Log deploy | Belum |
-| 12 | **Legal:** privasi, ketentuan, "bukan jaminan", panduan layar biru Windows | Halaman tayang | Belum |
-| 13 | **Listing:** teks id/en, 3 gambar dari layar asli, tutorial, `SKILL.md` | Halaman Marketplace | Belum |
+| 12 | **Legal:** privasi, ketentuan, "bukan jaminan", panduan layar biru Windows | Halaman tayang | Cloud: `/privasi`, `/ketentuan` (bukan jaminan, Komitmen, layar biru Windows), panduan layar biru di Unduh PC; nama badan hukum dan tinjauan hukum menunggu Chief (K-114a); tayang di produksi (L2) |
+| 13 | **Listing:** teks id/en, 3 gambar dari layar asli, tutorial, `SKILL.md` | Halaman Marketplace | Bahan siap: `integrasi-portal/listing.md` (id/en, tutorial), `skill/SKILL.md`; gambar dan terbit (L3) |
 
 Target non-fungsional di `02-PRD.md` §18 juga wajib terpenuhi.

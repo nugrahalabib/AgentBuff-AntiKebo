@@ -1,0 +1,54 @@
+{
+  "keterangan": "Aturan beku K-07: tenggang 72 jam sejak AgentBuff pertama kali menjawab tidak berhak. Dibaca tests/unit/aturan-beku.test.ts.",
+  "tenggangJam": 72,
+  "kasus": [
+    { "nama": "aktif: tidak pernah ditahan", "status": { "aktif": true, "bekuSejak": null }, "jadwal": "2026-10-20T22:00:00Z", "ditahan": false, "akhir": null },
+    { "nama": "belum pernah diperiksa", "status": null, "jadwal": "2026-10-20T22:00:00Z", "ditahan": false, "akhir": null },
+    {
+      "nama": "beku, alarm di dalam tenggang",
+      "status": { "aktif": false, "bekuSejak": "2026-10-10T01:00:00Z" },
+      "jadwal": "2026-10-12T22:00:00Z",
+      "ditahan": false,
+      "akhir": "2026-10-13T01:00:00.000Z"
+    },
+    {
+      "nama": "beku, alarm tepat di akhir tenggang",
+      "status": { "aktif": false, "bekuSejak": "2026-10-10T01:00:00Z" },
+      "jadwal": "2026-10-13T01:00:00Z",
+      "ditahan": true,
+      "akhir": "2026-10-13T01:00:00.000Z"
+    },
+    {
+      "nama": "beku, alarm sesudah tenggang",
+      "status": { "aktif": false, "bekuSejak": "2026-10-10T01:00:00Z" },
+      "jadwal": "2026-10-14T22:00:00Z",
+      "ditahan": true,
+      "akhir": "2026-10-13T01:00:00.000Z"
+    },
+    {
+      "nama": "beku tanpa tanggal (data lama): tidak ditahan sampai tanggal terisi",
+      "status": { "aktif": false, "bekuSejak": null },
+      "jadwal": "2026-10-20T22:00:00Z",
+      "ditahan": false,
+      "akhir": null
+    }
+  ],
+  "transisi": [
+    {
+      "nama": "aktif ke beku: mulai sekarang",
+      "lama": { "aktif": true, "bekuSejak": null },
+      "aktifSekarang": false,
+      "sekarang": "2026-10-10T01:00:00Z",
+      "hasil": "2026-10-10T01:00:00.000Z"
+    },
+    {
+      "nama": "masih beku: tanggal awal tetap",
+      "lama": { "aktif": false, "bekuSejak": "2026-10-10T01:00:00Z" },
+      "aktifSekarang": false,
+      "sekarang": "2026-10-12T05:00:00Z",
+      "hasil": "2026-10-10T01:00:00.000Z"
+    },
+    { "nama": "pulih: kosong", "lama": { "aktif": false, "bekuSejak": "2026-10-10T01:00:00Z" }, "aktifSekarang": true, "sekarang": "2026-10-12T05:00:00Z", "hasil": null },
+    { "nama": "pertama kali diperiksa dan langsung beku", "lama": null, "aktifSekarang": false, "sekarang": "2026-10-10T01:00:00Z", "hasil": "2026-10-10T01:00:00.000Z" }
+  ]
+}

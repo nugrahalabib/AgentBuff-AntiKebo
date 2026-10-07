@@ -1,11 +1,13 @@
 import { and, asc, eq, gt, isNull, lte, ne, or } from "drizzle-orm";
+import { akhirTenggang, alarmDitahan } from "@/lib/agentbuff/aturan-beku";
 import { kirimKabar as kirimKabarAsli } from "@/lib/agentbuff/pintu";
 import { SkemaBawaan } from "@/lib/alarm/isi";
 import { schema, type Db, type Tx } from "@/lib/db";
 import { env } from "@/lib/env";
 import { bagianLokal, instanLokal } from "@/lib/jadwal/zona";
-import { notifPengingat, pesanPengingat } from "@/lib/pesan";
+import { notifPengingat, pesanPengingat, waktuPanjang, type BekuPengingat } from "@/lib/pesan";
 import { kirimPush, type KirimPermintaan } from "@/lib/push";
+import { tautanPerpanjangMutlak } from "./beku";
 import { catatKiriman } from "./kanal";
 import { konteksPengguna } from "./konteks";
 import { SIAGA_MS } from "./perangkat";
@@ -35,11 +37,14 @@ export type OpsiPengingat = { sekarang?: Date; kirimKabar?: typeof kirimKabarAsl
 export async function prosesPengingatMalam(db: () => Db, opsi: OpsiPengingat = {}): Promise<{ dikirim: number }> {
   const sekarang = opsi.sekarang ?? new Date();
   const jalankan = <T>(fn: (tx: Tx) => Promise<T>) => db().transaction(fn);
+  // Pemilik beku ikut diperiksa walau pengingat malam dimatikan: malam sebelum alarm pertama yang
+  // tidak lagi berbunyi, mereka wajib diberi tahu terang-terangan (PRD A4, K-07).
   const calon = await jalankan((tx) =>
     tx
       .select({ id: schema.pengguna.id, zona: schema.pengguna.zonaWaktu, jamTidur: schema.pengguna.jamTidur, terkirim: schema.pengguna.pengingatTerkirim })
       .from(schema.pengguna)
-      .where(and(eq(schema.pengguna.pengingatMalam, true), isNull(schema.pengguna.dihapusPada))),
+      .leftJoin(schema.statusHak, eq(schema.statusHak.penggunaId, schema.pengguna.id))
+      .where(and(or(eq(schema.pengguna.pengingatMalam, true), eq(schema.statusHak.aktif, false)), isNull(schema.pengguna.dihapusPada))),
   );
   let dikirim = 0;
   for (const p of calon) {
@@ -62,7 +67,14 @@ export async function prosesPengingatMalam(db: () => Db, opsi: OpsiPengingat = {
 async function kirimPengingat(jalankan: <T>(fn: (tx: Tx) => Promise<T>) => Promise<T>, penggunaId: string, tanggal: string, sekarang: Date, opsi: OpsiPengingat): Promise<boolean> {
   const data = await jalankan(async (tx) => {
     const k = await konteksPengguna(tx, penggunaId);
-    const [p] = await tx.select({ sub: schema.pengguna.agentbuffSub, bawaan: schema.pengguna.bawaan }).from(schema.pengguna).where(eq(schema.pengguna.id, penggunaId));
+    const [p] = await tx
+      .select({ sub: schema.pengguna.agentbuffSub, bawaan: schema.pengguna.bawaan, pengingatMalam: schema.pengguna.pengingatMalam })
+      .from(schema.pengguna)
+      .where(eq(schema.pengguna.id, penggunaId));
+    const [hak] = await tx
+      .select({ aktif: schema.statusHak.aktif, bekuSejak: schema.statusHak.bekuSejak, alasan: schema.statusHak.alasan })
+      .from(schema.statusHak)
+      .where(eq(schema.statusHak.penggunaId, penggunaId));
     const [kej] = await tx
       .select()
       .from(schema.kejadianAlarm)
@@ -88,6 +100,8 @@ async function kirimPengingat(jalankan: <T>(fn: (tx: Tx) => Promise<T>) => Promi
     return {
       k,
       sub: p.sub,
+      pengingatMalam: p.pengingatMalam,
+      hak: hak ?? null,
       kej,
       agenda: alarm && alarm.agendaJudul.trim() !== k.t.alarmBaru.judulBawaan ? alarm.agendaJudul.trim() : null,
       kanal: kanalBawaan.length ? kanalBawaan : (alarm?.spam.kanal ?? []),
@@ -98,7 +112,14 @@ async function kirimPengingat(jalankan: <T>(fn: (tx: Tx) => Promise<T>) => Promi
   const { k, sub, kej } = data;
   const jam = k.bahasa === "id" ? kej.jamLokal.replace(":", ".") : kej.jamLokal;
   const asal = (opsi.asal ?? env("APP_ORIGIN")).replace(/\/+$/, "");
-  const m = { bahasa: k.bahasa, nama: k.namaSapaan, jam, agenda: data.agenda, perangkatSiap: data.siap };
+  // Beku (K-07): alarm besok ditahan = peringatan tegas; masih tenggang = baris tambahan.
+  const akhir = akhirTenggang(data.hak);
+  const beku: BekuPengingat | null =
+    akhir && data.hak
+      ? { ditahan: alarmDitahan(data.hak, kej.jadwalUtc), sampai: waktuPanjang(akhir, k.zona, k.bahasa), tautan: tautanPerpanjangMutlak(data.hak.alasan, asal) }
+      : null;
+  if (!data.pengingatMalam && !beku?.ditahan) return false;
+  const m = { bahasa: k.bahasa, nama: k.namaSapaan, jam, agenda: data.agenda, perangkatSiap: data.siap, beku };
   const kirimKabar = opsi.kirimKabar ?? kirimKabarAsli;
   await Promise.all([
     kirimPush(jalankan, penggunaId, notifPengingat({ ...m, url: "/app" }), { kirim: opsi.kirimPermintaanPush, ttlDtk: 3_600 }),

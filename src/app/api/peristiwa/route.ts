@@ -1,4 +1,4 @@
-import { bearer } from "@/lib/api";
+import { bearer, lolosLaju } from "@/lib/api";
 import { sesiSaatIni } from "@/lib/auth/sesi";
 import { perangkatDariToken } from "@/lib/layanan/perangkat";
 import { aliranPeristiwa, type JenisPeristiwa } from "@/lib/peristiwa";
@@ -14,6 +14,7 @@ export async function GET(req: Request) {
   if (token) {
     const p = await perangkatDariToken(token);
     if (!p) return new Response("token perangkat tidak berlaku", { status: 401 });
+    if (!lolosLaju(`sse:${p.penggunaId}`, 60)) return new Response("terlalu sering", { status: 429 });
     return aliranPeristiwa(req, p.penggunaId, {
       saring: (e) => UNTUK_PERANGKAT.has(e.j),
       tutupBila: (e) => e.j === "cabut" && e.d === p.id,
@@ -21,5 +22,6 @@ export async function GET(req: Request) {
   }
   const s = await sesiSaatIni();
   if (!s) return new Response("belum masuk", { status: 401 });
+  if (!lolosLaju(`sse:${s.pengguna.id}`, 60)) return new Response("terlalu sering", { status: 429 });
   return aliranPeristiwa(req, s.pengguna.id);
 }

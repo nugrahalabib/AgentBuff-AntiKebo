@@ -23,7 +23,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P10 | Aplikasi PC (Tauri) | Cloud | Selesai |
 | P11 | Orientasi, Siaga, Riwayat, Pengaturan, Template | Cloud | Selesai |
 | P12 | MCP paritas penuh + SKILL.md | Cloud | Selesai |
-| P13 | Mutu, keamanan, aksesibilitas, Inggris, legal | Cloud | Belum |
+| P13 | Mutu, keamanan, aksesibilitas, Inggris, legal | Cloud | Selesai |
 | L1 | Pintu kanal, pesan, suara di AgentBuff | Laptop | Belum |
 | L2 | Rilis uji + uji PC dan HP asli | Laptop | Belum |
 | L3 | Gerbang rilis dan terbitkan | Laptop | Belum |
@@ -538,10 +538,37 @@ Catatan untuk paket berikutnya:
 
 ## P13 Mutu, keamanan, aksesibilitas, Inggris, legal
 
-- [ ] Audit kontras + axe semua halaman kedua tema, 320 px, teks 200%, keyboard, pembaca layar.
-- [ ] Anggaran performa, batas laju, CSP, tinjauan keamanan.
-- [ ] Kamus Inggris lengkap; privasi, ketentuan, "bukan jaminan".
-- [ ] Bahan `integrasi-portal/`: teks listing id/en, `SKILL.md`, draf skrip bukti.
+**Status: selesai 2026-10-07.** Bukti di cloud: 671 tes vitest (baru: contoh emas aturan beku,
+pembatas laju, redaksi log, beku di penjadwal + jadwal perangkat + kabar sekali + pengingat malam,
+batas token manual dan batas laju MCP per pengguna lintas token, id palsu ditolak, Komitmen mengunci
+putus perangkat/rumah/darurat); 127 uji Playwright mode produksi (baru: `aksesibilitas.spec.ts`
+axe 0 pelanggaran WCAG 2.2 AA di 22 layar kedua tema, tanpa gulir mendatar di 320 dan 640 px, lima
+alur hanya papan ketik; `anggaran.spec.ts` JS awal 156 sampai 223 KB, CLS 0, LCP paling lama 0,4 dtk di mesin uji; akses beku: pengaturan dibekukan, alarm tetap
+berbunyi dan berhenti lewat soal); 14 penjaga jaga.
+
+Rujukan: PRD §16 N5, §18; `GERBANG-RILIS.md` butir 7, 9, 12, 13; `docs/AKSESIBILITAS.md`.
+
+- [x] Audit kontras + axe semua halaman kedua tema, 320 px, teks 200%, keyboard, pembaca layar.
+      (K-111; naskah pembaca layar di perangkat asli untuk L2 di `docs/AKSESIBILITAS.md` §2.)
+- [x] Anggaran performa, batas laju, CSP, tinjauan keamanan. (K-112, K-113, K-115; CSP ber-nonce dan
+      header keamanan sudah sejak P0, diperiksa ulang. Tinjauan menemukan dan memperbaiki: aturan beku
+      K-07 belum dijalankan (K-110), layar berbunyi ikut terblokir saat beku (K-109), pembatas laju
+      bisa dikosongkan, rute baca tanpa batas, batas MCP per token, Komitmen bisa dilemahkan lewat
+      putus perangkat/rumah.)
+- [x] Kamus Inggris lengkap; privasi, ketentuan, "bukan jaminan". (K-114; kamus `en` bertipe sama
+      dengan `id`, dipindai bebas kata Indonesia; istilah "Commitment Mode" diseragamkan.)
+- [x] Bahan `integrasi-portal/`: teks listing id/en, `SKILL.md`, draf skrip bukti.
+
+Selesai bila: semua butir di atas terbukti di cloud; yang hanya bisa di perangkat asli atau produksi
+tercatat "wajib diuji" untuk L2/L3.
+
+Catatan untuk paket berikutnya:
+- L1: kabar beku dan pengingat malam memakai pintu kabar AgentBuff asli; bila AgentBuff menolak
+  mengirim untuk akun yang tidak aktif, notifikasi web tetap terkirim (diuji di cloud).
+- L2: jalankan naskah pembaca layar `docs/AKSESIBILITAS.md` §2 (VoiceOver, TalkBack, Narator);
+  pakai `integrasi-portal/listing.md` untuk katalog `coming_soon`.
+- L3: ukur LCP/INP/CLS di HP asli terhadap produksi; skrip bukti dari `integrasi-portal/bukti.md`;
+  Chief mengisi nama badan hukum pengendali data dan meminta tinjauan hukum (K-114a).
 
 ## L1 Pintu kanal, pesan, suara di AgentBuff (Laptop, repo AgentBuff)
 

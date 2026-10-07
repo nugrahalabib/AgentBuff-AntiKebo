@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bearer, dariGalat, galat } from "@/lib/api";
+import { bearer, dariGalat, galat, lolosLaju } from "@/lib/api";
 import { sesiSaatIni } from "@/lib/auth/sesi";
 import { perangkatDariToken, salinanJadwal } from "@/lib/layanan/perangkat";
 
@@ -20,6 +20,7 @@ export async function GET(req: Request) {
       if (!s) return galat(401, "belum_masuk", "Sesi berakhir. Silakan masuk lagi.");
       penggunaId = s.pengguna.id;
     }
+    if (!lolosLaju(`jadwal:${penggunaId}`, 120)) return galat(429, "terlalu_sering", "Terlalu sering.");
     const sekarang = new Date();
     return NextResponse.json({ waktuServer: sekarang.toISOString(), ...(await salinanJadwal(penggunaId, sekarang)) }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {

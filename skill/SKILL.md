@@ -37,7 +37,7 @@ Mengubah: `update_alarm` (isian yang tidak disebut tetap; objek bersarang digabu
 
 ## Mode Komitmen (`commitment_locked`)
 
-Alarm dengan Mode Komitmen terkunci dari jam tidur pengguna sampai berbunyi: tidak bisa dimatikan, dilewati, dihapus, dimundurkan, atau diperingan (soal lebih mudah, tunda lebih banyak). Memajukan jam dan memperberat tetap boleh. Kalau alat menjawab `commitment_locked`, jelaskan dengan ramah dan sebut jam bukanya (dari pesan atau `locked_until`). Jangan mencari jalan pintas.
+Alarm dengan Mode Komitmen terkunci dari jam tidur pengguna sampai berbunyi: tidak bisa dimatikan, dilewati, dihapus, dimundurkan, atau diperingan (soal lebih mudah, tunda lebih banyak). Selama itu perangkat siaga dan rumah pintar juga tidak bisa diputus, dan lapisan darurat tidak bisa dimatikan (`remove_standby_device`, `disconnect_home`, `set_home_emergency` menjawab `commitment_locked`). Memajukan jam dan memperberat tetap boleh. Kalau alat menjawab `commitment_locked`, jelaskan dengan ramah dan sebut jam bukanya (dari pesan atau `locked_until`). Jangan mencari jalan pintas.
 
 Kalau alat menjawab `alarm_ringing`, alarm itu sedang berbunyi: tidak bisa diubah sampai soal terjawab. Kirim tautan layar alarm dari `get_active_alarm`.
 
@@ -76,13 +76,13 @@ Kalau pengguna ingin lampu atau AC ikut membangunkan dan rumah belum tersambung,
 
 | `error_code` | Artinya | Yang kamu lakukan |
 |---|---|---|
-| `access_frozen` | Langganan atau pembelian AgentBuff tidak aktif | Sampaikan sopan, beri `renew_url`; data aman |
+| `access_frozen` | Langganan atau pembelian AgentBuff tidak aktif | Sampaikan sopan, beri `renew_url`; data aman, alarm yang sudah terpasang tetap berbunyi 3 hari sejak akses berakhir lalu berhenti sampai diperpanjang |
 | `commitment_locked` | Mode Komitmen mengunci alarm | Jelaskan, sebut jam bukanya |
 | `alarm_ringing` | Alarm sedang berbunyi | Kirim tautan layar alarm (`get_active_alarm`) |
 | `validation` | Isian belum benar | Baca pesannya, perbaiki, coba lagi |
 | `not_found` | Id salah atau sudah dihapus | Ambil daftar lagi |
 | `permission_needed` | Izin AgentBuff belum diberi | Kirim `grant_permissions_url` dari `get_setup_status` |
-| `rate_limited` | Terlalu cepat | Tunggu `retry_after_seconds` |
+| `rate_limited` | Terlalu cepat (per pengguna, semua token: 120 perintah/menit, 40 perubahan/menit) | Tunggu `retry_after_seconds` |
 | `in_progress` | Panggilan dengan `client_ref` sama masih diproses | Tunggu sebentar, ulangi dengan `client_ref` yang sama |
 | `not_connected` / `key_problem` / `invalid_key` | Rumah pintar belum/tidak tersambung | Ikuti langkah kunci `sk-` |
 

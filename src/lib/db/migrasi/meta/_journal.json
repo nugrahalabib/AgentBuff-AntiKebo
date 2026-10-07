@@ -71,6 +71,13 @@
       "when": 1791397791090,
       "tag": "0009_idempotensi_mcp",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791401280543,
+      "tag": "0010_beku",
+      "breakpoints": true
     }
   ]
 }

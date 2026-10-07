@@ -1,4 +1,5 @@
 import { and, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
+import { alarmDitahan } from "@/lib/agentbuff/aturan-beku";
 import { isiDariBaris } from "@/lib/alarm/baris";
 import { barisDari, schema, type Tx } from "@/lib/db";
 import { materialisasi } from "@/lib/layanan/alarm";
@@ -129,7 +130,7 @@ async function batalkanLangkah(tx: Tx, kejadianId: string, sekarang: Date, hanya
 
 // ------------------------------------------------------------------ transisi
 
-export type HasilKlaim = { kejadian: BarisKejadian; hasil: "berbunyi" | "terlewat" };
+export type HasilKlaim = { kejadian: BarisKejadian; hasil: "berbunyi" | "terlewat" | "ditahan" };
 
 /**
  * Klaim kejadian `menunggu` yang jadwalnya tiba (FOR UPDATE SKIP LOCKED: dua worker tidak pernah
@@ -153,8 +154,17 @@ export async function klaimJatuhTempo(tx: Tx, sekarang: Date, batas = 20): Promi
     const terlambatMs = Math.max(0, sekarang.getTime() - k.jadwalUtc.getTime());
     const isi: IsiKejadian | null = (k.isi as IsiKejadian | null) ?? (a ? { ...isiDariBaris(a), zona: a.zona } : null);
 
+    // Hak AgentBuff berakhir lebih dari masa tenggang (K-07): tidak dibunyikan, tidak masuk Riwayat.
+    const [hak] = await tx
+      .select({ aktif: schema.statusHak.aktif, bekuSejak: schema.statusHak.bekuSejak })
+      .from(schema.statusHak)
+      .where(eq(schema.statusHak.penggunaId, k.penggunaId));
+
     let baru: BarisKejadian;
-    if (terlambatMs > BATAS_TERLAMBAT_MS) {
+    if (!k.uji && alarmDitahan(hak, k.jadwalUtc)) {
+      [baru] = await tx.update(schema.kejadianAlarm).set({ status: "dibatalkan", isi, diubah: sekarang }).where(eq(schema.kejadianAlarm.id, id)).returning();
+      hasil.push({ kejadian: baru, hasil: "ditahan" });
+    } else if (terlambatMs > BATAS_TERLAMBAT_MS) {
       [baru] = await tx.update(schema.kejadianAlarm).set({ status: "terlewat", isi, diubah: sekarang }).where(eq(schema.kejadianAlarm.id, id)).returning();
       for (const s of saluran) if (s.rencanaTerlewat) await tulisRencana(tx, baru, s, s.rencanaTerlewat(isi, sekarang, baru), sekarang);
       hasil.push({ kejadian: baru, hasil: "terlewat" });

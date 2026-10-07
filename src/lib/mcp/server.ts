@@ -18,6 +18,7 @@ import { db, denganPengguna, schema } from "@/lib/db";
 import { env } from "@/lib/env";
 import { bahasaSah, isi } from "@/lib/i18n";
 import { kamusUntuk } from "@/lib/i18n/kamus-server";
+import { PembatasLaju } from "@/lib/keamanan/laju";
 import { GalatLayanan } from "@/lib/layanan/dasar";
 import { log } from "@/lib/log";
 import { ALAT_BEBAS, cariAlat, SEMUA_ALAT } from "./alat";
@@ -33,21 +34,16 @@ const VERSI = "0.1.0";
 const BATAS_BADAN = 256 * 1024;
 
 const PETUNJUK =
-  "AntiKebo is the user's anti-oversleep alarm: when it rings it does not stop until the user solves a challenge on the alarm screen. Reply to the user in their language with the short result text. Call get_setup_status first when unsure about the account or AgentBuff permissions, and give the user the exact links it returns. You can NEVER stop, snooze, or answer a ringing alarm, and must never claim an alarm was turned off: when asked, send the user the alarm screen link instead. If a tool returns access_frozen, explain politely and give renew_url; the user's alarms and settings stay safe.";
+  "AntiKebo is the user's anti-oversleep alarm: when it rings it does not stop until the user solves a challenge on the alarm screen. Reply to the user in their language with the short result text. Call get_setup_status first when unsure about the account or AgentBuff permissions, and give the user the exact links it returns. You can NEVER stop, snooze, or answer a ringing alarm, and must never claim an alarm was turned off: when asked, send the user the alarm screen link instead. If a tool returns access_frozen, explain politely and give renew_url: data stays safe, and alarms already set keep ringing for 3 days after access ended, then stop until renewed.";
 
 // ------------------------------------------------------------ batas laju
 
-const jendela = new Map<string, { mulai: number; n: number }>();
+// Per PENGGUNA, bukan per token: membuat banyak token manual tidak melipatgandakan batas.
+const laju = new PembatasLaju(20_000);
+/** Detik sampai boleh lagi (0 = lolos). */
 function tungguLaju(kunci: string, batas: number): number {
-  const kini = Date.now();
-  const w = jendela.get(kunci);
-  if (!w || kini - w.mulai > 60_000) {
-    jendela.set(kunci, { mulai: kini, n: 1 });
-    if (jendela.size > 20_000) jendela.clear();
-    return 0;
-  }
-  w.n += 1;
-  return w.n > batas ? Math.ceil((w.mulai + 60_000 - kini) / 1000) : 0;
+  const ms = laju.tunggu(kunci, batas);
+  return ms ? Math.ceil(ms / 1000) : 0;
 }
 
 // ------------------------------------------------------------ konteks & hasil
@@ -91,6 +87,9 @@ const ALASAN_INGGRIS: Record<string, string> = {
   lemahkan: "weaker",
   jam_tidur: "bedtime",
   hapus_data: "delete_data",
+  putus_perangkat: "disconnect_device",
+  putus_rumah: "disconnect_home",
+  darurat_mati: "emergency_off",
 };
 function tambahanInggris(t: Record<string, unknown> | undefined): Record<string, unknown> {
   return Object.fromEntries(Object.entries(t ?? {}).map(([k, v]) => [KUNCI_INGGRIS[k] ?? k, k === "alasan" && typeof v === "string" ? (ALASAN_INGGRIS[v] ?? v) : v]));
@@ -103,7 +102,7 @@ function hasilGalat(kode: string, pesan: string, tambahan: Record<string, unknow
 async function jalankanAlat(kt: KonteksAlat, nama: string, argumen: unknown): Promise<CallToolResult> {
   const a = cariAlat(nama);
   if (!a) throw new ProtocolError(-32602, `Unknown tool: ${nama}`);
-  const tunggu = tungguLaju(`t:${kt.token.id}`, 120) || (a.kelas === "tulis" ? tungguLaju(`w:${kt.token.id}`, 40) : 0);
+  const tunggu = tungguLaju(`t:${kt.penggunaId}`, 120) || (a.kelas === "tulis" ? tungguLaju(`w:${kt.penggunaId}`, 40) : 0);
   if (tunggu) return hasilGalat("rate_limited", isi(kt.t.mcp.terlaluBanyak, { n: tunggu }), { retry_after_seconds: tunggu });
 
   if (!ALAT_BEBAS.has(nama)) {
@@ -223,6 +222,13 @@ export async function layaniMcp(req: Request): Promise<Response> {
       })
     : null;
   if (!kt) return tolak401();
+  // Semua permintaan (initialize, tools/list, panggilan) ikut dibatasi, bukan hanya tools/call.
+  const tunggu = tungguLaju(`r:${kt.penggunaId}`, 300);
+  if (tunggu) {
+    const r = galatRpc(429, -32000, "Too many requests");
+    r.headers.set("Retry-After", String(tunggu));
+    return r;
+  }
 
   if (req.method !== "POST") return galatRpc(405, -32000, "Method not allowed");
   if (!isJsonContentType(req.headers.get("content-type"))) return galatRpc(415, -32600, "Content-Type wajib application/json");

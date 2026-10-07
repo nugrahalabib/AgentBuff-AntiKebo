@@ -5,6 +5,7 @@ import { log } from "@/lib/log";
 import { lengkapiMaterialisasi, pasangSaluran } from "@/lib/penjadwal/mesin";
 import { Penjadwal } from "@/lib/penjadwal/penjadwal";
 import { saluranAsli } from "@/lib/penjadwal/saluran-asli";
+import { sapuHak } from "@/lib/layanan/beku";
 import { prosesPengingatMalam } from "@/lib/layanan/pengingat";
 import { bersihkanSuara } from "@/lib/layanan/suara";
 import { prosesAntreanSuara } from "@/lib/suara/antrean";
@@ -95,6 +96,11 @@ putaran("suara", 3_000, async () => {
 putaran("pengingat", 60_000, async () => {
   const h = await prosesPengingatMalam(db);
   return h.dikirim ? `${h.dikirim} pengingat terkirim` : undefined;
+});
+// Hak AgentBuff pemilik yang punya alarm dalam 48 jam + kabar sekali saat akses berakhir (K-07).
+putaran("hak", 5 * 60_000, async () => {
+  const h = await sapuHak(db);
+  return h.diperiksa || h.dikabari ? `${h.diperiksa} diperiksa, ${h.dikabari} dikabari beku` : undefined;
 });
 // Jaring pengaman invarian "alarm aktif = satu kejadian menunggu".
 putaran("materialisasi", 10 * 60_000, async () => `${await db().transaction((tx) => lengkapiMaterialisasi(tx, new Date()))} dipulihkan`);
