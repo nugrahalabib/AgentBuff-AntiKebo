@@ -9,13 +9,14 @@ import { kalimatAlarm } from "@/lib/layanan/suara";
 import { benihDari, notifBunyi, notifCek, notifSelesai, notifTerlewat, pesanCek, pesanPenutup, pesanSpam, pesanTerlewat, pilihKe } from "@/lib/pesan";
 import { kirimPush, type KirimPermintaan } from "@/lib/push";
 import { saluranBatas, saluranCekBatas } from "./mesin";
-import { saluranTuyaTiruan, type BarisKejadian, type HasilLangkah, type IsiKejadian, type Saluran } from "./saluran";
+import { type BarisKejadian, type HasilLangkah, type IsiKejadian, type Saluran } from "./saluran";
+import { saluranTuya } from "./saluran-tuya";
 
 /**
  * Saluran asli worker (P6, arsitektur §4.4 dan §7): spam kanal per kanal dengan jeda platform dan
  * batas waktu, notifikasi web berulang 30 dtk, "Masih bangun?" (notifikasi + satu pesan kanal),
  * kabar terlewat, pesan penutup sesudah bangun, dan notifikasi diganti "sudah mati". Semua pesan
- * tercatat di `kiriman_kanal` (tanpa isi). Tuya masih tiruan sampai P7.
+ * tercatat di `kiriman_kanal` (tanpa isi). Rumah pintar: `saluran-tuya.ts` (P7).
  */
 
 export type DepSaluran = {
@@ -26,6 +27,8 @@ export type DepSaluran = {
   kirimPermintaanPush?: KirimPermintaan;
   /** Asal aplikasi untuk tautan di pesan (bawaan APP_ORIGIN). */
   asal?: string;
+  /** Jeda menunggu laporan perangkat Tuya (uji: dipercepat). */
+  jedaKonfirmasiTuya?: readonly number[];
 };
 
 export const NOTIFIKASI_ULANG_MS = 30_000; // PRD G5
@@ -262,5 +265,15 @@ export function saluranAsli(dep: DepSaluran): Saluran[] {
     },
   };
 
-  return [notifikasi, spam, saluranTuyaTiruan, kabarTerlewat, cekTampil, penutup, notifikasiSelesai, saluranBatas, saluranCekBatas];
+  return [
+    notifikasi,
+    spam,
+    ...saluranTuya({ db: dep.db, jedaKonfirmasi: dep.jedaKonfirmasiTuya }),
+    kabarTerlewat,
+    cekTampil,
+    penutup,
+    notifikasiSelesai,
+    saluranBatas,
+    saluranCekBatas,
+  ];
 }

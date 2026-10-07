@@ -66,6 +66,15 @@ const KODE_INGGRIS: Record<string, string> = {
   batas_laju: "rate_limited",
   perlu_izin: "permission_needed",
   perlu_perangkat: "device_required",
+  komitmen_terkunci: "commitment_locked",
+  sedang_berbunyi: "alarm_ringing",
+  kanal_gagal: "channel_failed",
+  belum_tersambung: "not_connected",
+  kunci_bermasalah: "key_problem",
+  kunci_tidak_sah: "invalid_key",
+  offline: "device_offline",
+  tidak_didukung: "not_supported",
+  tuya_gangguan: "tuya_unavailable",
 };
 
 function hasilGalat(kode: string, pesan: string, tambahan: Record<string, unknown> = {}): CallToolResult {

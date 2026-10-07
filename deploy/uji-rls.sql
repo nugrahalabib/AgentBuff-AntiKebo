@@ -36,6 +36,12 @@ INSERT INTO kiriman_kanal (pengguna_id, kejadian_id, kanal_id, jenis, status, ku
   ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000d4', 'k_uji', 'spam', 'terkirim', 'uji:rls:1');
 INSERT INTO langganan_push (pengguna_id, endpoint_hash, data) VALUES
   ('00000000-0000-4000-8000-0000000000a1', repeat('6', 64), 'AK1uji');
+INSERT INTO sambungan_tuya (pengguna_id, kunci_sandi, kunci_samar, wilayah) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', 'AK1uji', 'sk-SG••••uji1', 'SG');
+INSERT INTO perangkat_tuya (pengguna_id, device_id, nama, kategori) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', 'lampu-uji', 'Lampu A', 'dj');
+INSERT INTO potret_tuya (pengguna_id, kejadian_id, device_id, properti) VALUES
+  ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-0000000000d4', 'lampu-uji', '{"switch_led":false}');
 
 DO $$
 DECLARE n int;
@@ -57,6 +63,8 @@ BEGIN
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: naskah atau klip suara terbaca tanpa konteks'; END IF;
   SELECT (SELECT count(*) FROM kiriman_kanal) + (SELECT count(*) FROM langganan_push) INTO n;
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: kiriman kanal atau langganan push terbaca tanpa konteks'; END IF;
+  SELECT (SELECT count(*) FROM sambungan_tuya) + (SELECT count(*) FROM perangkat_tuya) + (SELECT count(*) FROM potret_tuya) INTO n;
+  IF n <> 0 THEN RAISE EXCEPTION 'RLS: data rumah pintar terbaca tanpa konteks'; END IF;
 
   -- Konteks B: tidak melihat, mengubah, atau menghapus milik A.
   PERFORM set_config('app.pengguna_id', '00000000-0000-4000-8000-0000000000b2', true);
@@ -97,6 +105,17 @@ BEGIN
     RAISE EXCEPTION 'RLS: B menambah langganan push atas nama A';
   EXCEPTION WHEN insufficient_privilege THEN NULL;
   END;
+  SELECT (SELECT count(*) FROM sambungan_tuya) + (SELECT count(*) FROM perangkat_tuya) + (SELECT count(*) FROM potret_tuya) INTO n;
+  IF n <> 0 THEN RAISE EXCEPTION 'RLS: B melihat data rumah pintar A'; END IF;
+  UPDATE sambungan_tuya SET status = 'aktif';
+  GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B mengubah sambungan Tuya A'; END IF;
+  DELETE FROM perangkat_tuya;
+  GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B menghapus perangkat Tuya A'; END IF;
+  BEGIN
+    INSERT INTO sambungan_tuya (pengguna_id, kunci_sandi, kunci_samar, wilayah) VALUES ('00000000-0000-4000-8000-0000000000a1', 'palsu', 'palsu', 'SG');
+    RAISE EXCEPTION 'RLS: B menulis sambungan Tuya atas nama A';
+  EXCEPTION WHEN insufficient_privilege THEN NULL;
+  END;
   UPDATE soal_kejadian SET status = 'benar';
   GET DIAGNOSTICS n = ROW_COUNT;          IF n <> 0 THEN RAISE EXCEPTION 'RLS: B menandai soal A benar'; END IF;
   UPDATE alarm SET aktif = false;
@@ -125,6 +144,8 @@ BEGIN
   IF n <> 2 THEN RAISE EXCEPTION 'RLS: A tidak melihat naskah dan klip suaranya'; END IF;
   SELECT (SELECT count(*) FROM kiriman_kanal) + (SELECT count(*) FROM langganan_push) INTO n;
   IF n <> 2 THEN RAISE EXCEPTION 'RLS: A tidak melihat kiriman dan langganan push-nya'; END IF;
+  SELECT (SELECT count(*) FROM sambungan_tuya) + (SELECT count(*) FROM perangkat_tuya) + (SELECT count(*) FROM potret_tuya) INTO n;
+  IF n <> 3 THEN RAISE EXCEPTION 'RLS: A tidak melihat data rumah pintarnya'; END IF;
 
   -- Hash token: tepat satu baris terlihat tanpa konteks pemilik; hash lain nol.
   PERFORM set_config('app.pengguna_id', '', true);
@@ -148,6 +169,8 @@ BEGIN
   IF n < 1 THEN RAISE EXCEPTION 'RLS: worker tidak melihat antrean suara'; END IF;
   SELECT count(*) INTO n FROM langganan_push;
   IF n < 1 THEN RAISE EXCEPTION 'RLS: worker tidak melihat langganan push'; END IF;
+  SELECT count(*) INTO n FROM sambungan_tuya;
+  IF n < 1 THEN RAISE EXCEPTION 'RLS: worker tidak melihat sambungan Tuya'; END IF;
   RESET ROLE;
 
   -- Tidak ada peran aplikasi yang superuser atau BYPASSRLS.
@@ -162,7 +185,7 @@ BEGIN
       AND NOT (c.relrowsecurity AND c.relforcerowsecurity);
   IF n <> 0 THEN RAISE EXCEPTION 'RLS: ada tabel milik pemilik tanpa ENABLE+FORCE'; END IF;
 
-  RAISE NOTICE 'uji RLS: 44/44 lulus';
+  RAISE NOTICE 'uji RLS: 51/51 lulus';
 END $$;
 
 ROLLBACK;

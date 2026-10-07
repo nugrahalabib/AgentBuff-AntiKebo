@@ -10,6 +10,7 @@ import {
   langkahPantas,
   lengkapiMaterialisasi,
   pulihkanLangkahMacet,
+  rencanakanPra,
 } from "./mesin";
 import type { HasilLangkah, IsiKejadian } from "./saluran";
 
@@ -113,6 +114,7 @@ export class Penjadwal {
           total.terlewat += klaim.filter((k) => k.hasil === "terlewat").length;
           for (const k of klaim) log.info({ kejadian: k.kejadian.id, hasil: k.hasil, terlambatDtk: k.kejadian.terlambatDtk }, "kejadian diklaim");
           total.bangunDariTunda += (await this.o.db().transaction((tx) => bangunkanTundaHabis(tx, sekarang))).length;
+          await this.o.db().transaction((tx) => rencanakanPra(tx, sekarang));
           await this.putarLangkah();
         } while (this.ulangi);
       } finally {

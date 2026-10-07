@@ -38,7 +38,7 @@ test("kode QR: dibuat lalu halaman cetaknya menampilkan kode besar dan petunjuk"
   const asal = new URL(page.url()).origin;
   const r = await page.request.post("/api/app/kode-qr", { data: { nama: "kamar mandi" }, headers: { Origin: asal } });
   expect(r.status()).toBe(201);
-  const { cetak } = (await r.json()) as { cetak: string };
+  const { cetak, kodeQr } = (await r.json()) as { cetak: string; kodeQr: { id: string } };
   await page.goto(cetak);
   await expect(page.getByRole("heading", { name: "Kode bangun: kamar mandi" })).toBeVisible();
   await expect(page.getByRole("img", { name: "Kode bangun: kamar mandi" }).locator("svg")).toBeVisible();
@@ -49,6 +49,8 @@ test("kode QR: dibuat lalu halaman cetaknya menampilkan kode besar dan petunjuk"
   await page.emulateMedia({ media: "print" });
   await expect(page.getByRole("button", { name: "Cetak" })).toBeHidden();
   await page.emulateMedia({ media: "screen" });
+  // Hapus lagi: batas 10 kode per pengguna tidak boleh habis oleh uji yang diulang di DB lokal.
+  expect((await page.request.delete(`/api/app/kode-qr/${kodeQr.id}`, { headers: { Origin: asal } })).status()).toBe(200);
   expect(galat).toEqual([]);
 });
 

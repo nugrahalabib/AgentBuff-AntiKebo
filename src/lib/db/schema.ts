@@ -8,7 +8,7 @@ import type { Pengulangan } from "@/lib/jadwal/pengulangan";
 // di migrasi (dijaga scripts/jaga.mjs). Hanya skema di sini; SQL-nya di src/lib/db/migrasi.
 // P0 = tabel dasar; P2 = alarm, lewati, template, kejadian, langkah, preferensi; P3 = perangkat
 // siaga, kode sambung; P4 = soal kejadian, kode QR; P5 = naskah dan klip suara; P6 = kiriman
-// kanal, langganan push. Tuya menyusul (P7). Impor dari src/lib hanya `import type` (drizzle-kit
+// kanal, langganan push; P7 = sambungan, perangkat, dan potret Tuya. Impor dari src/lib hanya `import type` (drizzle-kit
 // memuat berkas ini tanpa alias jalur).
 
 const citext = customType<{ data: string }>({ dataType: () => "citext" });
@@ -508,4 +508,73 @@ export const langgananPush = pgTable(
     dibuat: dibuat(),
   },
   (t) => [uniqueIndex("langganan_push_unik").on(t.penggunaId, t.endpointHash)],
+);
+
+// ------------------------------------------------------------ rumah pintar Tuya (P7)
+
+/**
+ * Satu sambungan Tuya per pemilik (pola template). Kunci `sk-...` tersandi amplop (AAD terikat
+ * pengguna), tidak pernah dikirim ke peramban. `darurat` = lapisan darurat tersembunyi (PRD I6):
+ * telepon/SMS Tuya ke nomor akun sendiri bila belum bangun sesudah X menit. Mati bawaannya.
+ */
+export const sambunganTuya = pgTable("sambungan_tuya", {
+  penggunaId: uuid("pengguna_id")
+    .primaryKey()
+    .references(() => pengguna.id),
+  kunciSandi: text("kunci_sandi").notNull(),
+  kunciSamar: text("kunci_samar").notNull(),
+  wilayah: char("wilayah", { length: 2 }).notNull(),
+  status: text("status").notNull().default("aktif"), // aktif | kunci_bermasalah
+  statusPesan: text("status_pesan"),
+  rumahUtamaId: text("rumah_utama_id"),
+  struktur: jsonb("struktur"),
+  strukturDiperbarui: waktu("struktur_diperbarui"),
+  darurat: jsonb("darurat").$type<{ aktif: boolean; menit: number; cara: "telepon" | "sms" }>().notNull().default({ aktif: false, menit: 15, cara: "telepon" }),
+  tersambungPada: waktu("tersambung_pada").notNull().defaultNow(),
+  diperiksaPada: waktu("diperiksa_pada"),
+  diubah: waktu("diubah").notNull().defaultNow(),
+});
+
+/** Cermin perangkat Tuya pemilik + keadaan terakhir (pola template `perangkat`). */
+export const perangkatTuya = pgTable(
+  "perangkat_tuya",
+  {
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    deviceId: text("device_id").notNull(),
+    homeId: text("home_id"),
+    roomId: text("room_id"),
+    nama: text("nama").notNull(),
+    kategori: text("kategori").notNull(),
+    kategoriNama: text("kategori_nama"),
+    produkNama: text("produk_nama"),
+    online: boolean("online").notNull().default(false),
+    properti: jsonb("properti").$type<Record<string, unknown>>(),
+    propertiDiperbarui: waktu("properti_diperbarui"),
+    model: jsonb("model"),
+    modelDiperbarui: waktu("model_diperbarui"),
+    hilangPada: waktu("hilang_pada"),
+    diubah: waktu("diubah").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("perangkat_tuya_unik").on(t.penggunaId, t.deviceId)],
+);
+
+/** Keadaan perangkat sebelum aksi alarm pertama per kejadian, untuk "kembalikan" sesudah bangun (PRD I3). */
+export const potretTuya = pgTable(
+  "potret_tuya",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    kejadianId: uuid("kejadian_id")
+      .notNull()
+      .references(() => kejadianAlarm.id, { onDelete: "cascade" }),
+    deviceId: text("device_id").notNull(),
+    properti: jsonb("properti").$type<Record<string, unknown>>().notNull(),
+    dipulihkan: waktu("dipulihkan"),
+    dibuat: dibuat(),
+  },
+  (t) => [uniqueIndex("potret_tuya_unik").on(t.kejadianId, t.deviceId)],
 );

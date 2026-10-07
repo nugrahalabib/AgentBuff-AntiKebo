@@ -231,6 +231,7 @@ export async function lolosKejadian(tx: Tx, kejadianId: string, sekarang: Date, 
   await batalkanLangkah(tx, k.id, sekarang);
   await tulisRencana(tx, b, saluranCekTampilTiruan, [{ jatuhTempo: cekPada }], sekarang);
   await tulisRencana(tx, b, saluranCekBatas, [{ jatuhTempo: cekBatas }], sekarang);
+  for (const s of saluran) if (s.rencanaCek) await tulisRencana(tx, b, s, s.rencanaCek(isi, sekarang, b), sekarang);
   return b;
 }
 
@@ -276,7 +277,7 @@ export async function tundaKejadian(tx: Tx, kejadianId: string, sampai: Date, se
     .set({ status: "ditunda", tundaSampai: sampai, jumlahTunda: sql`${schema.kejadianAlarm.jumlahTunda} + 1`, diubah: sekarang })
     .where(and(eq(schema.kejadianAlarm.id, kejadianId), eq(schema.kejadianAlarm.status, "berbunyi"), eq(schema.kejadianAlarm.tanpaTunda, false)))
     .returning();
-  if (k)
+  if (k) {
     await batalkanLangkah(
       tx,
       kejadianId,
@@ -285,6 +286,9 @@ export async function tundaKejadian(tx: Tx, kejadianId: string, sampai: Date, se
         .filter((s) => s.saatTunda === "berhenti")
         .map((s) => s.jenis),
     );
+    const isi = k.isi as IsiKejadian | null;
+    for (const s of saluran) if (s.rencanaTunda) await tulisRencana(tx, k, s, s.rencanaTunda(isi, sekarang, k), sekarang);
+  }
   return k ?? null;
 }
 
@@ -303,6 +307,48 @@ export async function bangunkanTundaHabis(tx: Tx, sekarang: Date, batas = 20): P
     hasil.push(k);
   }
   return hasil;
+}
+
+/** Jendela perencanaan langkah pra (aturan "sebelum X menit", X paling lama 60). */
+export const JENDELA_PRA_MS = 61 * 60_000;
+
+/**
+ * Rencanakan langkah sebelum berbunyi (rumah pintar naik bertahap) untuk kejadian menunggu yang
+ * jadwalnya tinggal ≤ 61 menit. Sekali per jadwal: bila jam alarm diubah, direncanakan ulang
+ * untuk jadwal baru (langkah lama melewati dirinya sendiri karena jadwalnya tidak cocok lagi).
+ */
+export async function rencanakanPra(tx: Tx, sekarang: Date): Promise<number> {
+  const daftar = saluran.filter((s) => s.rencanaPra);
+  if (!daftar.length) return 0;
+  const jenis = daftar.map((s) => s.jenis);
+  const ids = barisDari<{ id: string }>(
+    await tx.execute(sql`
+      select k.id from kejadian_alarm k join alarm a on a.id = k.alarm_id
+      where k.status = 'menunggu' and k.jadwal_utc > ${sekarang.toISOString()}
+        and k.jadwal_utc <= ${new Date(sekarang.getTime() + JENDELA_PRA_MS).toISOString()}
+        and a.tuya @> '[{"kapan":"sebelum"}]'::jsonb
+        and not exists (
+          select 1 from langkah_kejadian l
+          where l.kejadian_id = k.id and l.jenis in (${sql.join(
+            jenis.map((x) => sql`${x}`),
+            sql`, `,
+          )})
+            and (l.parameter->>'jadwal')::timestamptz = k.jadwal_utc)
+      for update of k skip locked`),
+  );
+  let n = 0;
+  for (const { id } of ids) {
+    const [k] = await tx.select().from(schema.kejadianAlarm).where(eq(schema.kejadianAlarm.id, id));
+    const [a] = k.alarmId ? await tx.select().from(schema.alarm).where(eq(schema.alarm.id, k.alarmId)) : [];
+    if (!a) continue;
+    const isi: IsiKejadian = { ...isiDariBaris(a), zona: a.zona };
+    for (const s of daftar) {
+      const r = s.rencanaPra!(isi, k, sekarang);
+      await tulisRencana(tx, k, s, r, sekarang);
+      n += r.length;
+    }
+  }
+  return n;
 }
 
 // ------------------------------------------------------------------ langkah
@@ -346,6 +392,10 @@ export function langkahPantas(jenis: string, statusKejadian: string): boolean {
   switch (s.fase ?? "berbunyi") {
     case "terlewat":
       return statusKejadian === "terlewat";
+    case "pra":
+      return statusKejadian === "menunggu" || statusKejadian === "berbunyi" || statusKejadian === "ditunda";
+    case "tunda":
+      return statusKejadian === "ditunda";
     case "cek":
       return statusKejadian === "cek_bangun";
     case "selesai":

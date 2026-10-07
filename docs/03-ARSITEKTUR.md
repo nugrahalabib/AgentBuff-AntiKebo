@@ -40,7 +40,7 @@ Nama tabel/kolom bahasa Indonesia, `snake_case`, waktu `timestamptz` (UTC). Semu
 | `kode_qr` | nama tempat, hash isi kode (isi acak 128 bit), dibuat |
 | `naskah_suara` | sumber (karakter/pribadi/agenda), teks, hash (teks + suara + gaya), status |
 | `klip_suara` | `audio` (bytea), mime, durasi, penyedia, hash, dipakai terakhir |
-| `sambungan_tuya`, `perangkat_tuya` | Salin dari template |
+| `sambungan_tuya`, `perangkat_tuya` | Disalin dari template dan dipangkas: kunci `sk-` tersandi + samaran, wilayah, status (`aktif`/`kunci_bermasalah`), struktur rumah/ruangan, lapisan darurat (JSON); cermin perangkat (model, properti, online) |
 | `potret_tuya` | keadaan perangkat sebelum alarm per kejadian (untuk dikembalikan) |
 | `detak_worker` | detak worker |
 
@@ -117,10 +117,23 @@ kejadian ini (dicatat, ditampilkan). Teks dari `src/lib/pesan/` (kumpulan kalima
 
 ## 8. Tuya
 
-Salin `src/lib/tuya/*` dan layanan sambungan/rumah/suasana dari template. Penjadwal Tuya template
-(20 dtk) **tidak** dipakai; aksi Tuya adalah langkah kejadian. Sebelum aksi pertama sebuah
-kejadian, keadaan perangkat yang terlibat dipotret ke `potret_tuya` (pola `potretKeadaan`) supaya
-bisa dikembalikan. Efek kedip = langkah berulang tiap 3 dtk dengan batas laju Tuya.
+`src/lib/tuya/*` disalin dari template (klien dipangkas ke yang dipakai alarm), layanan di
+`src/lib/layanan/tuya.ts`. Penjadwal Tuya template (20 dtk) **tidak** dipakai; aksi Tuya adalah
+langkah kejadian di `src/lib/penjadwal/saluran-tuya.ts`:
+
+- `tuya_pra` (fase `pra`): aturan "sebelum X menit", direncanakan `rencanakanPra` saat jadwal
+  tinggal ≤ 61 menit; lampu naik satu langkah per menit dari 1% sampai terang tujuan.
+- `tuya` (bareng), `tuya_kedip` (100% dan 10% tiap 3 dtk, berhenti saat tunda),
+  `tuya_kedip_tunda` dan `tuya_kedip_cek` (kedip berhenti = terang tetap), `tuya_tunda`.
+- `tuya_selesai` (fase `selesai`): aturan "sesudah" lalu kembalikan (potret, sekali per
+  perangkat), suasana pagi (lampu 100%, putih 60%), atau biarkan. Suasana pagi dan aturan
+  "sesudah" hanya untuk status `bangun`.
+- `tuya_darurat`: telepon/SMS Tuya ke nomor akun sendiri sesudah X menit, tiap 5 menit, maks 15
+  per hari, tidak untuk uji alarm.
+
+Sebelum aksi pertama sebuah kejadian, keadaan perangkat dipotret ke `potret_tuya`. Perintah
+dikonfirmasi lewat laporan perangkat (pola template); offline dilewati dan dicatat di hasil
+langkah; kunci ditolak = sambungan `kunci_bermasalah` (spanduk) dan aksi berhenti.
 
 ## 9. Soal
 
