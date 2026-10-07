@@ -3,6 +3,41 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P8): Pasang alarm sendiri dan matikan dengan soal
+
+**Baru**
+- **Pasang alarm dari Beranda.** Tombol + membuka lembar alarm: putar jam, tulis agenda, pilih hari
+  (atau tanggal tertentu, tiap 2 minggu, tanggal tiap bulan, Senin pertama tiap bulan), karakter
+  omelan (bisa didengar dulu), kalimat omelanmu sendiri, jenis soal, tunda, chat yang dispam, lampu
+  dan AC, Mode Komitmen, Masih bangun, bunyi alarm (bisa didengar 5 detik), dan batas waktu.
+- **Beranda hidup:** alarm berikutnya dengan hitung mundur, alarm lainnya dengan sakelar, geser
+  kartu di HP untuk lewati sekali atau hapus. Ubah, gandakan, lewati, hapus, dan uji alarm ada di
+  lembar alarm. Alarm yang dikunci Mode Komitmen menjelaskan sampai jam berapa.
+- **Uji alarm:** berbunyi 1 menit lagi dengan soal ringan; boleh ikut spam chat dan lampu bila dicentang.
+- **Layar alarm penuh:** judul agenda besar, bunyi dan omelan, soal langsung tampil: hitungan, ingat
+  angka (tampil 3 detik), ketik kalimat, atau pindai kode QR (kamera ditolak? ganti soal hitungan).
+  Jawaban salah = soal baru. Ada tombol tunda selama jatahnya masih ada, dengan soal ringan.
+- Saat ditunda: layar tenang dengan hitung mundur, lalu berbunyi lagi sendiri.
+- **Selamat pagi:** jam bangun, agenda hari ini, skor bangun, jumlah tunda, berapa menit sampai bangun.
+- **Masih bangun?** muncul beberapa menit kemudian dengan tombol besar dan cincin hitung mundur.
+- Dua alarm berbunyi bersamaan: dikerjakan satu per satu ("1 dari 2").
+- Begitu alarm berbunyi, AntiKebo yang sedang terbuka langsung pindah ke layar alarm.
+
+**Keputusan**
+- K-74 sampai K-79 (`KEPUTUSAN.md`). Yang terasa pengguna: skor sementara di Selamat pagi dan hari
+  libur tidak memutus hari beruntun (K-75), dua alarm satu per satu (K-76), alarm baru bawaan 06.00
+  (K-77).
+
+**Masih butuh Chief**
+- K-07 masih menunggu.
+- **Wajib diuji di perangkat asli (L2):** pindai kode QR dengan kamera HP, suara saat HP terkunci.
+
+**Untuk teknisi**
+- Rute web alarm, uji, dan kejadian; halaman `/app/bunyi/[id]`; grup `(utama)`; skor `src/lib/skor.ts`
+  dengan contoh emas; uraian pengulangan `src/lib/tampilan/uraian.ts`; jam bersama tanpa beda hidrasi.
+- Uji ujung ke ujung menyalakan worker sungguhan.
+- Bukti: 598 tes vitest, 81 uji Playwright mode produksi.
+
 ## 2026-10-07 (P7): Lampu dan AC ikut membangunkan
 
 **Baru**

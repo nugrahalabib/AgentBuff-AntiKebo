@@ -52,27 +52,34 @@ export function LayarContoh({ id, cari = {} }: { id: IdLayar; cari?: { berlalu?:
             buka={ubahBuka}
             ubahBuka={setUbahBuka}
             baru
-            kanal={C.KANAL}
-            tuyaTersambung={false}
+            hariIni="2026-10-07"
+            nama={C.NAMA}
+            data={{
+              kanal: { status: "ada", kanal: C.KANAL },
+              rumah: { status: "belum" },
+              kodeQr: { status: "ada", kode: [{ id: "qr1", nama: C.TEMPAT_QR }] },
+              suara: { status: "ada", suara: [] },
+            }}
             suara={{ status: "dibuat", n: 7, total: 12 }}
             simpan={() => setUbahBuka(false)}
             awal={{
-              jam: 5,
-              menit: 0,
-              judul: C.ALARM_BERIKUTNYA.judul,
-              detail: C.ALARM_BERIKUTNYA.detail ?? "",
-              hari: [1, 2, 3, 4, 5],
+              jam: "05:00",
+              pengulangan: { jenis: "hari_kerja" },
+              agendaJudul: C.ALARM_BERIKUTNYA.judul,
+              agendaDetail: C.ALARM_BERIKUTNYA.detail ?? null,
               karakter: "pelatih_tentara",
-              soal: "hitungan",
-              tingkat: "sedang",
-              benarBeruntun: 2,
-              tundaJatah: 2,
-              tundaMenit: 5,
-              kanal: ["k1", "k3"],
-              komitmen: true,
-              masihBangun: true,
-              libur: false,
+              suaraId: null,
               bunyi: "sirene",
+              soal: { jenis: "hitungan", tingkat: "sedang", benar: 2, kodeQr: [] },
+              tunda: { jatah: 2, menit: 5 },
+              spam: { kanal: ["k1", "k3"], jedaDtk: null, batasMenit: null },
+              tuya: [],
+              komitmen: true,
+              masihBangun: { aktif: true, menit: 5, batasDtk: 60 },
+              liburNasional: false,
+              batasMenit: null,
+              kalimatPribadi: [],
+              aktif: true,
             }}
           />
         </>,

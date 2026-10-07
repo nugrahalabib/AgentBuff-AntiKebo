@@ -21,7 +21,8 @@ export function LayarSelamatPagi({
   nama: string;
   jamBangun: string;
   agenda: { judul: string; detail?: string } | null;
-  skor: number;
+  /** Null = tidak dihitung (uji alarm). */
+  skor: number | null;
   tunda: number;
   menit: number;
   cekMenit: number | null;
@@ -47,9 +48,13 @@ export function LayarSelamatPagi({
 
         <section className="muncul mt-3 grid w-full grid-cols-3 gap-3 [animation-delay:180ms]">
           <div className="flex flex-col items-center rounded-[22px] bg-white/55 p-3 dark:bg-white/8">
-            <Cincin nilai={skor / 100} ukuran={64} tebal={7} warna="#f97316" jalur="rgba(249,115,22,0.2)" label={`${P.skor} ${skor}`}>
-              <span className="t-angka text-[19px] font-bold">{skor}</span>
-            </Cincin>
+            {skor === null ? (
+              <span className="grid size-16 place-items-center text-[15px] font-semibold text-fajar-label-2">{P.uji}</span>
+            ) : (
+              <Cincin nilai={skor / 100} ukuran={64} tebal={7} warna="#f97316" jalur="rgba(249,115,22,0.2)" label={`${P.skor} ${skor}`}>
+                <span className="t-angka text-[19px] font-bold">{skor}</span>
+              </Cincin>
+            )}
             <span className="t-keterangan mt-1.5 text-fajar-label-2">{P.skor}</span>
           </div>
           <div className="flex flex-col items-center justify-center rounded-[22px] bg-white/55 p-3 dark:bg-white/8">

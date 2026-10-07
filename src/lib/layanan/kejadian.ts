@@ -6,9 +6,11 @@ import { denganPengguna, schema } from "@/lib/db";
 import { bagianLokal } from "@/lib/jadwal/zona";
 import { STATUS_AKTIF } from "@/lib/penjadwal/mesin";
 import type { IsiKejadian } from "@/lib/penjadwal/saluran";
+import { skorKejadian, menitSampaiBangun } from "@/lib/skor";
 import { catatAudit } from "./audit";
 import { GalatLayanan, pesanMasukan, type Sumber } from "./dasar";
-import { konteksPengguna } from "./konteks";
+import { jamTampil, konteksPengguna } from "./konteks";
+import { omelanUntuk, type OmelanPerangkat } from "./suara";
 
 /** Kejadian alarm dari sisi pengguna: uji alarm (PRD B9) dan kejadian yang sedang aktif. */
 
@@ -24,6 +26,8 @@ export type KejadianAktif = {
   jam: string;
   jadwalUtc: Date;
   tundaSampai: Date | null;
+  /** Kapan "Masih bangun?" tampil (status cek_bangun). */
+  cekPada: Date | null;
   tunda: { terpakai: number; jatah: number; menit: number };
   uji: boolean;
 };
@@ -120,8 +124,93 @@ export async function kejadianAktif(penggunaId: string): Promise<KejadianAktif[]
       jam: x.jamLokal,
       jadwalUtc: x.jadwalUtc,
       tundaSampai: x.tundaSampai,
+      cekPada: x.cekPada,
       tunda: { terpakai: x.jumlahTunda, jatah: isi?.tunda.jatah ?? 0, menit: isi?.tunda.menit ?? 5 },
       uji: x.uji,
+    };
+  });
+}
+
+/** Data layar alarm satu kejadian (berbunyi, ditunda, Masih bangun, Selamat pagi). Tanpa jawaban soal. */
+export type LayarKejadian = {
+  id: string;
+  status: string;
+  uji: boolean;
+  judul: string;
+  detail: string | null;
+  /** Jam alarm tampil ("05.00" / "05:00"). */
+  jam: string;
+  jadwalUtc: Date;
+  berbunyiPada: Date | null;
+  bangunPada: Date | null;
+  tundaSampai: Date | null;
+  cekPada: Date | null;
+  cekBatas: Date | null;
+  terlambatMenit: number;
+  tunda: { terpakai: number; jatah: number; menit: number; boleh: boolean };
+  masihBangun: { aktif: boolean; menit: number; batasDtk: number };
+  /** Bunyi alarm + omelan (klip = hash siap unduh di `/api/perangkat/klip/<hash>`). */
+  suara: { bunyi: string; omelan: OmelanPerangkat[]; benih: number };
+  nama: string;
+  /** Jam server saat data dibuat (hitung mundur yang sama di server dan peramban). */
+  waktuServer: Date;
+  /** Ringkasan Selamat pagi (sesudah soal terjawab). */
+  pagi: { jamBangun: string; menit: number; tunda: number; skor: number | null } | null;
+};
+
+/** Benih urutan omelan dari id kejadian: semua perangkat memutar urutan yang sama. */
+function benihDari(id: string): number {
+  let h = 2166136261;
+  for (const c of id) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  return h;
+}
+
+export async function layarKejadian(penggunaId: string, kejadianId: string): Promise<LayarKejadian> {
+  return denganPengguna(penggunaId, async (tx) => {
+    const k = await konteksPengguna(tx, penggunaId);
+    const [x] = z.uuid().safeParse(kejadianId).success
+      ? await tx
+          .select()
+          .from(schema.kejadianAlarm)
+          .where(and(eq(schema.kejadianAlarm.penggunaId, penggunaId), eq(schema.kejadianAlarm.id, kejadianId)))
+      : [];
+    if (!x) throw new GalatLayanan("tidak_ditemukan", k.t.galat.alarmTidakAda);
+    const isi = x.isi as IsiKejadian | null;
+    const zona = isi?.zona ?? k.zona;
+    const omelan = isi ? await omelanUntuk(tx, k, isi) : [];
+    const lolos = !!x.bangunPada && (x.status === "bangun" || x.status === "cek_bangun");
+    return {
+      id: x.id,
+      status: x.status,
+      uji: x.uji,
+      judul: x.judul,
+      detail: isi?.agendaDetail ?? null,
+      jam: jamTampil(x.jadwalUtc, zona, k.bahasa),
+      jadwalUtc: x.jadwalUtc,
+      berbunyiPada: x.berbunyiPada,
+      bangunPada: x.bangunPada,
+      tundaSampai: x.tundaSampai,
+      cekPada: x.cekPada,
+      cekBatas: x.cekBatas,
+      terlambatMenit: Math.floor((x.terlambatDtk ?? 0) / 60),
+      tunda: {
+        terpakai: x.jumlahTunda,
+        jatah: isi?.tunda.jatah ?? 0,
+        menit: isi?.tunda.menit ?? 5,
+        boleh: x.status === "berbunyi" && !x.tanpaTunda && x.jumlahTunda < (isi?.tunda.jatah ?? 0),
+      },
+      masihBangun: isi?.masihBangun ?? { aktif: false, menit: 5, batasDtk: 60 },
+      suara: { bunyi: isi?.bunyi ?? "klasik", omelan, benih: benihDari(x.id) },
+      nama: k.namaSapaan,
+      waktuServer: new Date(),
+      pagi: lolos
+        ? {
+            jamBangun: jamTampil(x.bangunPada!, zona, k.bahasa),
+            menit: menitSampaiBangun(x),
+            tunda: x.jumlahTunda,
+            skor: skorKejadian({ status: x.status, uji: x.uji, berbunyiPada: x.berbunyiPada, bangunPada: x.bangunPada, jumlahTunda: x.jumlahTunda, gagalCek: x.tanpaTunda }),
+          }
+        : null,
     };
   });
 }

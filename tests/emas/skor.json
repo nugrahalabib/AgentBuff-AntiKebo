@@ -1,0 +1,31 @@
+{
+  "keterangan": "Contoh emas skor bangun (docs/03-ARSITEKTUR.md §10), dihitung tangan. Waktu dalam detik sesudah berbunyi; null = tidak ada.",
+  "kejadian": [
+    { "nama": "bangun dalam 1 menit, tanpa tunda", "status": "bangun", "uji": false, "bangunDtk": 60, "tunda": 0, "gagalCek": false, "skor": 100 },
+    { "nama": "tepat 2 menit belum dipotong", "status": "bangun", "uji": false, "bangunDtk": 179, "tunda": 0, "gagalCek": false, "skor": 100 },
+    { "nama": "3 menit penuh dipotong 1", "status": "bangun", "uji": false, "bangunDtk": 180, "tunda": 0, "gagalCek": false, "skor": 99 },
+    { "nama": "7 menit, tunda 1", "status": "bangun", "uji": false, "bangunDtk": 420, "tunda": 1, "gagalCek": false, "skor": 85 },
+    { "nama": "potongan menit maks 40", "status": "bangun", "uji": false, "bangunDtk": 5400, "tunda": 0, "gagalCek": false, "skor": 60 },
+    { "nama": "tunda 2 + gagal Masih bangun", "status": "bangun", "uji": false, "bangunDtk": 600, "tunda": 2, "gagalCek": true, "skor": 42 },
+    { "nama": "minimal 0", "status": "bangun", "uji": false, "bangunDtk": 7200, "tunda": 5, "gagalCek": true, "skor": 0 },
+    { "nama": "masih menunggu Masih bangun: skor sementara", "status": "cek_bangun", "uji": false, "bangunDtk": 240, "tunda": 0, "gagalCek": false, "skor": 98 },
+    { "nama": "tidak bangun = 0", "status": "tidak_bangun", "uji": false, "bangunDtk": null, "tunda": 3, "gagalCek": false, "skor": 0 },
+    { "nama": "terlewat karena server tidak dihitung", "status": "terlewat", "uji": false, "bangunDtk": null, "tunda": 0, "gagalCek": false, "skor": null },
+    { "nama": "dibatalkan tidak dihitung", "status": "dibatalkan", "uji": false, "bangunDtk": null, "tunda": 0, "gagalCek": false, "skor": null },
+    { "nama": "uji alarm tidak dihitung", "status": "bangun", "uji": true, "bangunDtk": 30, "tunda": 0, "gagalCek": false, "skor": null },
+    { "nama": "masih berbunyi belum dihitung", "status": "berbunyi", "uji": false, "bangunDtk": null, "tunda": 0, "gagalCek": false, "skor": null }
+  ],
+  "harian": [
+    { "nama": "rata-rata dibulatkan", "skor": [100, 85, 60], "hasil": 82 },
+    { "nama": "yang tidak dihitung diabaikan", "skor": [90, null], "hasil": 90 },
+    { "nama": "tidak ada yang dihitung", "skor": [null], "hasil": null },
+    { "nama": "pembulatan setengah ke atas", "skor": [99, 100], "hasil": 100 }
+  ],
+  "beruntun": [
+    { "nama": "tiga hari bagus", "hari": { "2026-10-05": [90], "2026-10-06": [70], "2026-10-07": [100] }, "hasil": 3 },
+    { "nama": "hari buruk memutus", "hari": { "2026-10-04": [100], "2026-10-05": [69], "2026-10-06": [80], "2026-10-07": [95] }, "hasil": 2 },
+    { "nama": "hari tanpa kejadian terhitung tidak memutus", "hari": { "2026-10-03": [100], "2026-10-04": [null], "2026-10-06": [80] }, "hasil": 2 },
+    { "nama": "satu kejadian buruk di hari yang sama memutus", "hari": { "2026-10-06": [100], "2026-10-07": [100, 40] }, "hasil": 0 },
+    { "nama": "kosong", "hari": {}, "hasil": 0 }
+  ]
+}

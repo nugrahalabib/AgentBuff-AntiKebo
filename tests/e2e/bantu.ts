@@ -1,4 +1,8 @@
+import { spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import { expect, test, type Page } from "@playwright/test";
+import postgres from "postgres";
 
 export const TIRUAN = "http://127.0.0.1:3199";
 export const NUGI = "ab_tiruan_nugi";
@@ -50,4 +54,66 @@ export function pantauGalat(page: Page): string[] {
     if (m.type() === "error") galat.push(`console: ${m.text()}`);
   });
   return galat;
+}
+
+/** URL DB peran worker (`.env.local`) untuk menyiapkan atau memajukan keadaan dalam uji. */
+export function urlWorker(): string {
+  if (process.env.DATABASE_URL_WORKER) return process.env.DATABASE_URL_WORKER;
+  const f = path.resolve(process.cwd(), ".env.local");
+  const baris = existsSync(f) ? readFileSync(f, "utf8").split("\n") : [];
+  const b = baris.find((x) => x.startsWith("DATABASE_URL_WORKER="));
+  if (!b) throw new Error("DATABASE_URL_WORKER tidak ada (jalankan scripts/siapkan-lokal.sh)");
+  return b.slice("DATABASE_URL_WORKER=".length);
+}
+
+export async function denganDb<T>(fn: (sql: postgres.Sql) => Promise<T>): Promise<T> {
+  const sql = postgres(urlWorker(), { max: 1, onnotice: () => {} });
+  try {
+    return await fn(sql);
+  } finally {
+    await sql.end({ timeout: 2 });
+  }
+}
+
+/** Jawaban soal hitungan dari teksnya (×, −, ², kurung), persis seperti manusia menghitung. */
+export function hitung(teks: string): string {
+  const js = teks
+    .replace(/×/g, "*")
+    .replace(/−/g, "-")
+    .replace(/(\d+)²/g, "($1*$1)")
+    .replace(/=\s*\?/, "");
+  if (!/^[\d\s+\-*()]+$/.test(js)) throw new Error(`teks soal tak terduga: ${teks}`);
+  return String(Function(`"use strict"; return (${js});`)());
+}
+
+/**
+ * Worker AntiKebo sungguhan (`pnpm worker`) untuk uji yang butuh alarm benar-benar berbunyi.
+ * Menunggu log "penjadwal menyala"; fungsi kembalian menghentikan seluruh kelompok prosesnya.
+ */
+export async function nyalakanWorker(): Promise<() => Promise<void>> {
+  const p = spawn("pnpm", ["worker"], { cwd: process.cwd(), env: { ...process.env, LOG_LEVEL: "info" }, stdio: ["ignore", "pipe", "pipe"], detached: true });
+  let log = "";
+  await new Promise<void>((ok, gagal) => {
+    const batas = setTimeout(() => gagal(new Error(`worker tidak menyala:\n${log.slice(-2000)}`)), 90_000);
+    p.stdout!.on("data", (b: Buffer) => {
+      log += String(b);
+      if (log.includes("penjadwal menyala")) {
+        clearTimeout(batas);
+        ok();
+      }
+    });
+    p.stderr!.on("data", (b: Buffer) => (log += String(b)));
+    p.on("exit", (c) => {
+      clearTimeout(batas);
+      gagal(new Error(`worker keluar (${c}):\n${log.slice(-2000)}`));
+    });
+  });
+  return async () => {
+    try {
+      process.kill(-p.pid!, "SIGTERM");
+    } catch {
+      /* sudah berhenti */
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  };
 }

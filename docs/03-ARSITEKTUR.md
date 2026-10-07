@@ -151,7 +151,8 @@ sama) dari benih turunan kunci kejadian, semua jawaban dikirim ke
 Per kejadian (bukan uji): mulai 100; −10 per tunda; −1 per menit dari berbunyi sampai lolos
 sesudah 2 menit pertama (maks −40); −30 bila gagal Masih bangun; `tidak_bangun` = 0; terlewat
 karena server tidak dihitung; minimal 0. Skor harian = rata-rata; hari beruntun = hari dengan
-semua kejadian ≥ 70. Wajib tes contoh emas.
+semua kejadian ≥ 70, dihitung mundur dari hari terbaru, hari tanpa kejadian terhitung dilewati
+(tidak memutus). Menit = menit penuh. Modul `src/lib/skor.ts`, contoh emas `tests/emas/skor.json`.
 
 ## 11. Keamanan
 

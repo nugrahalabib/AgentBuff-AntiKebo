@@ -6,6 +6,7 @@ import { keadaanKunci, periksaKomitmen, type KeadaanKunci } from "@/lib/alarm/ko
 import { barisDari, denganPengguna, schema, type Tx } from "@/lib/db";
 import { isi as isiTeks } from "@/lib/i18n";
 import { cocok, kejadianBerikutnya, SkemaTanggal, tanggalSekaliBerikutnya, type Kejadian } from "@/lib/jadwal/pengulangan";
+import { uraiPengulangan } from "@/lib/tampilan/uraian";
 import { catatAudit } from "./audit";
 import { GalatLayanan, pesanMasukan, type Sumber } from "./dasar";
 import { pastikanKodeQrMilik } from "./kode-qr";
@@ -47,6 +48,10 @@ export type AlarmLengkap = IsiAlarm & {
   berbunyi: boolean;
   /** Suara omelan: siap, sedang dibuat, atau belum bisa dibuat + alasan (PRD F4). */
   suara: StatusSuara;
+  /** Uraian pengulangan siap tampil dalam bahasa pengguna ("Hari kerja", "Sekali, besok"). */
+  uraianUlang: string;
+  /** Jam berakhirnya kunci Komitmen dalam bahasa pengguna ("05.00"), atau null. */
+  terkunciJam: string | null;
 };
 
 // ------------------------------------------------------------------ pembantu
@@ -197,6 +202,8 @@ async function lengkapi(tx: Tx, k: KonteksPengguna, daftar: BarisAlarm[], sekara
       terkunciSampai: kunci.terkunci ? kunci.sampai : null,
       berbunyi: kej.some((x) => x.alarmId === a.id && x.status !== "menunggu"),
       suara: suara.get(a.id) ?? { status: "siap" },
+      uraianUlang: uraiPengulangan(a.pengulangan, k.t, k.bahasa, hariIni),
+      terkunciJam: kunci.terkunci ? jamTampil(kunci.sampai, a.zona, k.bahasa) : null,
     };
   });
 }
