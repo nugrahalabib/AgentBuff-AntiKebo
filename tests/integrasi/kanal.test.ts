@@ -435,7 +435,12 @@ describe("pengingat malam (PRD G4)", () => {
 
     // Jejak pengingat menunjuk kejadian yang masih menunggu. Alarm itu lalu dihapus (kejadian
     // menunggunya ikut dihapus): penghapusan tidak boleh gagal, jejaknya tetap ada tanpa kejadian.
-    const [jejak] = await u.pekerja((tx) => tx.select().from(schema.kirimanKanal).where(and(eq(schema.kirimanKanal.penggunaId, P), eq(schema.kirimanKanal.jenis, "pengingat"))));
+    const [jejak] = await u.pekerja((tx) =>
+      tx
+        .select()
+        .from(schema.kirimanKanal)
+        .where(and(eq(schema.kirimanKanal.penggunaId, P), eq(schema.kirimanKanal.jenis, "pengingat"))),
+    );
     expect(jejak.kejadianId).not.toBeNull();
     await (await L()).hapusAlarm(P, besok.id, "web", { sekarang: wib("2026-11-11T00:40:00") });
     const [sesudahLewati] = await u.pekerja((tx) => tx.select().from(schema.kirimanKanal).where(eq(schema.kirimanKanal.id, jejak.id)));
