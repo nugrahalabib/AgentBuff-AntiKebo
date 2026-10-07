@@ -16,7 +16,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Selesai 2026-10-07 |
 | P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Selesai 2026-10-07 |
 | P5 | Suara dan bunyi | Cloud | Selesai |
-| P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Belum |
+| P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Selesai |
 | P7 | Rumah pintar Tuya | Cloud | Belum |
 | P8 | Layar inti tersambung API | Cloud | Belum |
 | P9 | Mode Jam Meja dan PWA | Cloud | Belum |
@@ -282,12 +282,48 @@ Catatan untuk paket berikutnya:
 
 ## P6 Spam kanal, pengingat malam, notifikasi web
 
+**Status: selesai 2026-10-07.** Bukti di cloud: jaga (13 penjaga), tsc, lint, format, 492 tes
+vitest (termasuk Postgres 16 sungguhan), build, 68 uji Playwright mode produksi (desktop + 390 px);
+`uji-rls.sql` 44/44 di PGlite dan Postgres 16; worker dibundel persis seperti Dockerfile lalu
+dinyalakan. Notifikasi di HP/PC asli (Android, iPhone dari Layar Utama, Windows) dan pesan lewat
+pintu AgentBuff asli: **wajib diuji** di L1/L2.
+
 Rujukan: PRD G1 sampai G7; arsitektur §7.
 
-- [ ] Klien `/masuk/kanal` dan `/masuk/kabar`; langkah spam per kanal dengan jeda dan batas waktu;
-      `terlalu_cepat` menggeser jadwal; jejak `kiriman_kanal`.
-- [ ] Kumpulan pesan id/en tanpa AI; pesan penutup; pengingat malam; uji kanal.
-- [ ] Web Push (VAPID) + Service Worker notifikasi alarm berulang.
+- [x] Klien `/masuk/kanal` dan `/masuk/kabar`; langkah spam per kanal dengan jeda dan batas waktu;
+      `terlalu_cepat` menggeser jadwal; jejak `kiriman_kanal`. (`src/lib/penjadwal/saluran-asli.ts`,
+      `src/lib/kanal/aturan.ts`; platform kanal diambil sekali per kejadian untuk jeda; galat berhenti
+      vs dicoba lagi, K-63; tabel `kiriman_kanal` tanpa isi pesan.)
+- [x] Kumpulan pesan id/en tanpa AI; pesan penutup; pengingat malam; uji kanal. (`src/lib/pesan/`,
+      K-61, K-62; `src/lib/layanan/pengingat.ts` dijalankan worker tiap menit, K-66; pesan uji
+      `/api/app/kanal/uji`; daftar kanal `/api/app/kanal`; Pengaturan menampilkan kanal, kanal bawaan,
+      pesan uji, notifikasi, pengingat malam.)
+- [x] Web Push (VAPID) + Service Worker notifikasi alarm berulang. (`src/lib/push.ts`, `public/sw.js`,
+      `/api/app/push`, `/api/app/push/uji`; tag per kejadian, ulang tiap 30 dtk, ditahan, diganti
+      "Alarm sudah mati" sesudah berhenti, K-64, K-65. Juga notifikasi "Masih bangun?" dan kabar
+      terlewat.)
+
+Selesai bila (tidak tertulis di rencana awal; dipakai sesi ini): spam per kanal terbukti dengan jam
+terkendali (jeda Telegram 15/Discord 20 dtk, kanal belum siap berhenti, `terlalu_cepat` menggeser,
+batas waktu, tunda menghentikan lalu melanjutkan penghitung, penutup sesudah bangun, izin dicabut dan
+agen mati), Web Push dibuka seperti peramban (aes128gcm + VAPID diverifikasi), Service Worker
+menampilkan notifikasi dari push sungguhan di Chromium, pengingat malam sekali per malam.
+(`tests/integrasi/kanal.test.ts`, `tests/unit/pesan.test.ts`, `tests/unit/sw.test.ts`,
+`tests/e2e/kanal.spec.ts`.)
+
+Catatan untuk paket berikutnya:
+- P8: tautan di setiap pesan dan notifikasi menuju **`/app/bunyi/[id]`** (id kejadian): halaman
+  layar berbunyi asli WAJIB ada di jalur itu. Saat layar itu menjawab soal dengan benar, penutup dan
+  notifikasi "sudah mati" berjalan sendiri lewat mesin (`rencanaSelesai`), tidak perlu kode tambahan.
+- P9: Mode Jam Meja mendaftarkan `/sw.js` yang sama (scope `/`) lalu menambah cache bunyi dan klip;
+  jangan membuat Service Worker kedua. Langganan push boleh membawa `perangkatId` Jam Meja.
+- P11: Riwayat memakai `GET /api/app/kejadian/[id]/kiriman` (jejak tanpa isi). Pengaturan lengkap
+  memakai `GET/PATCH /api/app/preferensi` (sudah ada) dan memindahkan bagian kanal/notifikasi/pengingat
+  dari `src/components/app/pengaturan-kanal.tsx` ke layar Pengaturan rancangan P1.
+- P12: alat MCP `list_channels`, `send_test_message`, `get_delivery_log`, `update_preferences`
+  (pengingat malam, kanal bawaan); langganan push hanya dari peramban (catat di `paritas.ts`).
+- L1: pintu `/masuk/kanal` dan `/masuk/kabar` asli wajib lolos `tests/integrasi/tiruan-kontrak.test.ts`;
+  sesudah itu jalankan pesan uji dari Pengaturan ke Telegram/WhatsApp asli.
 
 ## P7 Rumah pintar Tuya
 

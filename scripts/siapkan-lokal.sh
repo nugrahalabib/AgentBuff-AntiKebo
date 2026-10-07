@@ -40,6 +40,17 @@ EOT
   echo "siapkan-lokal: .env.local dibuat (nilai acak, tidak dicetak)"
 fi
 
+# Kunci VAPID notifikasi web (P6): ditambahkan ke .env.local lama yang belum punya (tidak menimpa).
+if ! grep -q '^VAPID_PUBLIC_KEY=.' "$ENV_LOKAL"; then
+  node -e '
+    const { generateKeyPairSync } = require("node:crypto");
+    const j = generateKeyPairSync("ec", { namedCurve: "prime256v1" }).privateKey.export({ format: "jwk" });
+    const pub = Buffer.concat([Buffer.from([4]), Buffer.from(j.x, "base64url"), Buffer.from(j.y, "base64url")]).toString("base64url");
+    process.stdout.write(`VAPID_PUBLIC_KEY=${pub}\nVAPID_PRIVATE_KEY=${j.d}\nVAPID_SUBJECT=mailto:pengembang@antikebo.invalid\n`);
+  ' >> "$ENV_LOKAL"
+  echo "siapkan-lokal: kunci VAPID ditambahkan ke .env.local (tidak dicetak)"
+fi
+
 set -a
 # shellcheck disable=SC1090
 . "./$ENV_LOKAL"

@@ -43,6 +43,13 @@
       "when": 1791374968424,
       "tag": "0005_suara",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791377424445,
+      "tag": "0006_kanal",
+      "breakpoints": true
     }
   ]
 }

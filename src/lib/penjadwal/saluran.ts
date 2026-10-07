@@ -4,8 +4,8 @@ import type { schema } from "@/lib/db";
 /**
  * Saluran = satu jenis langkah yang dijalankan worker selama kejadian berbunyi (arsitektur §4.4):
  * notifikasi web (P6), spam kanal (P6), rumah pintar (P7), batas berhenti sendiri (PRD C4).
- * P3 memasang implementasi TIRUAN untuk notifikasi, spam, Tuya, dan kabar terlewat (hanya mencatat
- * hasil) supaya mesin langkah bisa diuji utuh; paket berikutnya mengganti isinya, bukan bentuknya.
+ * Implementasi TIRUAN di bawah (hanya mencatat hasil) dipakai uji mesin langkah; worker memasang
+ * saluran asli (`saluran-asli.ts`, P6) lewat `pasangSaluran`. Tuya asli menyusul di P7.
  */
 
 export type BarisKejadian = typeof schema.kejadianAlarm.$inferSelect;
@@ -32,16 +32,30 @@ export type HasilLangkah = {
   akhiri?: "tidak_bangun";
   /** "Masih bangun?" tidak diketuk sampai batasnya: alarm kembali penuh (PRD E2). */
   bunyikanLagi?: true;
+  /** Parameter untuk ulangan berikutnya (mis. platform kanal yang baru diketahui). Bawaan: sama. */
+  parameterBaru?: Record<string, unknown>;
 };
+
+/** Status akhir kejadian yang memicu `rencanaSelesai`. */
+export type StatusSelesai = "bangun" | "tidak_bangun" | "dibatalkan";
+
+/**
+ * Kapan langkah saluran pantas dijalankan: `berbunyi` (bawaan; juga saat ditunda bila
+ * `saatTunda` = lanjut), `cek` (status cek_bangun), `terlewat`, `selesai` (sesudah berhenti).
+ */
+export type FaseSaluran = "berbunyi" | "cek" | "terlewat" | "selesai";
 
 export interface Saluran {
   jenis: string;
+  fase?: FaseSaluran;
   /** Saat ditunda: `lanjut` tetap berjalan (Tuya), `berhenti` dibatalkan dan direncanakan ulang sesudah tunda. */
   saatTunda: "lanjut" | "berhenti";
   /** Langkah awal ketika kejadian mulai (atau kembali) berbunyi. */
   rencana(isi: IsiKejadian, mulai: Date, kejadian: BarisKejadian): RencanaLangkah[];
   /** Langkah untuk kejadian yang terlewat (server sempat mati > 30 menit). Opsional. */
   rencanaTerlewat?(isi: IsiKejadian | null, sekarang: Date, kejadian: BarisKejadian): RencanaLangkah[];
+  /** Langkah sesudah kejadian berhenti (pesan penutup, notifikasi diganti "sudah mati"). Opsional. */
+  rencanaSelesai?(isi: IsiKejadian | null, sekarang: Date, kejadian: BarisKejadian, status: StatusSelesai): RencanaLangkah[];
   jalankan(k: KonteksLangkah): Promise<HasilLangkah>;
 }
 
@@ -80,6 +94,7 @@ export const saluranTuyaTiruan: Saluran = {
 
 export const saluranKabarTerlewatTiruan: Saluran = {
   jenis: "kabar_terlewat",
+  fase: "terlewat",
   saatTunda: "lanjut",
   rencana: () => [],
   rencanaTerlewat: (_isi, sekarang) => [{ jatuhTempo: sekarang }],
@@ -91,6 +106,7 @@ export const saluranKabarTerlewatTiruan: Saluran = {
 /** Saat "Masih bangun?" tampil: notifikasi + satu pesan kanal (P6). */
 export const saluranCekTampilTiruan: Saluran = {
   jenis: "cek_tampil",
+  fase: "cek",
   saatTunda: "lanjut",
   rencana: () => [],
   async jalankan() {

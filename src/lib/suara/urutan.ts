@@ -32,7 +32,8 @@ export function mulaiUrutan(): KeadaanUrutan {
   return { antrean: [], terakhir: null, waktuTerputar: [], putaran: 0 };
 }
 
-function acakPutaran(n: number, benih: number, putaran: number, hindari: number | null): number[] {
+/** Satu putaran acak (Fisher-Yates, mulberry32). Dipakai juga urutan isi pesan kanal (`src/lib/pesan`). */
+export function acakPutaran(n: number, benih: number, putaran: number, hindari: number | null): number[] {
   const r = new Acak((benih + Math.imul(putaran, 0x9e3779b1)) >>> 0);
   const a = Array.from({ length: n }, (_, i) => i);
   for (let i = n - 1; i > 0; i--) {

@@ -3,6 +3,42 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P6): Chat terus sampai bangun, notifikasi, dan pengingat malam
+
+**Baru**
+- **Spam chat saat alarm berbunyi.** Agenmu mengirim pesan terus ke Telegram, WhatsApp, Discord,
+  Slack, atau Google Chat yang kamu pilih: Telegram tiap 15 detik, Discord/Slack/Google Chat tiap 20
+  detik, WhatsApp tiap 45 detik (boleh diperlambat, tidak bisa lebih cepat dari batas aman). Isinya
+  galak dan beda-beda, ada nomor pesan, judul agenda, sudah berapa menit, dan tautan ke layar alarm.
+- Saat kamu menunda, pesannya berhenti dan lanjut lagi begitu tunda habis. Bisa juga diatur berhenti
+  sendiri sesudah sekian menit.
+- **Pesan penutup** sesudah kamu bangun: "Kamu bangun 05.07 (7 menit, tunda 1 kali). Selamat pagi!"
+- **Notifikasi alarm di peramban**: muncul dan bergetar terus selama berbunyi walau AntiKebo tidak
+  dibuka; diketuk langsung ke layar alarm; sesudah mati diganti "Alarm sudah mati".
+- **Pengingat malam** di jam tidurmu: alarm besok, agendanya, dan apakah perangkat siaga sudah siap.
+- **Pengaturan**: daftar kanal dari AgentBuff (yang belum siap tampil dengan alasannya), tombol
+  **Kirim pesan uji**, pilih kanal bawaan, nyalakan notifikasi di peramban ini, nyala/mati pengingat
+  malam.
+- "Masih bangun?" juga dikabari lewat notifikasi dan satu pesan chat. Alarm yang terlewat karena
+  server terganggu dikabari juga.
+
+**Keputusan**
+- K-61 sampai K-67 (`KEPUTUSAN.md`). Yang terasa pengguna: pesan penutup hanya ke chat yang sempat
+  dispam (K-62), pengingat malam ke kanal bawaan (K-66).
+
+**Masih butuh Chief**
+- K-07 masih menunggu.
+- **Wajib diuji di perangkat asli (L1/L2):** pesan lewat pintu AgentBuff asli; notifikasi di Android,
+  iPhone (harus dari Layar Utama), dan Windows.
+
+**Untuk teknisi**
+- Tabel `kiriman_kanal` (jejak tanpa isi pesan) dan `langganan_push` (tersandi), RLS + uji 44/44,
+  kolom `pengguna.pengingat_terkirim`.
+- Saluran asli worker di `src/lib/penjadwal/saluran-asli.ts`; mesin punya fase saluran dan langkah
+  sesudah selesai. Kunci VAPID kini wajib (dibuat otomatis).
+- Bukti: 492 tes vitest, 68 uji Playwright mode produksi (termasuk notifikasi Service Worker dari push
+  sungguhan lewat DevTools Protocol).
+
 ## 2026-10-07 (P5): Bunyi alarm dan omelan galak
 
 **Baru**

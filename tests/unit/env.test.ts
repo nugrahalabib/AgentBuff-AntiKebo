@@ -14,6 +14,9 @@ const SAH = {
   AGENTBUFF_MASUK_CLIENT_ID: "antikebo",
   AGENTBUFF_MASUK_CLIENT_SECRET: "rahasia",
   AGENTBUFF_TIRUAN: "",
+  VAPID_PUBLIC_KEY: "BPub",
+  VAPID_PRIVATE_KEY: "priv",
+  VAPID_SUBJECT: "mailto:operator@contoh.id",
 };
 const asli = { ...process.env };
 const pasang = (ubah: Record<string, string>) => Object.assign(process.env, SAH, ubah);
@@ -31,6 +34,11 @@ describe("periksaEnv", () => {
   it("wajib kosong: menolak dengan nama env, tanpa nilai", () => {
     pasang({ ENCRYPTION_KEK: "", AGENTBUFF_MASUK_CLIENT_SECRET: " " });
     expect(() => periksaEnv("web")).toThrow(/ENCRYPTION_KEK, AGENTBUFF_MASUK_CLIENT_SECRET/);
+  });
+  it("kunci notifikasi web (VAPID) wajib di web dan worker sejak P6", () => {
+    pasang({ VAPID_PRIVATE_KEY: "" });
+    expect(() => periksaEnv("web")).toThrow(/VAPID_PRIVATE_KEY/);
+    expect(() => periksaEnv("worker")).toThrow(/VAPID_PRIVATE_KEY/);
   });
   it("SESSION_SECRET < 32 karakter ditolak (web)", () => {
     pasang({ SESSION_SECRET: "pendek" });

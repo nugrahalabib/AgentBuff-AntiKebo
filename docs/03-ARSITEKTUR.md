@@ -154,7 +154,7 @@ Dari template: `DATABASE_URL`, `DATABASE_URL_MIGRASI`, `APP_ORIGIN`, `SESSION_SE
 `ENCRYPTION_KEK`, `AGENTBUFF_ISSUER`, `AGENTBUFF_ORIGIN`, `AGENTBUFF_PRODUCT_KEY` (`antikebo`),
 `AGENTBUFF_MASUK_CLIENT_ID`, `AGENTBUFF_MASUK_CLIENT_SECRET`, `LOG_LEVEL`, kata sandi peran DB.
 
-Baru: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `OPERATOR_KABAR` (tujuan
+Baru: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (wajib sejak P6, K-65), `OPERATOR_KABAR` (tujuan
 pemberitahuan operator), `PC_UPDATE_PUBKEY` (kunci publik pembaruan aplikasi PC), `AGENTBUFF_TIRUAN`
 (`1` = pakai server tiruan untuk kanal/suara saat pengembangan).
 

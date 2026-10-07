@@ -2,14 +2,17 @@ import { lt } from "drizzle-orm";
 import { db, klienSql, schema } from "@/lib/db";
 import { periksaEnv } from "@/lib/env";
 import { log } from "@/lib/log";
-import { lengkapiMaterialisasi } from "@/lib/penjadwal/mesin";
+import { lengkapiMaterialisasi, pasangSaluran } from "@/lib/penjadwal/mesin";
 import { Penjadwal } from "@/lib/penjadwal/penjadwal";
+import { saluranAsli } from "@/lib/penjadwal/saluran-asli";
+import { prosesPengingatMalam } from "@/lib/layanan/pengingat";
 import { bersihkanSuara } from "@/lib/layanan/suara";
 import { prosesAntreanSuara } from "@/lib/suara/antrean";
 
 // Worker AntiKebo (proses terpisah, peran DB antikebo_worker): penjadwal kejadian (tepat detik,
-// SKIP LOCKED, LISTEN/NOTIFY, pulih; P3), antrean suara (P5), detak, bersih-bersih. Spam kanal
-// (P6) dan Tuya (P7) masuk sebagai saluran langkah (docs/03-ARSITEKTUR.md §4 sampai §8).
+// SKIP LOCKED, LISTEN/NOTIFY, pulih; P3), antrean suara (P5), saluran asli spam kanal, notifikasi
+// web, penutup, kabar terlewat (P6), pengingat malam (P6), detak, bersih-bersih. Tuya (P7) masuk
+// sebagai saluran langkah (docs/03-ARSITEKTUR.md §4 sampai §8).
 // Setiap putaran berbatas waktu; satu putaran menggantung tidak boleh mengunci yang lain.
 
 // Pengembangan: satu .env.local untuk web dan worker; worker memakai peran antikebo_worker.
@@ -65,6 +68,9 @@ async function bersihBersih(): Promise<string> {
   return `${d.length} audit lama, ${s} klip tak terpakai dihapus`;
 }
 
+// Saluran asli: pesan kanal lewat pintu AgentBuff pengguna dan Web Push (tiruan hanya untuk uji mesin).
+pasangSaluran(saluranAsli({ db }));
+
 const penjadwal = new Penjadwal({
   db,
   dengar: async (cb) => {
@@ -79,6 +85,11 @@ putaran("bersih", 6 * 60 * 60_000, bersihBersih);
 putaran("suara", 3_000, async () => {
   const h = await prosesAntreanSuara(db);
   return h.diproses ? `${h.siap} siap, ${h.ulang} diulang, ${h.gagal} gagal` : undefined;
+});
+// Pengingat malam pada jam tidur tiap pengguna (PRD G4).
+putaran("pengingat", 60_000, async () => {
+  const h = await prosesPengingatMalam(db);
+  return h.dikirim ? `${h.dikirim} pengingat terkirim` : undefined;
 });
 // Jaring pengaman invarian "alarm aktif = satu kejadian menunggu".
 putaran("materialisasi", 10 * 60_000, async () => `${await db().transaction((tx) => lengkapiMaterialisasi(tx, new Date()))} dipulihkan`);

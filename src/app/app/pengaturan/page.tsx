@@ -1,11 +1,14 @@
 import { Check, CircleAlert } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { PengaturanKanal, PengaturanNotifikasi, PengaturanPengingat } from "@/components/app/pengaturan-kanal";
 import { TombolKeluar } from "@/components/app/tombol-keluar";
 import { TautanTombol } from "@/components/ui/dasar";
 import { sesiSaatIni } from "@/lib/auth/sesi";
 import { isi } from "@/lib/i18n";
 import { kamusServer } from "@/lib/i18n/server";
+import { ambilPreferensi } from "@/lib/layanan/preferensi";
+import { kunciPublikVapid } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.pengaturan.judul };
 }
 
-/** Pengaturan dasar P0: akun, izin AgentBuff, keluar. Pengaturan lengkap (PRD M) di P11. */
+/** Pengaturan: akun, izin AgentBuff, kanal pesan + notifikasi + pengingat malam (P6), keluar. Pengaturan lengkap (PRD M) di P11. */
 export default async function HalamanPengaturan() {
   const s = await sesiSaatIni();
   if (!s) redirect("/masuk");
@@ -25,6 +28,7 @@ export default async function HalamanPengaturan() {
     { label: P.izinSuara, diberi: s.pengguna.izinSuara },
   ];
   const kurang = izin.some((i) => !i.diberi);
+  const pref = await ambilPreferensi(s.pengguna.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -62,6 +66,10 @@ export default async function HalamanPengaturan() {
           </TautanTombol>
         ) : null}
       </section>
+
+      <PengaturanKanal spamBawaan={pref.bawaan.spam} />
+      <PengaturanNotifikasi kunciPublik={kunciPublikVapid()} />
+      <PengaturanPengingat nyala={pref.pengingatMalam} />
 
       <TombolKeluar />
     </div>

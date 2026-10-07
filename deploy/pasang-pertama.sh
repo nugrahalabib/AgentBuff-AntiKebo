@@ -34,9 +34,26 @@ if [ ! -f "$ENV" ]; then
     echo "LOG_LEVEL=info"
   } > "$ENV"
   chmod 600 "$ENV"
-  echo "  .env dibuat (nilai rahasia tidak dicetak). VAPID dan PC_UPDATE_PUBKEY ditambahkan saat P6/P10 dirilis."
+  echo "  .env dibuat (nilai rahasia tidak dicetak). PC_UPDATE_PUBKEY ditambahkan saat P10 dirilis."
 else
   echo "  .env sudah ada: dibiarkan."
+fi
+
+# Kunci VAPID notifikasi web (wajib sejak P6): ditambahkan sekali bila belum ada, tidak pernah
+# diganti (mengganti kunci = semua langganan notifikasi pengguna putus). Kunci P-256 dari SEC1 DER:
+# rahasia = 32 bait mulai bait ke-8, publik = 65 bait terakhir; keduanya base64url.
+if ! grep -q '^VAPID_PUBLIC_KEY=.' "$ENV"; then
+  b64url() { base64 -w0 | tr '+/' '-_' | tr -d '='; }
+  KUNCI=$(mktemp)
+  openssl ecparam -name prime256v1 -genkey -noout -outform DER 2>/dev/null | openssl ec -inform DER -outform DER -out "$KUNCI" 2>/dev/null
+  {
+    echo "VAPID_PUBLIC_KEY=$(tail -c 65 "$KUNCI" | b64url)"
+    echo "VAPID_PRIVATE_KEY=$(head -c 39 "$KUNCI" | tail -c 32 | b64url)"
+    echo "VAPID_SUBJECT=mailto:operator@agentbuff.id"
+  } >> "$ENV"
+  rm -f "$KUNCI"
+  chmod 600 "$ENV"
+  echo "  kunci VAPID ditambahkan ke .env (tidak dicetak)."
 fi
 
 # Cadangan tiap 6 jam (baris ditambah hanya bila belum ada).

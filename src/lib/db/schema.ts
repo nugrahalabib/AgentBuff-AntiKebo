@@ -7,8 +7,8 @@ import type { Pengulangan } from "@/lib/jadwal/pengulangan";
 // Setiap tabel ber-`pengguna_id` milik pemilik WAJIB punya RLS ENABLE+FORCE + kebijakan
 // di migrasi (dijaga scripts/jaga.mjs). Hanya skema di sini; SQL-nya di src/lib/db/migrasi.
 // P0 = tabel dasar; P2 = alarm, lewati, template, kejadian, langkah, preferensi; P3 = perangkat
-// siaga, kode sambung; P4 = soal kejadian, kode QR; P5 = naskah dan klip suara. Kanal, Tuya
-// menyusul (P6, P7). Impor dari src/lib hanya `import type` (drizzle-kit
+// siaga, kode sambung; P4 = soal kejadian, kode QR; P5 = naskah dan klip suara; P6 = kiriman
+// kanal, langganan push. Tuya menyusul (P7). Impor dari src/lib hanya `import type` (drizzle-kit
 // memuat berkas ini tanpa alias jalur).
 
 const citext = customType<{ data: string }>({ dataType: () => "citext" });
@@ -47,6 +47,8 @@ export const pengguna = pgTable(
     /** Bawaan alarm baru (sebagian isian alarm, divalidasi `SkemaBawaan`). */
     bawaan: jsonb("bawaan").$type<Bawaan>().notNull().default({}),
     pengingatMalam: boolean("pengingat_malam").notNull().default(true),
+    /** Tanggal lokal malam terakhir pengingat terkirim (P6): satu pengingat per malam. */
+    pengingatTerkirim: date("pengingat_terkirim", { mode: "string" }),
     orientasiSelesai: waktu("orientasi_selesai"),
   },
   (t) => [uniqueIndex("pengguna_agentbuff_sub_unik").on(t.agentbuffSub)],
@@ -457,4 +459,53 @@ export const klipSuara = pgTable(
     dipakaiTerakhir: waktu("dipakai_terakhir").notNull().defaultNow(),
   },
   (t) => [uniqueIndex("klip_suara_unik").on(t.penggunaId, t.hash)],
+);
+
+// ------------------------------------------------------------ kanal dan notifikasi (P6)
+
+/**
+ * Jejak setiap pesan kanal (PRD G6): spam, penutup, cek, terlewat, pengingat malam, uji. Isi
+ * pesan TIDAK disimpan. `kunci` = kunci idempoten ke AgentBuff (unik per pengguna: langkah yang
+ * diulang sesudah worker mati tidak tercatat dua kali).
+ */
+export const kirimanKanal = pgTable(
+  "kiriman_kanal",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    kejadianId: uuid("kejadian_id").references(() => kejadianAlarm.id),
+    kanalId: text("kanal_id").notNull(),
+    platform: text("platform"),
+    jenis: text("jenis").notNull(), // spam | penutup | cek | terlewat | pengingat | uji
+    ke: integer("ke"),
+    status: text("status").notNull(), // terkirim | gagal | ditunda
+    alasan: text("alasan"),
+    idKiriman: text("id_kiriman"),
+    kunci: text("kunci").notNull(),
+    dibuat: dibuat(),
+  },
+  (t) => [uniqueIndex("kiriman_kanal_unik").on(t.penggunaId, t.kunci), index("kiriman_kanal_kejadian_idx").on(t.kejadianId)],
+);
+
+/**
+ * Langganan Web Push (PRD G5). Endpoint + kunci browser = rahasia: disimpan tersandi amplop
+ * (`data`), dicari lewat hash endpoint. Tidak pernah dikirim balik ke peramban.
+ */
+export const langgananPush = pgTable(
+  "langganan_push",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    perangkatId: uuid("perangkat_id").references(() => perangkatSiaga.id),
+    endpointHash: char("endpoint_hash", { length: 64 }).notNull(),
+    data: text("data").notNull(),
+    terakhirBerhasil: waktu("terakhir_berhasil"),
+    gagalBeruntun: integer("gagal_beruntun").notNull().default(0),
+    dibuat: dibuat(),
+  },
+  (t) => [uniqueIndex("langganan_push_unik").on(t.penggunaId, t.endpointHash)],
 );

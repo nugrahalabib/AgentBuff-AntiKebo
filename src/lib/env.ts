@@ -11,12 +11,25 @@ const WAJIB_WEB = [
   "AGENTBUFF_PRODUCT_KEY",
   "AGENTBUFF_MASUK_CLIENT_ID",
   "AGENTBUFF_MASUK_CLIENT_SECRET",
+  "VAPID_PUBLIC_KEY",
+  "VAPID_PRIVATE_KEY",
+  "VAPID_SUBJECT",
 ] as const;
 
-const WAJIB_WORKER = ["DATABASE_URL", "APP_ORIGIN", "ENCRYPTION_KEK", "AGENTBUFF_ISSUER", "AGENTBUFF_MASUK_CLIENT_ID", "AGENTBUFF_MASUK_CLIENT_SECRET"] as const;
+const WAJIB_WORKER = [
+  "DATABASE_URL",
+  "APP_ORIGIN",
+  "ENCRYPTION_KEK",
+  "AGENTBUFF_ISSUER",
+  "AGENTBUFF_MASUK_CLIENT_ID",
+  "AGENTBUFF_MASUK_CLIENT_SECRET",
+  "VAPID_PUBLIC_KEY",
+  "VAPID_PRIVATE_KEY",
+  "VAPID_SUBJECT",
+] as const;
 
 /**
- * Belum wajib di P0; menjadi wajib saat fiturnya dibangun (VAPID di P6, PC_UPDATE_PUBKEY di P10).
+ * Belum wajib; menjadi wajib saat fiturnya dibangun (VAPID wajib sejak P6, PC_UPDATE_PUBKEY di P10).
  * Daftar ini juga dibaca penjaga `env-contoh` (scripts/jaga.mjs) untuk memastikan .env.example lengkap.
  */
 export const OPSIONAL = [
@@ -26,9 +39,6 @@ export const OPSIONAL = [
   "ANTIKEBO_HAK_LAJU_PER_DTK",
   "AGENTBUFF_TIRUAN",
   "AGENTBUFF_TIRUAN_URL",
-  "VAPID_PUBLIC_KEY",
-  "VAPID_PRIVATE_KEY",
-  "VAPID_SUBJECT",
   "OPERATOR_KABAR",
   "PC_UPDATE_PUBKEY",
 ] as const;
