@@ -96,7 +96,6 @@ test("axe 0 pelanggaran WCAG 2.2 AA di semua halaman, kedua tema, tanpa gulir me
     ["/app/riwayat", "Riwayat"],
     ["/app/pengaturan", "Pengaturan"],
     ["/app/agen", "Agen"],
-    ["/app/rumah", "Rumah pintar"],
     ["/app/unduh-pc", /AntiKebo untuk PC/],
     ["/app/jam-meja", "Mode Jam Meja"],
     [qr.cetak, /Kode bangun/],
@@ -106,6 +105,17 @@ test("axe 0 pelanggaran WCAG 2.2 AA di semua halaman, kedua tema, tanpa gulir me
     await periksa(url);
     if (url === "/app/pengaturan") await tangkap(page, "p13", "pengaturan");
   }
+  // Rumah pintar di kedua keadaan (tidak bergantung pada uji lain): wizard belum tersambung, lalu
+  // daftar perangkat sesudah tersambung ke Tuya tiruan. Sambungan diputus lagi sesudahnya.
+  await fetch("http://127.0.0.1:3198/_tiruan/setel-ulang", { method: "POST" });
+  await page.request.delete("/api/app/rumah/kunci", { headers: { Origin: o } });
+  await buka(page, "/app/rumah", "Sambungkan rumahmu");
+  await periksa("rumah belum tersambung");
+  expect((await page.request.post("/api/app/rumah/kunci", { data: { kunci: "sk-SGrumahuji123456" }, headers: { Origin: o } })).ok()).toBe(true);
+  await buka(page, "/app/rumah", "Rumah pintar");
+  await periksa("rumah tersambung");
+  await page.request.delete("/api/app/rumah/kunci", { headers: { Origin: o } });
+
   // Jam Meja sesudah "Mulai siaga": jam redup sengaja, teks bantu tetap wajib AA.
   await buka(page, "/app/jam-meja", "Mode Jam Meja");
   await page.getByRole("button", { name: "Mulai siaga" }).click();

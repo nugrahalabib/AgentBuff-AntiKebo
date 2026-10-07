@@ -9,7 +9,7 @@ dibuktikan otomatis di cloud dan naskah uji manual yang wajib dijalankan manusia
 
 | Uji | Isi | Hasil P13 |
 |---|---|---|
-| axe WCAG 2.2 AA | Halaman depan, Privasi, Ketentuan, Masuk (dengan pesan galat), Beranda, lembar Ubah alarm, Siaga, Riwayat, Pengaturan, Agen, Rumah pintar, Unduh PC, Jam Meja (sebelum dan sesudah Mulai siaga), cetak kode QR, Sambung PC, Perkenalan, layar berbunyi, Selamat pagi, layar beku; tema terang dan gelap | 0 pelanggaran |
+| axe WCAG 2.2 AA | Halaman depan, Privasi, Ketentuan, Masuk (dengan pesan galat), Beranda, lembar Ubah alarm, Siaga, Riwayat, Pengaturan, Agen, Rumah pintar (belum dan sudah tersambung), Unduh PC, Jam Meja (sebelum dan sesudah Mulai siaga), cetak kode QR, Sambung PC, Perkenalan, layar berbunyi, Selamat pagi, layar beku; tema terang dan gelap | 0 pelanggaran |
 | Reflow | Tanpa gulir mendatar di lebar 320 px (1.4.10) dan 640 px (setara zoom 200% di layar 1280, 1.4.4) untuk semua halaman di atas | Lolos |
 | Papan ketik + pembaca layar | 5 alur hanya dengan papan ketik, setiap kontrol dicapai dengan Tab dan dikenali dari peran + nama (pohon aksesibilitas peramban) | Lolos |
 
