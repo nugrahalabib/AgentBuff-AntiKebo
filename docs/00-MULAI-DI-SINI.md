@@ -2,10 +2,11 @@
 
 ## Status terkini
 
-- **2026-10-07:** konsep versi 2 disepakati Chief; semua dokumen ditulis ulang. Belum ada kode
-  aplikasi. Paket cloud berikutnya: **P0**. Paket laptop L1 (pintu AgentBuff) bisa jalan paralel.
-- Menunggu Chief: K-07 (`KEPUTUSAN.md`), pemasangan GitHub App dan environment cloud
-  (`07-SESI-CLOUD.md`).
+- **2026-10-07:** **P0 selesai**: kerangka aplikasi (masuk dengan AgentBuff, cek hak, MCP dasar,
+  worker detak, DB ber-RLS, deploy, penjaga, tes, CI) + server tiruan AgentBuff (`pnpm tiruan`).
+  Paket cloud berikutnya: **P1** (prototipe desain semua layar). Paket laptop L1 (pintu AgentBuff)
+  bisa jalan paralel; acuannya `tests/integrasi/tiruan-kontrak.test.ts`.
+- Menunggu Chief: K-07 (`KEPUTUSAN.md`).
 
 (Perbarui bagian ini di akhir setiap sesi: tanggal, paket yang selesai, paket berikutnya.)
 

@@ -104,6 +104,27 @@ langsung push dan deploy tanpa ditanya, kecuali tindakan yang merusak data atau 
 
 ## 8. Perintah
 
-Belum ada kode aplikasi. Paket P0 membuat kerangka dari template Tuya, lalu mengisi bagian ini
-dengan perintah yang benar-benar dipakai (mis. `pnpm dev`, `pnpm test`, `node scripts/jaga.mjs`,
-`pnpm exec tsc --noEmit`, `pnpm build`, `cargo test -p antikebo-inti`).
+Di sesi cloud, hook `SessionStart` (`scripts/sesi-cloud.sh`) sudah menyalakan Postgres, memasang
+dependensi, membuat `.env.local` acak, peran DB, dan menjalankan migrasi. Di laptop atau bila
+perlu diulang: `bash scripts/siapkan-lokal.sh` (idempoten, tidak pernah menimpa `.env.local`).
+
+| Perintah | Guna |
+|---|---|
+| `pnpm tiruan` | Server tiruan AgentBuff di `http://127.0.0.1:3199/masuk` (masuk OIDC, cek hak, kanal, pesan, suara). Layar masuknya berisi akun contoh: Nugi (aktif), Rani (belum beli), Dodi (langganan habis) |
+| `pnpm dev` | Aplikasi di `http://localhost:3100` (butuh `pnpm tiruan` untuk masuk) |
+| `pnpm worker` | Worker (peran `antikebo_worker`) |
+| `pnpm db:migrate` | Migrasi aditif sebagai `antikebo_migrasi` |
+| `node scripts/jaga.mjs` | Penjaga (juga dijalankan `pnpm build`) |
+| `pnpm tsc` / `pnpm lint` / `pnpm format:cek` | Tipe, lint, format |
+| `pnpm test` | Unit + integrasi (PGlite, peran tanpa BYPASSRLS, server tiruan) |
+| `pnpm build` | Penjaga + build Next |
+| `pnpm test:e2e` | Playwright; memakai `pnpm dev` (atau `E2E_PRODUKSI=1` = `pnpm start` sesudah build) |
+| `E2E_PRODUKSI=1 SIMPAN_TANGKAPAN=1 pnpm test:e2e` | Tangkapan layar desktop + 390 px, terang + gelap, ke `docs/tangkapan/` (diabaikan git) |
+
+- Migrasi baru: ubah `src/lib/db/schema.ts`, `pnpm exec drizzle-kit generate --name <nama>`, tinjau
+  SQL-nya, tambah RLS (ENABLE + FORCE + kebijakan) dan baris uji di `deploy/uji-rls.sql`.
+- Tangkapan layar PR: commit khusus `git add -f docs/tangkapan/...`, tautkan di badan PR lewat SHA
+  commit itu (`https://raw.githubusercontent.com/<repo>/<sha>/docs/tangkapan/...`), lalu hapus lagi
+  di commit berikutnya. PR digabung dengan squash, jadi gambar tidak masuk `main`.
+- Jangan `pkill -f "next dev"` dari perintah yang teksnya memuat pola itu (ikut membunuh shell sendiri).
+- Aplikasi PC (P10): `cargo test -p antikebo-inti` di `pc/`.

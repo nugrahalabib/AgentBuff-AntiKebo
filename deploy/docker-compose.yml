@@ -1,0 +1,81 @@
+# AntiKebo di VPS (pola template Tuya / BYM): jaringan internal sendiri, web ikut jaringan
+# reverse proxy supaya bisa diteruskan. TIDAK menyentuh kontainer/jaringan proyek lain.
+# Tidak ada port dipublikasikan. Variabel dari <ANTIKEBO_AKAR>/.env (600) lewat
+# `docker compose --env-file`. Lokasi & nama host tidak ditulis di repo publik.
+name: antikebo
+
+services:
+  antikebo-db:
+    image: postgres:16-alpine
+    container_name: antikebo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: antikebo_super
+      POSTGRES_PASSWORD: ${ANTIKEBO_SUPER_PASSWORD:?}
+      POSTGRES_DB: antikebo
+      ANTIKEBO_MIGRASI_PASSWORD: ${ANTIKEBO_MIGRASI_PASSWORD:?}
+      ANTIKEBO_APP_PASSWORD: ${ANTIKEBO_APP_PASSWORD:?}
+      ANTIKEBO_WORKER_PASSWORD: ${ANTIKEBO_WORKER_PASSWORD:?}
+    volumes:
+      - ${ANTIKEBO_AKAR:-/opt/antikebo}/data/pg:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    networks: [antikebo_internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U antikebo_super -d antikebo"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  antikebo-web:
+    image: antikebo:${ANTIKEBO_TAG:-terbaru}
+    container_name: antikebo-web
+    restart: unless-stopped
+    environment: &env-aplikasi
+      NODE_ENV: production
+      APP_ORIGIN: ${APP_ORIGIN:?}
+      SESSION_SECRET: ${SESSION_SECRET:?}
+      ENCRYPTION_KEK: ${ENCRYPTION_KEK:?}
+      AGENTBUFF_ISSUER: ${AGENTBUFF_ISSUER:?}
+      AGENTBUFF_ORIGIN: ${AGENTBUFF_ORIGIN:?}
+      AGENTBUFF_PRODUCT_KEY: ${AGENTBUFF_PRODUCT_KEY:?}
+      AGENTBUFF_MASUK_CLIENT_ID: ${AGENTBUFF_MASUK_CLIENT_ID:?}
+      AGENTBUFF_MASUK_CLIENT_SECRET: ${AGENTBUFF_MASUK_CLIENT_SECRET:?}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+      OPERATOR_KABAR: ${OPERATOR_KABAR:-}
+      PC_UPDATE_PUBKEY: ${PC_UPDATE_PUBKEY:-}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://antikebo_app:${ANTIKEBO_APP_PASSWORD}@antikebo-db:5432/antikebo
+      ANTIKEBO_HAK_LAJU_PER_DTK: "4"
+    depends_on:
+      antikebo-db:
+        condition: service_healthy
+    networks: [antikebo_internal, proxy]
+    healthcheck:
+      test: ["CMD-SHELL", 'wget -qO- http://127.0.0.1:3000/api/health | grep -q ''"ok":true''']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # Worker butuh internet (pintu AgentBuff, Tuya) tapi tidak perlu dijangkau dari luar.
+  antikebo-worker:
+    image: antikebo:${ANTIKEBO_TAG:-terbaru}
+    container_name: antikebo-worker
+    restart: unless-stopped
+    command: ["node", "dist/worker.mjs"]
+    environment:
+      <<: *env-aplikasi
+      DATABASE_URL: postgres://antikebo_worker:${ANTIKEBO_WORKER_PASSWORD}@antikebo-db:5432/antikebo
+      ANTIKEBO_HAK_LAJU_PER_DTK: "2"
+    depends_on:
+      antikebo-db:
+        condition: service_healthy
+    networks: [antikebo_internal]
+
+networks:
+  antikebo_internal:
+    driver: bridge
+  proxy:
+    external: true
+    name: ${ANTIKEBO_JARINGAN_PROXY:-npm_default}

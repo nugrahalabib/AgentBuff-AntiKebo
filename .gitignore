@@ -9,6 +9,9 @@ dist/
 out/
 coverage/
 *.tsbuildinfo
+next-env.d.ts
+/target/
+/pc/target/
 
 # Rahasia dan data lokal
 .env
@@ -30,3 +33,7 @@ Thumbs.db
 __pycache__/
 *.pyc
 .claude/settings.local.json
+/public/vendor/
+
+# Tangkapan layar Playwright untuk PR (dilampirkan lewat commit khusus, tidak masuk main)
+/docs/tangkapan/

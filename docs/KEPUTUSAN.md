@@ -57,3 +57,31 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
 - **K-20 (2026-10-07) Misi QR, "Masih bangun?", dan Mode Komitmen dibuat.**
 - **K-21 (2026-10-07) Aplikasi PC memakai Tauri v2** (pemasang kecil, tanpa admin, WebView2
   bawaan Windows, pembaruan bertanda tangan sendiri).
+- **K-22 (2026-10-07, P0) Sesi web 30 hari bergulir, paling lama 90 hari.** Template memakai 14/30
+  hari. Alasan: `05-INTEGRASI` §1 meminta sesi panjang supaya pengguna tidak dilempar ke layar masuk
+  saat setengah sadar; sesudah 90 hari masuk ulang senyap (`prompt=none`) biasanya tanpa layar.
+- **K-23 (2026-10-07, P0) Server tiruan AgentBuff juga meniru Masuk dengan AgentBuff (OIDC).**
+  Discovery, authorize (layar pilih akun contoh + centang izin), token (PKCE, id_token ES256), JWKS,
+  userinfo, `/status`, keempat pintu baru, asersi `mcp-token`, dan kendali `/_tiruan/*` untuk tes.
+  Alasan: sesi cloud tidak punya klien OIDC AgentBuff asli, padahal P1 sampai P13 butuh masuk untuk
+  tangkapan layar dan uji ujung ke ujung. Tiruan hanya boleh dengan `APP_ORIGIN` localhost
+  (`env.ts` menolak selain itu).
+- **K-24 (2026-10-07, P0) Cadangan scope.** Bila AgentBuff menjawab `invalid_scope` untuk izin
+  `agentbuff:kabar`/`agentbuff:suara`, masuk diulang otomatis dengan scope dasar dan izin dicatat
+  belum diberi. Alasan: L1 bisa belum selesai saat AntiKebo dicoba dengan AgentBuff asli; masuk tidak
+  boleh rusak karenanya.
+- **K-25 (2026-10-07, P0) Rincian kontrak pintu yang sebelumnya belum tertulis** (ditambahkan ke
+  `05-INTEGRASI-AGENTBUFF.md`, wajib diikuti L1): urutan pemeriksaan klien, badan, `sub`, hak, izin;
+  400 `permintaan_tidak_sah`; `/masuk/kabar` teks kosong atau > 1000 = 422 `teks_tidak_sah`; kanal
+  tak dikenal = 409 `kanal_tidak_siap`; kunci idempoten yang sama = 200 dengan `id` yang sama;
+  `agen_tidak_aktif` hanya di kabar dan suara; suara tak dikenal = suara bawaan.
+- **K-26 (2026-10-07, P0) Tangkapan layar PR tidak masuk `main`.** Disimpan di commit khusus pada
+  cabang kerja, ditautkan di badan PR lewat SHA commit, dihapus di commit berikutnya, PR digabung
+  squash. Alasan: 14 paket x 28 gambar akan membengkakkan repo; tautan tetap hidup lewat ref PR.
+- **K-27 (2026-10-07, P0) `agentRules: false` di `next.config.ts`.** Next 16.3 `next dev` menulis
+  blok aturan agen (dengan tanda pisah panjang) ke `CLAUDE.md`; aturan yang sama sudah ada di §5.5.
+- **K-28 (2026-10-07, P0) Deploy berparameter.** Alias SSH VPS, folder, dan perintah penyegaran alat
+  di AgentBuff diisi di `deploy/.env.deploy` (diabaikan git), bukan ditulis di repo publik.
+- **K-29 (2026-10-07, P0) Suara tiruan dibuat skrip, dikode MP3 murni JS** (`@breezystack/lamejs`,
+  hanya devDependency): deterministik (isi sama = berkas sama) dan durasinya mengikuti panjang teks,
+  jadi P5 bisa menguji pakai ulang klip dan urutan putar tanpa layanan suara sungguhan.

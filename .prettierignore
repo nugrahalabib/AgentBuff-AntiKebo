@@ -1,0 +1,16 @@
+# Hanya dibaca, tidak pernah diformat.
+referensi/
+# Dokumen ditulis tangan (tabel dan lebar baris dijaga manual).
+*.md
+# Dihasilkan alat.
+pnpm-lock.yaml
+src/lib/db/migrasi/meta/
+.next/
+dist/
+out/
+coverage/
+playwright-report/
+test-results/
+public/vendor/
+pc/
+next-env.d.ts
