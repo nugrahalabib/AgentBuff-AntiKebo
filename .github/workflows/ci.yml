@@ -1,0 +1,86 @@
+# CI AntiKebo: penjaga, tipe, lint, format, tes (unit + integrasi PGlite + kontrak tiruan),
+# migrasi + uji RLS terhadap Postgres 16 sungguhan, build, dan uji peramban ujung ke ujung
+# terhadap server tiruan AgentBuff. Tidak memakai rahasia apa pun: semua nilai dibuat acak
+# oleh scripts/siapkan-lokal.sh di mesin CI.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      PGPASSWORD: postgres
+      PSQL_SUPER: psql -h 127.0.0.1 -U postgres
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Pasang dependensi
+        run: pnpm install --frozen-lockfile
+
+      - name: Penjaga (jaga)
+        run: node scripts/jaga.mjs
+
+      - name: Cek tipe (tsc)
+        run: pnpm tsc
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format (prettier)
+        run: pnpm format:cek
+
+      - name: Tes unit + integrasi (vitest)
+        run: pnpm test
+
+      - name: Basis data, peran tanpa BYPASSRLS, migrasi
+        run: bash scripts/siapkan-lokal.sh
+
+      - name: Uji RLS terhadap Postgres 16 sungguhan
+        run: psql -h 127.0.0.1 -U postgres -d antikebo -v ON_ERROR_STOP=1 -q -f deploy/uji-rls.sql
+
+      - name: Build
+        run: pnpm build
+
+      - name: Pasang Chromium untuk Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Uji ujung ke ujung (Playwright)
+        run: pnpm test:e2e
+
+      - name: Laporan Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laporan-playwright
+          path: playwright-report/
+          retention-days: 7

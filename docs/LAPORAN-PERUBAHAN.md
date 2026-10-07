@@ -3,6 +3,41 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P0): Kerangka aplikasi AntiKebo berdiri
+
+**Baru**
+- AntiKebo sekarang benar-benar bisa dibuka: halaman depan, halaman **Masuk dengan AgentBuff**,
+  beranda (sapaan + "Belum ada alarm"), dan Pengaturan (akun, izin AgentBuff, Keluar). Pembuat
+  alarm belum ada; itu paket berikutnya.
+- Saat masuk, AgentBuff meminta dua izin: **kirim pesan lewat agenmu** (untuk spam chat) dan **buat
+  suara omelan**. Kalau ditolak, AntiKebo tetap bisa dipakai dan menampilkan spanduk "Izin AgentBuff
+  belum lengkap" dengan tombol **Beri izin**.
+- Yang belum membeli atau langganannya habis mendapat penjelasan ramah + tautan perbaikan. Kalau
+  akses berhenti di tengah jalan, aplikasi dibekukan dan data tetap tersimpan.
+- Sesi masuk tahan lama (30 hari sejak terakhir dipakai, paling lama 90 hari) supaya tidak disuruh
+  masuk lagi saat masih setengah sadar.
+- Agen AgentBuff sudah bisa tersambung otomatis ke AntiKebo (alat pertama: cek status akun dan
+  izin). Alat untuk membuat alarm lewat chat menyusul di P12.
+
+**Untuk teknisi**
+- Kerangka dari template Tuya: Next.js 16, Drizzle + Postgres 16 dengan RLS ENABLE + FORCE, peran
+  tanpa BYPASSRLS, OIDC AgentBuff, cek hak 72 jam, MCP stateless, worker detak, penjaga `jaga`
+  (12 penjaga, termasuk baru: `referensi-terkecuali`, `env-contoh`, `tanda-pisah` seluruh `src/`),
+  deploy berparameter (lokasi server tidak di repo), CI GitHub Actions.
+- **Server tiruan AgentBuff** (`pnpm tiruan`): masuk OIDC lengkap dengan akun contoh, cek hak,
+  pintu kanal/pesan/suara persis kontrak, suara tiruan MP3 buatan skrip. Dipakai pengembangan dan
+  tes; ditolak di luar localhost.
+- Klien pintu `src/lib/agentbuff/pintu.ts` siap dipakai P5/P6.
+- Bukti: 65 tes vitest (unit, integrasi PGlite sebagai `antikebo_app`, kontrak tiruan, MCP, OIDC),
+  14 uji Playwright (desktop + 390 px), `deploy/uji-rls.sql` lulus di PGlite dan Postgres 16.
+
+**Keputusan**
+- K-22 sampai K-29 (`KEPUTUSAN.md`). Kontrak pintu diperjelas di `05-INTEGRASI-AGENTBUFF.md` (K-25).
+
+**Masih butuh Chief**
+- K-07 (alarm saat langganan berakhir) masih menunggu; kode belum memakai masa tenggang (P3).
+- Menilai tampilan awal dari tangkapan layar di PR (rancangan lengkap di P1).
+
 ## 2026-10-07: Konsep versi 2 disepakati, semua dokumen ditulis ulang
 
 **Diubah**

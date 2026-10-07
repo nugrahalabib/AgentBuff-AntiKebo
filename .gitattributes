@@ -1,4 +1,7 @@
+# Berkas yang dieksekusi Linux wajib LF (CRLF di shebang membuat kontainer gagal boot).
 * text=auto eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf
 *.png binary
 *.jpg binary
 *.jpeg binary
@@ -9,3 +12,4 @@
 *.mp3 binary
 *.ogg binary
 *.wav binary
+*.wasm binary

@@ -1,0 +1,11 @@
+node_modules
+.next
+dist
+.git
+.env
+.env.*
+referensi
+playwright-report
+test-results
+coverage
+pc/target

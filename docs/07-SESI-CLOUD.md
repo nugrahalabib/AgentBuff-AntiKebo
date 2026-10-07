@@ -67,10 +67,11 @@ Kredit cloud Chief: **$250, kedaluwarsa 5 November 2026 pukul 14.59 WIB**. Ada 1
 
 - Tidak ada SSH ke VPS, DB produksi, repo AgentBuff, atau PC Windows. **Jangan mencoba deploy.**
   Pekerjaan itu ada di paket L1 sampai L3.
-- `CLAUDE_CODE_REMOTE=true` menandakan cloud. Hook `SessionStart` menyalakan Postgres dan memasang
-  dependensi (paket P0 melengkapi: DB pengembangan, migrasi, `.env.local` acak, Rust bila ada `pc/`).
-- AgentBuff selalu lewat server tiruan (`AGENTBUFF_TIRUAN=1`), mengikuti kontrak
-  `05-INTEGRASI-AGENTBUFF.md`.
+- `CLAUDE_CODE_REMOTE=true` menandakan cloud. Hook `SessionStart` menyalakan Postgres, memasang
+  dependensi, membuat `.env.local` acak, peran + DB pengembangan, menjalankan migrasi
+  (`scripts/siapkan-lokal.sh`), dan mengunduh crate Rust bila ada `pc/`. Log di `/tmp/sesi-cloud-*.log`.
+- AgentBuff selalu lewat server tiruan (`AGENTBUFF_TIRUAN=1`, `pnpm tiruan`), termasuk layar masuk
+  dengan akun contoh, mengikuti kontrak `05-INTEGRASI-AGENTBUFF.md`.
 - Aplikasi PC: VM cloud adalah Linux. Taruh logika di crate `pc/inti` tanpa ketergantungan Tauri
   supaya `cargo test` jalan di VM tanpa pustaka sistem. Build Windows dan tes khusus Windows
   dijalankan GitHub Actions (`windows-latest`).

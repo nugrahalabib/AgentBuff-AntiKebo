@@ -46,18 +46,25 @@ Sumber pola: `referensi/template-tuya/` dan `referensi/standar-agentbuff/`
 
 **Status: rancangan, dibangun di repo AgentBuff (sesi laptop, paket L1).** Selama belum ada,
 AntiKebo memakai server tiruan `tests/tiruan/agentbuff.ts` yang mengikuti kontrak ini persis
-(`AGENTBUFF_TIRUAN=1`). Bila AgentBuff mengubah kontrak, dokumen ini diperbarui lebih dulu.
+(`AGENTBUFF_TIRUAN=1`, `pnpm tiruan`). Klien AntiKebo: `src/lib/agentbuff/pintu.ts`; uji kontraknya
+`tests/integrasi/tiruan-kontrak.test.ts` menjadi acuan L1 ("lolos tes yang sama terhadap pintu
+asli"). Bila AgentBuff mengubah kontrak, dokumen ini diperbarui lebih dulu.
 
 Semua pintu: `POST`, autentikasi Basic klien (sama dengan `/status`), badan JSON, jawaban JSON
 kecuali disebut lain. Galat umum:
 
 | HTTP | `alasan` | Arti |
 |---|---|---|
+| 400 | `permintaan_tidak_sah` | Badan bukan objek JSON, isian wajib hilang, atau `gaya`/`bahasa` tidak dikenal |
 | 401 | `klien` | Kredensial klien salah |
 | 403 | `tidak_berhak` | Hak AntiKebo pengguna tidak aktif |
-| 403 | `belum_diizinkan` | Scope izin belum diberi pengguna |
+| 403 | `belum_diizinkan` | Scope izin belum diberi pengguna (`kanal`/`kabar`: `agentbuff:kabar`; `suara`: `agentbuff:suara`) |
 | 404 | `tidak_dikenal` | `sub` tidak dikenal |
-| 503 | `agen_tidak_aktif` | Mesin agen pengguna sedang mati; coba lagi nanti |
+| 503 | `agen_tidak_aktif` | Mesin agen pengguna sedang mati; coba lagi nanti (hanya `kabar` dan `suara`) |
+
+Urutan pemeriksaan (K-25): kredensial klien, badan, `sub`, hak, izin, lalu aturan pintu itu.
+Badan galat selalu `{ "alasan", "pesan"? }`; AntiKebo memperlakukan `alasan` yang tidak dikenal dan
+jawaban yang tidak bisa dibaca sebagai "tidak terjangkau" (aman untuk dicoba lagi).
 
 ### 4.1 `POST /masuk/kanal`
 
@@ -81,8 +88,10 @@ Badan `{ "sub", "kanal": "k_7f3a", "teks": "...", "kunci": "kej_123:spam:7" }`.
 `teks` ≤ 1000 huruf (teks polos, tautan boleh). `kunci` ≤ 64 huruf untuk idempotensi (kunci sama
 dalam 24 jam = tidak dikirim dua kali).
 
-- 200 `{ "ok": true, "id": "..." }`
-- 409 `{ "alasan": "kanal_tidak_siap", "pesan": "..." }`
+- 200 `{ "ok": true, "id": "..." }`; kunci idempoten yang sama dalam 24 jam = 200 dengan `id` yang
+  sama tanpa mengirim lagi (tidak terkena batas jeda).
+- 409 `{ "alasan": "kanal_tidak_siap", "pesan": "..." }` (juga bila `kanal` sudah tidak ada)
+- 422 `{ "alasan": "teks_tidak_sah" }` (teks kosong atau > 1000 huruf)
 - 429 `{ "alasan": "terlalu_cepat", "ulangiSetelahMs": 4000 }`
 
 Batas minimal antar pesan per kanal ditegakkan AgentBuff: Telegram 5 dtk, Discord/Slack/Google
@@ -105,7 +114,8 @@ Badan `{ "sub", "bahasa": "id" }` →
 ### 5.2 `POST /masuk/suara`
 
 Badan `{ "sub", "teks": "...", "gaya": "galak", "suara": "id-ID-ArdiNeural", "bahasa": "id" }`.
-`teks` ≤ 300 huruf; `gaya`: `galak` atau `biasa`; `suara` opsional (bawaan pengguna).
+`teks` ≤ 300 huruf; `gaya`: `galak` atau `biasa`; `suara` opsional (bawaan pengguna; id yang tidak
+dikenal juga memakai bawaan, header `X-AgentBuff-Suara` menyebut suara yang benar-benar dipakai).
 
 - 200: badan = berkas audio (`audio/ogg` atau `audio/mpeg`), header `X-AgentBuff-Penyedia`,
   `X-AgentBuff-Suara`, `X-AgentBuff-Durasi-Ms`.

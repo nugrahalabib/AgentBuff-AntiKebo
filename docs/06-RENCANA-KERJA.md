@@ -10,7 +10,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 
 | Paket | Isi | Tempat | Status |
 |---|---|---|---|
-| P0 | Kerangka dari template Tuya + server tiruan AgentBuff | Cloud | Belum |
+| P0 | Kerangka dari template Tuya + server tiruan AgentBuff | Cloud | Selesai 2026-10-07 |
 | P1 | Prototipe desain semua layar (untuk dinilai Chief) | Cloud | Belum |
 | P2 | Data, pengulangan, layanan alarm, template, Komitmen | Cloud | Belum |
 | P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Belum |
@@ -32,27 +32,49 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 
 ## P0 Kerangka dari template Tuya
 
+**Status: selesai 2026-10-07.** Bukti di cloud dan di klon bersih: jaga (12 penjaga), tsc, lint,
+format, 65 tes vitest, build, 14 uji Playwright (desktop + 390 px) hijau; `deploy/uji-rls.sql`
+lulus di PGlite dan Postgres 16 sungguhan. CI GitHub Actions menjalankan langkah yang sama di PR P0
+dan PR digabung hanya bila hijau.
+
 Tujuan: aplikasi kosong yang sudah lolos standar (masuk, cek hak, MCP kosong, worker, DB, deploy,
 guard, tes, CI) dengan nama AntiKebo.
 
-- [ ] Salin kerangka `referensi/template-tuya/`: konfigurasi, `src/lib/{env,kripto,log}.ts`,
+- [x] Salin kerangka `referensi/template-tuya/`: konfigurasi, `src/lib/{env,kripto,log}.ts`,
       `src/lib/agentbuff/*`, `src/lib/auth/*`, `src/lib/agen/*`, `src/lib/mcp/{server,dasar}.ts`,
       `src/lib/db/*` (tabel dasar: pengguna, sesi, token_mcp, jti_terpakai, audit), `src/proxy.ts`,
       halaman masuk, auth, mcp, health, hak, keluar, `src/worker/index.ts` (detak), `scripts/{jaga.mjs,
       migrasi.ts}`, `tests/integrasi/harness.ts`, `deploy/*`, `globals.css`, komponen UI dasar, i18n.
-- [ ] Ganti semua `tuya` → `antikebo` (kuki, prefiks token, peran DB, kontainer, product key).
+      (Tambahan: `status_hak`, `detak_worker`; tabel `aktivitas` template menjadi `audit`.)
+- [x] Ganti semua `tuya` → `antikebo` (kuki, prefiks token, peran DB, kontainer, product key).
       Modul Tuya disalin lagi di P7.
-- [ ] Scope OIDC tambahan `agentbuff:kabar agentbuff:suara` (diabaikan server tiruan bila belum ada).
-- [ ] `tests/tiruan/agentbuff.ts`: server tiruan pintu `/masuk/kanal`, `/masuk/kabar`,
+- [x] Scope OIDC tambahan `agentbuff:kabar agentbuff:suara`, izin dicermin di `pengguna.izin_*`,
+      tombol "Beri izin" (`prompt=consent`), cadangan otomatis ke scope dasar bila AgentBuff menjawab
+      `invalid_scope` (K-24).
+- [x] `tests/tiruan/agentbuff.ts`: server tiruan pintu `/masuk/kanal`, `/masuk/kabar`,
       `/masuk/suara`, `/masuk/suara/daftar` persis kontrak `05-INTEGRASI-AGENTBUFF.md` (suara tiruan =
-      berkas audio pendek buatan skrip), plus `/status`. Dipakai dev (`AGENTBUFF_TIRUAN=1`) dan tes.
-- [ ] Kecualikan `referensi/` dari tsconfig, ESLint, Vitest, Prettier, `jaga`, build.
-- [ ] CI `.github/workflows/ci.yml`: jaga, tsc, lint, test, build.
-- [ ] Lengkapi `scripts/sesi-cloud.sh`: peran + DB pengembangan, migrasi, `.env.local` acak.
-- [ ] Isi bagian "Perintah" di `CLAUDE.md`; `.env.example` lengkap (`03-ARSITEKTUR.md` §12).
+      MP3 buatan skrip `tests/tiruan/suara.ts`), plus `/status` **dan OIDC lengkap** (K-23). Dipakai
+      dev (`pnpm tiruan`, `AGENTBUFF_TIRUAN=1`) dan tes. Klien asli: `src/lib/agentbuff/pintu.ts`.
+- [x] Kecualikan `referensi/` dari tsconfig, ESLint, Vitest, Prettier, `jaga`, build (dijaga penjaga
+      `referensi-terkecuali`). Cargo: belum ada `pc/`; P10 wajib memakai workspace yang tidak
+      menyentuh `referensi/`.
+- [x] CI `.github/workflows/ci.yml`: jaga, tsc, lint, format, test, migrasi + uji RLS di Postgres 16,
+      build, Playwright.
+- [x] Lengkapi `scripts/sesi-cloud.sh`: peran + DB pengembangan, migrasi, `.env.local` acak (lewat
+      `scripts/siapkan-lokal.sh`, juga dipakai CI).
+- [x] Isi bagian "Perintah" di `CLAUDE.md`; `.env.example` lengkap (`03-ARSITEKTUR.md` §12, dijaga
+      penjaga `env-contoh`).
 
 Selesai bila: install, jaga, tsc, lint, test, build hijau di cloud dan CI; `/api/health` = `ok`;
 `/masuk` tampil; tes harness jalan dengan peran non-bypass; server tiruan menjawab sesuai kontrak.
+
+Catatan untuk paket berikutnya:
+- P1/P8/P11: shell P0 hanya punya tab Alarm dan Pengaturan; tab Siaga, Riwayat, bilah samping
+  laptop, Bara, Fajar, dan maskot Kebo menyusul. Tombol utama sudah grafit pil, toska untuk aktif.
+- P3: K-07 (tenggang hak) butuh kolom "tidak aktif sejak" di `status_hak` dan satu modul aturan.
+  SSE `/api/peristiwa` dan `LISTEN/NOTIFY` belum disalin (dibangun bersama token perangkat).
+- P5/P6: pakai `src/lib/agentbuff/pintu.ts` (tidak pernah melempar; `ulangiSetelahMs` sudah dibaca).
+- P12: `src/lib/mcp/alat.ts` baru berisi `get_setup_status`; `paritas.ts` + penjaganya belum ada.
 
 ## P1 Prototipe desain semua layar
 
