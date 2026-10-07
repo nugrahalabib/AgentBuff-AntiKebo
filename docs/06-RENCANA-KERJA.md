@@ -32,9 +32,10 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 
 ## P0 Kerangka dari template Tuya
 
-**Status: selesai 2026-10-07.** Bukti: jaga (12 penjaga), tsc, lint, format, 65 tes vitest,
-build, 14 uji Playwright (desktop + 390 px) hijau di cloud dan CI; `deploy/uji-rls.sql` lulus di
-PGlite dan Postgres 16 sungguhan. Rincian di `LAPORAN-PERUBAHAN.md` 2026-10-07 (P0).
+**Status: selesai 2026-10-07** (kode dan uji); CI GitHub Actions baru berjalan saat cabang bisa
+di-push (lihat "Masih butuh Chief" di `LAPORAN-PERUBAHAN.md`). Bukti di cloud dan di klon bersih:
+jaga (12 penjaga), tsc, lint, format, 65 tes vitest, build, 14 uji Playwright (desktop + 390 px)
+hijau; `deploy/uji-rls.sql` lulus di PGlite dan Postgres 16 sungguhan.
 
 Tujuan: aplikasi kosong yang sudah lolos standar (masuk, cek hak, MCP kosong, worker, DB, deploy,
 guard, tes, CI) dengan nama AntiKebo.
