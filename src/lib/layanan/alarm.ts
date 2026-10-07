@@ -1,7 +1,7 @@
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 import { isiDariBaris, kolomDariIsi, type BarisAlarm } from "@/lib/alarm/baris";
-import { BAWAAN_SISTEM, MAKS_ALARM, SkemaIsiAlarm, SkemaMasukanAlarm, type IsiAlarm, type MasukanAlarm } from "@/lib/alarm/isi";
+import { BAWAAN_SISTEM, MAKS_ALARM, SkemaIsiAlarmUtuh, SkemaMasukanAlarm, type IsiAlarm, type MasukanAlarm } from "@/lib/alarm/isi";
 import { keadaanKunci, periksaKomitmen, type KeadaanKunci } from "@/lib/alarm/komitmen";
 import { barisDari, denganPengguna, schema, type Tx } from "@/lib/db";
 import { isi as isiTeks } from "@/lib/i18n";
@@ -9,6 +9,7 @@ import { cocok, kejadianBerikutnya, SkemaTanggal, tanggalSekaliBerikutnya, type 
 import { catatAudit } from "./audit";
 import { GalatLayanan, pesanMasukan, type Sumber } from "./dasar";
 import { pastikanKodeQrMilik } from "./kode-qr";
+import { rencanakanNaskahAlarm, statusSuaraAlarm, type StatusSuara } from "./suara";
 import { jamTampil, konteksPengguna, type KonteksPengguna } from "./konteks";
 import { cariTemplate } from "./template";
 
@@ -43,6 +44,8 @@ export type AlarmLengkap = IsiAlarm & {
   terkunciSampai: Date | null;
   /** Sedang berbunyi, ditunda, atau menunggu konfirmasi bangun. */
   berbunyi: boolean;
+  /** Suara omelan: siap, sedang dibuat, atau belum bisa dibuat + alasan (PRD F4). */
+  suara: StatusSuara;
 };
 
 // ------------------------------------------------------------------ pembantu
@@ -143,7 +146,7 @@ function rakit(lapisan: Array<Partial<MasukanAlarm> | Partial<IsiAlarm>>, k: Kon
   if (p?.jenis === "sekali" && !p.tanggal && typeof gabung.jam === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(gabung.jam)) {
     gabung.pengulangan = { jenis: "sekali", tanggal: tanggalSekaliBerikutnya(gabung.jam, zona, sekarang) };
   }
-  const h = SkemaIsiAlarm.safeParse(gabung);
+  const h = SkemaIsiAlarmUtuh.safeParse(gabung);
   if (!h.success) throw new GalatLayanan("masukan", pesanMasukan(h.error, k.t));
   return h.data;
 }
@@ -171,6 +174,11 @@ async function lengkapi(tx: Tx, k: KonteksPengguna, daftar: BarisAlarm[], sekara
     .from(schema.lewatiAlarm)
     .where(inArray(schema.lewatiAlarm.alarmId, ids))
     .orderBy(asc(schema.lewatiAlarm.tanggal));
+  const suara = await statusSuaraAlarm(
+    tx,
+    k,
+    daftar.map((a) => ({ id: a.id, isi: isiDariBaris(a) })),
+  );
   return daftar.map((a) => {
     const m = kej.find((x) => x.alarmId === a.id && x.status === "menunggu");
     const berikutnya = m ? { utc: m.jadwalUtc, tanggal: m.tanggal } : null;
@@ -187,6 +195,7 @@ async function lengkapi(tx: Tx, k: KonteksPengguna, daftar: BarisAlarm[], sekara
       lewati: lw.filter((x) => x.alarmId === a.id && x.tanggal >= hariIni).map((x) => x.tanggal),
       terkunciSampai: kunci.terkunci ? kunci.sampai : null,
       berbunyi: kej.some((x) => x.alarmId === a.id && x.status !== "menunggu"),
+      suara: suara.get(a.id) ?? { status: "siap" },
     };
   });
 }
@@ -239,7 +248,7 @@ export async function buatAlarm(penggunaId: string, masukan: unknown, sumber: Su
     const [{ n }] = barisDari<{ n: number }>(await tx.execute(sql`select count(*)::int as n from alarm where pengguna_id = ${penggunaId}`));
     if (n >= MAKS_ALARM) throw new GalatLayanan("masukan", isiTeks(k.t.galat.batasAlarm, { n: MAKS_ALARM }));
     const tpl = opsi.template ? await cariTemplate(tx, k, opsi.template) : null;
-    const dasar: Partial<IsiAlarm> = { ...BAWAAN_SISTEM, ...k.bawaan, agendaJudul: k.t.alarmBaru.judulBawaan, agendaDetail: null, tuya: [], aktif: true };
+    const dasar: Partial<IsiAlarm> = { ...BAWAAN_SISTEM, ...k.bawaan, agendaJudul: k.t.alarmBaru.judulBawaan, agendaDetail: null, tuya: [], kalimatPribadi: [], aktif: true };
     const isiBaru = rakit([dasar, { pengulangan: { jenis: "sekali" } }, tpl?.isi ?? {}, m], k, k.zona, sekarang);
     await pastikanKodeQrMilik(tx, k, isiBaru.soal.kodeQr);
     tolakBila(k, isiBaru, hitungBerikutnya(isiBaru, k.zona, [], sekarang));
@@ -248,6 +257,7 @@ export async function buatAlarm(penggunaId: string, masukan: unknown, sumber: Su
       .values({ penggunaId, zona: k.zona, dariTemplate: tpl?.id ?? null, ...kolomDariIsi(isiBaru) })
       .returning();
     await materialisasi(tx, a, sekarang);
+    await rencanakanNaskahAlarm(tx, k, isiBaru);
     await catatAudit(penggunaId, { sumber, jenis: "alarm", ringkasan: `Alarm dibuat: ${ringkas(isiBaru)}`, detail: { alarmId: a.id, template: tpl?.id ?? null } }, tx);
     const [hasil] = await lengkapi(tx, k, [a], sekarang);
     return hasil;
@@ -272,6 +282,7 @@ export async function ubahAlarm(penggunaId: string, id: string, masukan: unknown
       .where(eq(schema.alarm.id, a.id))
       .returning();
     await materialisasi(tx, b, sekarang);
+    await rencanakanNaskahAlarm(tx, k, isiBaru);
     await catatAudit(penggunaId, { sumber, jenis: "alarm", ringkasan: `Alarm diubah: ${ringkas(isiBaru)}`, detail: { alarmId: a.id, isian: Object.keys(m) } }, tx);
     const [hasil] = await lengkapi(tx, k, [b], sekarang);
     return hasil;
@@ -308,6 +319,7 @@ export async function aturAktifAlarm(penggunaId: string, id: string, aktif: bool
     tolakBila(k, isiBaru, berikutnya);
     const [b] = await tx.update(schema.alarm).set({ aktif, pengulangan: isiBaru.pengulangan, diubah: sekarang }).where(eq(schema.alarm.id, a.id)).returning();
     await materialisasi(tx, b, sekarang);
+    await rencanakanNaskahAlarm(tx, k, isiBaru);
     await catatAudit(penggunaId, { sumber, jenis: "alarm", ringkasan: `Alarm ${aktif ? "dinyalakan" : "dimatikan"}: ${ringkas(a)}`, detail: { alarmId: a.id } }, tx);
     const [hasil] = await lengkapi(tx, k, [b], sekarang);
     return hasil;

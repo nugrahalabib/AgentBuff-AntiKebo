@@ -1,0 +1,56 @@
+import type { NaskahKarakter } from "./jenis";
+
+export const temanNyolot: NaskahKarakter = {
+  id: {
+    umum: [
+      "Woy {nama}, kerbau aja udah bangun dari tadi!",
+      "{nama}, bangun! Gue udah nungguin dari subuh, anjir.",
+      "Lu tidur apa pingsan sih, {nama}?",
+      "{nama}, kasur lu nggak bakal kabur. Bangun!",
+      "{nama}! Matahari udah nyolot, lu juga dong!",
+      "{nama}, gue rekam ngorok lu ya kalau nggak bangun.",
+      "Bangun, {nama}! Jangan jadi legenda kesiangan lagi.",
+      "{nama}, grup udah rame ngomongin lu yang belum bangun.",
+      "Yaelah {nama}, alarm segini doang nggak mempan?",
+      "{nama}! Bangun atau gue spam terus nih!",
+      "Kampret, {nama}, bangun dong!",
+      "{nama}, nanti nyesel lho kalau kesiangan lagi.",
+    ],
+    waktu: {
+      3: "Tiga menit, {nama}. Lu serius masih tidur?",
+      5: "Lima menit, {nama}! Gue udah bosen nungguin.",
+      10: "Sepuluh menit, {nama}! Rekor baru nih, bangga?",
+      15: "Lima belas menit, {nama}! Gue udah sarapan dua kali.",
+      30: "Setengah jam, {nama}! Lu kerbau beneran ya?",
+    },
+    agenda: ["{nama}, inget {agenda} woy!", "Katanya mau {agenda}, {nama}? Bangun!", "{nama}, jangan sampai {agenda} batal gara-gara lu molor."],
+    cek: "{nama}, lu masih melek kan? Jangan merem lagi!",
+    penutup: "Nah gitu, {nama}! Gue bangga dikit.",
+  },
+  en: {
+    umum: [
+      "Yo {nama}, even a buffalo got up ages ago!",
+      "{nama}, wake up! I've been waiting since dawn, man.",
+      "Are you asleep or passed out, {nama}?",
+      "{nama}, your bed isn't going anywhere. Get up!",
+      "{nama}! The sun is showing off, you should too!",
+      "{nama}, I'm recording your snoring if you don't get up.",
+      "Get up, {nama}! Don't become the oversleeping legend again.",
+      "{nama}, the group chat is all about you still sleeping.",
+      "Come on {nama}, this alarm isn't enough for you?",
+      "{nama}! Get up or I'll keep spamming you!",
+      "Dude, {nama}, just get up already!",
+      "{nama}, you'll regret it if you oversleep again.",
+    ],
+    waktu: {
+      3: "Three minutes, {nama}. You're seriously still asleep?",
+      5: "Five minutes, {nama}! I'm bored of waiting.",
+      10: "Ten minutes, {nama}! New record, proud of yourself?",
+      15: "Fifteen minutes, {nama}! I've had breakfast twice.",
+      30: "Half an hour, {nama}! Are you an actual buffalo?",
+    },
+    agenda: ["{nama}, remember {agenda}, yo!", "You said you'd do {agenda}, {nama}? Get up!", "{nama}, don't let {agenda} get cancelled because you overslept."],
+    cek: "{nama}, eyes still open, right? Don't close them again!",
+    penutup: "There you go, {nama}! I'm a little proud.",
+  },
+};

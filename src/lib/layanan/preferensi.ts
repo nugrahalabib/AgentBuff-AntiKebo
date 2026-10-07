@@ -8,6 +8,7 @@ import { SkemaJam } from "@/lib/jadwal/pengulangan";
 import { zonaSah } from "@/lib/jadwal/zona";
 import { alarmTerkunci, pindahZona } from "./alarm";
 import { catatAudit } from "./audit";
+import { rencanakanSemua } from "./suara";
 import { GalatLayanan, pesanMasukan, type Sumber } from "./dasar";
 import { jamTampil, konteksPengguna } from "./konteks";
 
@@ -93,6 +94,8 @@ export async function ubahPreferensi(penggunaId: string, masukan: unknown, sumbe
         ...(m.orientasiSelesai !== undefined ? { orientasiSelesai: m.orientasiSelesai ? sekarang : null } : {}),
       })
       .where(eq(schema.pengguna.id, penggunaId));
+    // Nama atau bahasa berubah = kalimat omelan berubah: rencanakan klip baru.
+    if (m.namaPanggilan !== undefined || m.bahasa) await rencanakanSemua(tx, await konteksPengguna(tx, penggunaId));
     await catatAudit(penggunaId, { sumber, jenis: "pengaturan", ringkasan: "Pengaturan diubah", detail: { isian: Object.keys(m) } }, tx);
   });
   return ambilPreferensi(penggunaId);

@@ -1,0 +1,78 @@
+{
+  "laju": 22050,
+  "format": "wav-pcm16-mono",
+  "bunyi": [
+    {
+      "id": "klasik",
+      "berkas": "/bunyi/klasik.wav",
+      "durasiMs": 2600,
+      "lufs": -14,
+      "puncakDb": -5.8,
+      "naikDtk": null,
+      "bait": 114704
+    },
+    {
+      "id": "digital",
+      "berkas": "/bunyi/digital.wav",
+      "durasiMs": 2400,
+      "lufs": -14,
+      "puncakDb": -9.4,
+      "naikDtk": null,
+      "bait": 105884
+    },
+    {
+      "id": "sirene",
+      "berkas": "/bunyi/sirene.wav",
+      "durasiMs": 3200,
+      "lufs": -14,
+      "puncakDb": -9.3,
+      "naikDtk": null,
+      "bait": 141164
+    },
+    {
+      "id": "lonceng",
+      "berkas": "/bunyi/lonceng.wav",
+      "durasiMs": 3600,
+      "lufs": -14,
+      "puncakDb": -5.6,
+      "naikDtk": null,
+      "bait": 158804
+    },
+    {
+      "id": "kebakaran",
+      "berkas": "/bunyi/kebakaran.wav",
+      "durasiMs": 4000,
+      "lufs": -14,
+      "puncakDb": -10.3,
+      "naikDtk": null,
+      "bait": 176444
+    },
+    {
+      "id": "ayam",
+      "berkas": "/bunyi/ayam.wav",
+      "durasiMs": 2800,
+      "lufs": -14,
+      "puncakDb": -7.1,
+      "naikDtk": null,
+      "bait": 123524
+    },
+    {
+      "id": "nuklir",
+      "berkas": "/bunyi/nuklir.wav",
+      "durasiMs": 3400,
+      "lufs": -14,
+      "puncakDb": -6,
+      "naikDtk": null,
+      "bait": 149984
+    },
+    {
+      "id": "naik",
+      "berkas": "/bunyi/naik.wav",
+      "durasiMs": 2400,
+      "lufs": -14,
+      "puncakDb": -2.7,
+      "naikDtk": 60,
+      "bait": 105884
+    }
+  ]
+}

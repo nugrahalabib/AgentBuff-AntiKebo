@@ -15,7 +15,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P2 | Data, pengulangan, layanan alarm, template, Komitmen | Cloud | Selesai 2026-10-07 |
 | P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Selesai 2026-10-07 |
 | P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Selesai 2026-10-07 |
-| P5 | Suara dan bunyi | Cloud | Belum |
+| P5 | Suara dan bunyi | Cloud | Selesai |
 | P6 | Spam kanal, pengingat malam, notifikasi web | Cloud | Belum |
 | P7 | Rumah pintar Tuya | Cloud | Belum |
 | P8 | Layar inti tersambung API | Cloud | Belum |
@@ -236,17 +236,49 @@ Catatan untuk paket berikutnya:
 
 ## P5 Suara dan bunyi
 
+**Status: selesai 2026-10-07.** Bukti di cloud: jaga (13 penjaga), tsc, lint, format, 436 tes
+vitest (termasuk Postgres 16 sungguhan), build, 62 uji Playwright mode produksi (desktop + 390 px);
+`uji-rls.sql` 38/38 di PGlite dan Postgres 16. Kekerasan 8 bunyi dicocokkan silang dengan
+`ffmpeg ebur128`. Rasa bunyi dan suara di speaker asli, iPhone saklar senyap: **wajib diuji** Chief (L2).
+
 Rujukan: `10-SUARA.md`; PRD F1 sampai F7.
 
-- [ ] `scripts/bangun-bunyi.ts` + 8 bunyi + normalisasi + `public/bunyi/LISENSI.md` ("dibuat sendiri").
-- [ ] Naskah 5 karakter id/en + penyaring kata.
-- [ ] Tabel `naskah_suara`, `klip_suara`; antrean worker; klien `/masuk/suara` dan `/masuk/suara/daftar`;
-      status suara per alarm; unduh klip untuk perangkat.
-- [ ] Pemutar web (Web Audio): lapisan bunyi + omelan, jeda 3 dtk, peredaman, acak tanpa ulang,
-      kalimat waktu, cadangan `speechSynthesis`.
+- [x] `scripts/bangun-bunyi.ts` + 8 bunyi + normalisasi + `public/bunyi/LISENSI.md` ("dibuat sendiri").
+      (`src/lib/bunyi/sintesis.ts`: WAV PCM16 mono 22,05 kHz, −14 LUFS BS.1770, puncak ≤ −1,5 dBFS,
+      K-54; tes memastikan berkas di repo sama persis dengan sintesis ulang.)
+- [x] Naskah 5 karakter id/en + penyaring kata. (`src/lib/suara/karakter/*`, `saring.ts`,
+      `naskah.ts`; kalimat pribadi maks 10 × 150 huruf lewat penyaring yang sama; Kustom wajib
+      punya kalimat pribadi, K-57.)
+- [x] Tabel `naskah_suara`, `klip_suara`; antrean worker; klien `/masuk/suara` dan `/masuk/suara/daftar`;
+      status suara per alarm; unduh klip untuk perangkat. (`src/lib/suara/antrean.ts`,
+      `src/lib/layanan/suara.ts`, `/api/perangkat/klip/[hash]`, `/api/app/suara`,
+      `/api/app/suara/contoh`; omelan + hash klip ikut di jadwal perangkat; K-55, K-56, K-59, K-60.)
+- [x] Pemutar web (Web Audio): lapisan bunyi + omelan, jeda 3 dtk, peredaman, acak tanpa ulang,
+      kalimat waktu, cadangan `speechSynthesis`. (`src/lib/suara/pemutar.ts`,
+      `src/components/layar/berbunyi-suara.tsx`; teks besar bila tanpa suara perangkat, nada bip bila
+      berkas bunyi gagal, ajakan "Ketuk layar" bila peramban menahan audio, K-58.)
 
 Selesai bila: tes antrean (ulang, galat tetap, pakai ulang klip), tes urutan putar (contoh emas),
-uji Playwright layar berbunyi dengan suara tiruan.
+uji Playwright layar berbunyi dengan suara tiruan. (Semua ada: `tests/integrasi/suara.test.ts`,
+`tests/unit/suara.test.ts` + `tests/emas/urutan-suara.json` dari oracle Python,
+`tests/e2e/suara.spec.ts` dengan MP3 suara tiruan di `/prototipe/bunyiHitungan?klip=1&berlalu=185`.)
+
+Catatan untuk paket berikutnya:
+- P6: kalimat `penutup` karakter dipakai sebagai pesan kanal; kalimat `cek` untuk "Masih bangun?".
+  Ambil dari `naskahAlarm`/`kalimatAlarm` (sudah berisi nama panggilan), jangan menulis ulang.
+- P8: layar berbunyi asli memakai `LayarBerbunyiBersuara` (bukan `LayarBerbunyi` polos) dengan
+  `omelan` dari `omelanUntuk` (bentuknya sama dengan `jadwalPerangkat`), `benih` dari kejadian, dan
+  `mulaiMs` = saat berbunyi. Ubah alarm: pilihan bunyi memakai `pratinjauBunyi` (5 dtk), pilihan
+  suara `/api/app/suara` + contoh `/api/app/suara/contoh`, kalimat pribadi (galat ramah
+  `kalimat_kasar`, `kalimat_kustom_wajib`). Kartu alarm menampilkan `alarm.suara` (siap / dibuat n
+  dari total / belum + alasan + tombol "Beri izin" bila `belum_diizinkan`).
+- P9: Service Worker menyimpan `public/bunyi/*.wav` dan klip 24 jam ke depan; siaga "siap" hanya
+  bila semua klip tersimpan. `LayarBerbunyiBersuara` dipakai juga di Jam Meja (ketukan "Mulai
+  siaga" sudah membuka audio, jadi ajakan ketuk tidak muncul).
+- P10: rodio memutar WAV yang sama (dibundel), urutan omelan port Rust `urutan.ts` wajib lulus
+  `tests/emas/urutan-suara.json`; klip diunduh dari `/api/perangkat/klip/[hash]` dengan token.
+- P12: alat MCP `list_voices`, `preview_voice`, `get_voice_status`, dan `kalimatPribadi` di alat
+  alarm (atau catat di `paritas.ts`).
 
 ## P6 Spam kanal, pengingat malam, notifikasi web
 

@@ -1,0 +1,56 @@
+import type { NaskahKarakter } from "./jenis";
+
+export const pelatihTentara: NaskahKarakter = {
+  id: {
+    umum: [
+      "BANGUN, {nama}! Ini bukan hari libur!",
+      "Kasur bukan medan perang, {nama}! Berdiri!",
+      "Prajurit {nama}! Bangun dalam hitungan tiga!",
+      "{nama}! Siap grak! Kaki ke lantai sekarang!",
+      "Tidak ada kata nanti, {nama}! Bangun!",
+      "{nama}, musuh tidak menunggu kamu bangun!",
+      "Lima puluh push up kalau kamu tidak bangun sekarang, {nama}!",
+      "{nama}! Selimut itu bukan seragam! Lepaskan!",
+      "Komandan tidak suka prajurit pemalas, {nama}!",
+      "Bangun, {nama}! Disiplin dimulai dari pagi!",
+      "{nama}! Ini perintah, bukan permintaan!",
+      "Mata terbuka, badan tegak, {nama}! Sekarang!",
+    ],
+    waktu: {
+      3: "Tiga menit terbuang, {nama}! Tidak bisa diterima!",
+      5: "Lima menit, {nama}! Prajurit macam apa kamu?",
+      10: "Sepuluh menit, {nama}! Satu peleton sudah lari pagi!",
+      15: "Lima belas menit, {nama}! Kamu terlambat apel!",
+      30: "Setengah jam, {nama}! Ini pelanggaran berat!",
+    },
+    agenda: ["Misi hari ini: {agenda}! Bangun, {nama}!", "{nama}, {agenda} menunggu! Gerak cepat!", "Tidak ada prajurit yang gagal {agenda} karena kesiangan, {nama}!"],
+    cek: "{nama}! Laporkan! Masih bangun?",
+    penutup: "Bagus, {nama}! Sekarang siap tempur!",
+  },
+  en: {
+    umum: [
+      "WAKE UP, {nama}! This is not a holiday!",
+      "Your bed is not a battlefield, {nama}! On your feet!",
+      "Private {nama}! Up on the count of three!",
+      "{nama}! Attention! Feet on the floor now!",
+      "There is no later, {nama}! Get up!",
+      "{nama}, the enemy won't wait for you to wake up!",
+      "Fifty push ups if you don't get up now, {nama}!",
+      "{nama}! That blanket is not a uniform! Take it off!",
+      "The commander hates lazy soldiers, {nama}!",
+      "Up, {nama}! Discipline starts in the morning!",
+      "{nama}! That's an order, not a request!",
+      "Eyes open, back straight, {nama}! Now!",
+    ],
+    waktu: {
+      3: "Three minutes wasted, {nama}! Unacceptable!",
+      5: "Five minutes, {nama}! What kind of soldier are you?",
+      10: "Ten minutes, {nama}! The whole platoon is already running!",
+      15: "Fifteen minutes, {nama}! You're late for roll call!",
+      30: "Half an hour, {nama}! This is a serious offense!",
+    },
+    agenda: ["Today's mission: {agenda}! Get up, {nama}!", "{nama}, {agenda} is waiting! Move it!", "No soldier fails {agenda} by oversleeping, {nama}!"],
+    cek: "{nama}! Report! Still awake?",
+    penutup: "Good, {nama}! Now get ready for battle!",
+  },
+};

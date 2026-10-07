@@ -4,10 +4,12 @@ import { periksaEnv } from "@/lib/env";
 import { log } from "@/lib/log";
 import { lengkapiMaterialisasi } from "@/lib/penjadwal/mesin";
 import { Penjadwal } from "@/lib/penjadwal/penjadwal";
+import { bersihkanSuara } from "@/lib/layanan/suara";
+import { prosesAntreanSuara } from "@/lib/suara/antrean";
 
 // Worker AntiKebo (proses terpisah, peran DB antikebo_worker): penjadwal kejadian (tepat detik,
-// SKIP LOCKED, LISTEN/NOTIFY, pulih; P3), detak, bersih-bersih. Antrean suara (P5), spam kanal
-// (P6), Tuya (P7) masuk sebagai saluran langkah (docs/03-ARSITEKTUR.md §4 sampai §8).
+// SKIP LOCKED, LISTEN/NOTIFY, pulih; P3), antrean suara (P5), detak, bersih-bersih. Spam kanal
+// (P6) dan Tuya (P7) masuk sebagai saluran langkah (docs/03-ARSITEKTUR.md §4 sampai §8).
 // Setiap putaran berbatas waktu; satu putaran menggantung tidak boleh mengunci yang lain.
 
 // Pengembangan: satu .env.local untuk web dan worker; worker memakai peran antikebo_worker.
@@ -59,7 +61,8 @@ async function bersihBersih(): Promise<string> {
   await db()
     .delete(schema.sesi)
     .where(lt(schema.sesi.kedaluwarsaMutlak, new Date(Date.now() - 24 * 60 * 60 * 1000)));
-  return `${d.length} audit lama dihapus`;
+  const s = await db().transaction((tx) => bersihkanSuara(tx, new Date()));
+  return `${d.length} audit lama, ${s} klip tak terpakai dihapus`;
 }
 
 const penjadwal = new Penjadwal({
@@ -72,6 +75,11 @@ const penjadwal = new Penjadwal({
 
 putaran("utama", DETAK_MS, async () => "hidup");
 putaran("bersih", 6 * 60 * 60_000, bersihBersih);
+// Pembuat suara omelan lewat AgentBuff pengguna (docs/10-SUARA.md §4).
+putaran("suara", 3_000, async () => {
+  const h = await prosesAntreanSuara(db);
+  return h.diproses ? `${h.siap} siap, ${h.ulang} diulang, ${h.gagal} gagal` : undefined;
+});
 // Jaring pengaman invarian "alarm aktif = satu kejadian menunggu".
 putaran("materialisasi", 10 * 60_000, async () => `${await db().transaction((tx) => lengkapiMaterialisasi(tx, new Date()))} dipulihkan`);
 penjadwal

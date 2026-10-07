@@ -7,10 +7,15 @@ import type { Pengulangan } from "@/lib/jadwal/pengulangan";
 // Setiap tabel ber-`pengguna_id` milik pemilik WAJIB punya RLS ENABLE+FORCE + kebijakan
 // di migrasi (dijaga scripts/jaga.mjs). Hanya skema di sini; SQL-nya di src/lib/db/migrasi.
 // P0 = tabel dasar; P2 = alarm, lewati, template, kejadian, langkah, preferensi; P3 = perangkat
-// siaga, kode sambung; P4 = soal kejadian, kode QR. Suara, kanal, Tuya menyusul (P5 sampai P7). Impor dari src/lib hanya `import type` (drizzle-kit
+// siaga, kode sambung; P4 = soal kejadian, kode QR; P5 = naskah dan klip suara. Kanal, Tuya
+// menyusul (P6, P7). Impor dari src/lib hanya `import type` (drizzle-kit
 // memuat berkas ini tanpa alias jalur).
 
 const citext = customType<{ data: string }>({ dataType: () => "citext" });
+const bytea = customType<{ data: Buffer; driverData: Buffer | Uint8Array }>({
+  dataType: () => "bytea",
+  fromDriver: (v) => (Buffer.isBuffer(v) ? v : Buffer.from(v)),
+});
 const waktu = (nama: string) => timestamp(nama, { withTimezone: true, mode: "date" });
 const dibuat = () => waktu("dibuat").notNull().defaultNow();
 
@@ -161,6 +166,8 @@ export const alarm = pgTable(
     liburNasional: boolean("libur_nasional").notNull().default(false),
     /** Berhenti sendiri sesudah X menit (PRD C4). Null = tanpa batas. */
     batasMenit: integer("batas_menit"),
+    /** Kalimat omelan pribadi (PRD F3): maks 10, maks 150 huruf, lewat penyaring. */
+    kalimatPribadi: jsonb("kalimat_pribadi").$type<string[]>().notNull().default([]),
     aktif: boolean("aktif").notNull().default(true),
     /** Template asal ("bawaan:..." atau id template pengguna), hanya catatan. */
     dariTemplate: text("dari_template"),
@@ -398,4 +405,56 @@ export const kodeQr = pgTable(
     dibuat: dibuat(),
   },
   (t) => [uniqueIndex("kode_qr_hash_unik").on(t.isiHash), index("kode_qr_pengguna_idx").on(t.penggunaId)],
+);
+
+// ------------------------------------------------------------ suara (P5)
+
+/**
+ * Kalimat omelan yang perlu dibuatkan suara lewat AgentBuff pengguna (docs/10-SUARA.md §4). Satu
+ * baris per kunci (`hash` = teks + suara + gaya + bahasa) per pengguna: dipakai ulang lintas alarm.
+ * Teks kalimat bukan rahasia tetapi pribadi: tidak pernah dicatat di log.
+ */
+export const naskahSuara = pgTable(
+  "naskah_suara",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    hash: char("hash", { length: 64 }).notNull(),
+    teks: text("teks").notNull(),
+    bahasa: text("bahasa").notNull(),
+    suaraId: text("suara_id"),
+    gaya: text("gaya").notNull(),
+    /** menunggu | dibuat | siap | gagal */
+    status: text("status").notNull().default("menunggu"),
+    /** Alasan gagal dari pintu suara (kode kontrak, bukan pesan mentah). */
+    alasan: text("alasan"),
+    percobaan: integer("percobaan").notNull().default(0),
+    cobaLagiSetelah: waktu("coba_lagi_setelah").notNull().defaultNow(),
+    klipId: uuid("klip_id"),
+    dibuat: dibuat(),
+    diubah: waktu("diubah").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("naskah_suara_unik").on(t.penggunaId, t.hash), index("naskah_suara_antre_idx").on(t.status, t.cobaLagiSetelah)],
+);
+
+/** Audio omelan dari AgentBuff pengguna (bytea, ikut cadangan DB). */
+export const klipSuara = pgTable(
+  "klip_suara",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    penggunaId: uuid("pengguna_id")
+      .notNull()
+      .references(() => pengguna.id),
+    hash: char("hash", { length: 64 }).notNull(),
+    audio: bytea("audio").notNull(),
+    mime: text("mime").notNull(),
+    durasiMs: integer("durasi_ms").notNull(),
+    penyedia: text("penyedia").notNull(),
+    suara: text("suara").notNull(),
+    dibuat: dibuat(),
+    dipakaiTerakhir: waktu("dipakai_terakhir").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("klip_suara_unik").on(t.penggunaId, t.hash)],
 );

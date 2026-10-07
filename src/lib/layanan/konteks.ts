@@ -5,7 +5,16 @@ import { bahasaSah, type Bahasa, type Kamus } from "@/lib/i18n";
 import { kamusUntuk } from "@/lib/i18n/kamus-server";
 import { GalatLayanan } from "./dasar";
 
-export type KonteksPengguna = { id: string; zona: string; jamTidur: string; bawaan: Bawaan; bahasa: Bahasa; t: Kamus };
+export type KonteksPengguna = {
+  id: string;
+  zona: string;
+  jamTidur: string;
+  bawaan: Bawaan;
+  bahasa: Bahasa;
+  t: Kamus;
+  /** Nama yang diucapkan omelan: nama panggilan, atau nama depan dari AgentBuff. */
+  namaSapaan: string;
+};
 
 /**
  * Preferensi yang dibutuhkan layanan dalam satu transaksi. `kunci` = kunci baris pengguna
@@ -14,14 +23,23 @@ export type KonteksPengguna = { id: string; zona: string; jamTidur: string; bawa
  */
 export async function konteksPengguna(tx: Tx, penggunaId: string, kunci = false): Promise<KonteksPengguna> {
   const q = tx
-    .select({ zona: schema.pengguna.zonaWaktu, jamTidur: schema.pengguna.jamTidur, bawaan: schema.pengguna.bawaan, bahasa: schema.pengguna.bahasa })
+    .select({
+      zona: schema.pengguna.zonaWaktu,
+      jamTidur: schema.pengguna.jamTidur,
+      bawaan: schema.pengguna.bawaan,
+      bahasa: schema.pengguna.bahasa,
+      nama: schema.pengguna.nama,
+      namaPanggilan: schema.pengguna.namaPanggilan,
+    })
     .from(schema.pengguna)
     .where(eq(schema.pengguna.id, penggunaId));
   const [p] = kunci ? await q.for("update") : await q;
   if (!p) throw new GalatLayanan("tidak_ditemukan", "Pengguna tidak ditemukan.");
   const bahasa = bahasaSah(p.bahasa);
   const bawaan = SkemaBawaan.safeParse(p.bawaan);
-  return { id: penggunaId, zona: p.zona, jamTidur: p.jamTidur, bawaan: bawaan.success ? bawaan.data : {}, bahasa, t: kamusUntuk(bahasa) };
+  const t = kamusUntuk(bahasa);
+  const namaSapaan = p.namaPanggilan?.trim() || p.nama?.trim().split(/\s+/)[0] || t.umum.kamu;
+  return { id: penggunaId, zona: p.zona, jamTidur: p.jamTidur, bawaan: bawaan.success ? bawaan.data : {}, bahasa, t, namaSapaan };
 }
 
 /** "05.00" (id) atau "05:00" (en) dari sebuah instan di zona pengguna. */

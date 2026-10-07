@@ -54,6 +54,7 @@ export async function ujiAlarm(penggunaId: string, masukan: unknown, sumber: Sum
       agendaJudul: k.t.uji.judul,
       agendaDetail: null,
       tuya: [],
+      kalimatPribadi: [],
       aktif: true,
     } as IsiAlarm;
     if (h.data.alarmId) {

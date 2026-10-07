@@ -25,6 +25,7 @@ export const id = {
     terputus: "Koneksi terputus. Menyambung ulang...",
     kurangi: "Kurangi",
     tambah: "Tambah",
+    kamu: "kamu",
   },
   waktu: {
     pagi: "Selamat pagi",
@@ -359,6 +360,9 @@ export const id = {
       tanggal_tidak_sah: "tanggalnya tidak ada di kalender",
       zona_tidak_sah: "zona waktu tidak dikenal",
       kode_qr_tidak_ada: "kode QR yang dipilih tidak ditemukan",
+      kalimat_kasar: "ada kalimat pribadi yang terlalu kasar",
+      kalimat_terlalu_banyak: "kalimat pribadi paling banyak 10",
+      kalimat_kustom_wajib: "karakter Kustom butuh paling sedikit satu kalimat pribadi",
       umum: "{isian} tidak sah",
     },
     komitmen: {
@@ -411,6 +415,16 @@ export const id = {
     petunjuk: "Tempel kode ini di {nama}, jauh dari kasur. Saat alarm berbunyi, pindai kode ini dengan HP untuk mematikannya.",
     cetak: "Cetak",
     kembali: "Kembali",
+  },
+  suara: {
+    contoh: "Halo {nama}, ini suaraku. Besok pagi aku yang bangunin kamu!",
+    alasan: {
+      belum_diizinkan: "Beri izin suara di AgentBuff dulu.",
+      teks_tidak_sah: "Ada kalimat yang ditolak pembuat suara. Ubah kalimat pribadimu.",
+      tidak_dikenal: "Suara pilihanmu tidak ditemukan. Pilih suara lain.",
+      umum: "Suara belum bisa dibuat. Alarm tetap berbunyi dengan suara bawaan perangkat.",
+    },
+    ketukMulai: "Ketuk layar untuk menyalakan suara",
   },
   prototipe: {
     judul: "Prototipe layar",

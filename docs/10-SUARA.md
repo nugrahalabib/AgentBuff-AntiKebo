@@ -12,7 +12,8 @@ omelan** (kalimat galak). Bunyi alarm tidak pernah bergantung pada suara omelan.
   sintesis, bukan rekaman), Nuklir, Naik Perlahan.
 - Panjang tiap putaran 2 sampai 6 detik, bisa diulang tanpa celah (titik potong di nol).
 - Kekerasan dinormalkan (target sekitar −14 LUFS, puncak ≤ −1 dBTP) supaya semua bunyi sama keras.
-- Format: OGG Opus + cadangan MP3 untuk peramban lama. Disimpan di `public/bunyi/`.
+- Format: WAV PCM 16 bit mono 22,05 kHz (bisa diulang tanpa celah di semua peramban dan rodio,
+  K-54). Disimpan di `public/bunyi/` beserta `bunyi.json` (durasi, LUFS, puncak).
 - Pratinjau 5 detik di Ubah alarm.
 
 ## 2. Karakter omelan
@@ -51,7 +52,7 @@ Kalimat pribadi: maks 10 per alarm, maks 150 huruf, lewat penyaring yang sama.
 
 - Bunyi alarm berjalan terus. Selama omelan diputar, bunyi alarm dikecilkan ke ±30% (turun 150 md),
   lalu naik lagi ke 100% saat jeda.
-- Jeda antar omelan **3 detik**.
+- Jeda antar omelan **3 detik**; 3 detik pertama bunyi alarm saja (K-58).
 - Urutan: acak dari kalimat umum + agenda + pribadi, tanpa kalimat yang sama dua kali berturut-
   turut, semua terpakai sebelum ada yang diulang.
 - Kalimat waktu disisipkan tepat sesudah menit 3, 5, 10, 15, 30 berlalu.
@@ -77,8 +78,8 @@ worker suara  ──► POST /masuk/suara (sub pengguna, teks, gaya "galak", sua
 perangkat     ──► mengunduh klip sebelum malam, menyimpannya lokal
 ```
 
-- **Kunci klip:** hash dari (teks yang sudah diisi nama/agenda, id suara, gaya, penyedia). Klip
-  dipakai ulang lintas alarm; hanya dibuat ulang bila salah satunya berubah.
+- **Kunci klip:** hash dari (teks yang sudah diisi nama/agenda, id suara, gaya, bahasa), K-55.
+  Klip dipakai ulang lintas alarm; hanya dibuat ulang bila salah satunya berubah.
 - **Kalimat umum dibuat sekali per pengguna per karakter per suara**; kalimat agenda per alarm.
 - Antrean: paralel 1 per pengguna, 4 total; galat sementara (`agen_tidak_aktif`, `penyedia_gagal`,
   `kuota`) diulang dengan jeda bertambah sampai 6 jam; galat tetap (`belum_diizinkan`,

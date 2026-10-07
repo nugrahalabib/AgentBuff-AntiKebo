@@ -3,6 +3,42 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P5): Bunyi alarm dan omelan galak
+
+**Baru**
+- **8 bunyi alarm buatan sendiri** (Klasik, Digital, Sirene, Lonceng Sekolah, Alarm Kebakaran, Ayam,
+  Nuklir, Naik Perlahan). Semua sama keras, berulang tanpa jeda, bebas lisensi.
+- **Omelan 5 karakter** (Ibu Galak, Pelatih Tentara, Bos Killer, Teman Nyolot, Pacar Bawel) dalam
+  bahasa Indonesia dan Inggris, memanggil namamu dan menyebut agendamu. Ada kalimat khusus sesudah 3,
+  5, 10, 15, dan 30 menit kamu masih molor.
+- **Kalimat pribadi**: sampai 10 kalimat buatanmu per alarm. Kata yang terlalu kasar ditolak.
+  Karakter **Kustom** hanya memutar kalimatmu sendiri.
+- **Suara dibuat oleh AgentBuff-mu** memakai pengaturan suaramu. Status di tiap alarm: "Suara siap",
+  "Sedang dibuat (7 dari 22)", atau "Belum bisa dibuat" dengan alasan yang jelas (mis. beri izin suara
+  dulu). Begitu izin diberi, suara dibuat ulang sendiri. Suara yang sama dipakai ulang di semua alarm,
+  jadi tidak dibuat berkali-kali.
+- **Saat berbunyi**: bunyi alarm terus jalan, omelan diputar bergantian dengan jeda 3 detik dan bunyi
+  dikecilkan sebentar selama omelan. Belum ada suara dari AgentBuff? Omelan dibacakan suara bawaan
+  HP/laptop. Tidak ada juga? Teksnya tampil besar. Berkas bunyi gagal dimuat? Alarm tetap berbunyi
+  dengan bip.
+- Kalau peramban menahan suara, muncul tombol "Ketuk layar untuk menyalakan suara".
+
+**Keputusan**
+- K-54 sampai K-60 (`KEPUTUSAN.md`). Yang terlihat pengguna: bunyi memakai format WAV supaya
+  berulang tanpa celah (K-54); 3 detik pertama bunyi saja sebelum omelan (K-58).
+
+**Masih butuh Chief**
+- K-07 masih menunggu.
+- **Wajib diuji di perangkat asli (L2):** rasa 8 bunyi di speaker HP/laptop, suara AgentBuff asli,
+  iPhone dengan saklar senyap, suara bawaan HP berbahasa Indonesia.
+
+**Untuk teknisi**
+- Tabel `naskah_suara` dan `klip_suara` (RLS + uji RLS 38/38), kolom `alarm.kalimat_pribadi`.
+- Worker `suara` (1 per pengguna, 4 total), jeda ulang berlipat sampai 6 jam, `klip_siap` lewat SSE.
+- Pemutar `src/lib/suara/pemutar.ts`; urutan putar punya contoh emas dari oracle Python (dipakai Rust
+  di P10).
+- Bukti: 437 tes vitest, 62 uji Playwright mode produksi.
+
 ## 2026-10-07 (P4): Soal, tunda, "Masih bangun?", dan Misi QR
 
 **Baru**
