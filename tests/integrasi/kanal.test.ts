@@ -411,7 +411,7 @@ describe("pengingat malam (PRD G4)", () => {
     const l = langgananBaru();
     await (await Kn()).daftarkanPush(P, { langganan: l }, "web");
     await (await import("@/lib/layanan/preferensi")).ubahPreferensi(P, { bawaan: { spam: { kanal: [tg], jedaDtk: null, batasMenit: null } } }, "web");
-    await alarmSekali(P, "2026-11-11", { agendaJudul: "Wawancara kerja" });
+    const besok = await alarmSekali(P, "2026-11-11", { agendaJudul: "Wawancara kerja" });
     const malam = wib("2026-11-10T22:00:30");
     await u.superuser.insert(schema.perangkatSiaga).values({ penggunaId: P, jenis: "pc", nama: "PC Kamar", terakhirTerlihat: new Date(malam.getTime() - 30_000) });
     const { prosesPengingatMalam } = await import("@/lib/layanan/pengingat");
@@ -432,6 +432,14 @@ describe("pengingat malam (PRD G4)", () => {
     await jalan(wib("2026-11-10T23:30:00"));
     await jalan(wib("2026-11-11T00:30:00"));
     expect(pesanKe(sub, tg)).toHaveLength(1);
+
+    // Jejak pengingat menunjuk kejadian yang masih menunggu. Alarm itu lalu dihapus (kejadian
+    // menunggunya ikut dihapus): penghapusan tidak boleh gagal, jejaknya tetap ada tanpa kejadian.
+    const [jejak] = await u.pekerja((tx) => tx.select().from(schema.kirimanKanal).where(and(eq(schema.kirimanKanal.penggunaId, P), eq(schema.kirimanKanal.jenis, "pengingat"))));
+    expect(jejak.kejadianId).not.toBeNull();
+    await (await L()).hapusAlarm(P, besok.id, "web", { sekarang: wib("2026-11-11T00:40:00") });
+    const [sesudahLewati] = await u.pekerja((tx) => tx.select().from(schema.kirimanKanal).where(eq(schema.kirimanKanal.id, jejak.id)));
+    expect(sesudahLewati).toMatchObject({ status: "terkirim", kejadianId: null });
 
     // Malam berikutnya tanpa alarm dalam 24 jam: tidak ada yang perlu diingatkan.
     await jalan(wib("2026-11-11T22:00:30"));

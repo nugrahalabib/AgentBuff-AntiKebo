@@ -475,7 +475,7 @@ export const kirimanKanal = pgTable(
     penggunaId: uuid("pengguna_id")
       .notNull()
       .references(() => pengguna.id),
-    kejadianId: uuid("kejadian_id").references(() => kejadianAlarm.id),
+    kejadianId: uuid("kejadian_id").references(() => kejadianAlarm.id, { onDelete: "set null" }),
     kanalId: text("kanal_id").notNull(),
     platform: text("platform"),
     jenis: text("jenis").notNull(), // spam | penutup | cek | terlewat | pengingat | uji

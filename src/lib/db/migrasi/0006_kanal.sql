@@ -26,7 +26,7 @@ CREATE TABLE "langganan_push" (
 --> statement-breakpoint
 ALTER TABLE "pengguna" ADD COLUMN "pengingat_terkirim" date;--> statement-breakpoint
 ALTER TABLE "kiriman_kanal" ADD CONSTRAINT "kiriman_kanal_pengguna_id_pengguna_id_fk" FOREIGN KEY ("pengguna_id") REFERENCES "public"."pengguna"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "kiriman_kanal" ADD CONSTRAINT "kiriman_kanal_kejadian_id_kejadian_alarm_id_fk" FOREIGN KEY ("kejadian_id") REFERENCES "public"."kejadian_alarm"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "kiriman_kanal" ADD CONSTRAINT "kiriman_kanal_kejadian_id_kejadian_alarm_id_fk" FOREIGN KEY ("kejadian_id") REFERENCES "public"."kejadian_alarm"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "langganan_push" ADD CONSTRAINT "langganan_push_pengguna_id_pengguna_id_fk" FOREIGN KEY ("pengguna_id") REFERENCES "public"."pengguna"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "langganan_push" ADD CONSTRAINT "langganan_push_perangkat_id_perangkat_siaga_id_fk" FOREIGN KEY ("perangkat_id") REFERENCES "public"."perangkat_siaga"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "kiriman_kanal_unik" ON "kiriman_kanal" USING btree ("pengguna_id","kunci");--> statement-breakpoint
