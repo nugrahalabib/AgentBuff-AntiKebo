@@ -477,10 +477,10 @@ Catatan untuk paket berikutnya:
 
 **Status: selesai 2026-10-07.** Bukti di cloud: 626 tes vitest (baru: ringkasan Riwayat murni,
 rincian + CSV + perangkat yang siaga saat berbunyi terhadap migrasi asli, hapus data termasuk tolak
-saat berbunyi dan selama Komitmen) dan 115 uji Playwright mode produksi (baru: perkenalan 6 langkah,
+saat berbunyi dan selama Komitmen) dan 117 uji Playwright mode produksi (baru: perkenalan 6 langkah,
 Pengaturan Kamu, bawaan alarm baru dipakai lembar Alarm baru, template simpan/pakai/ganti
-nama/hapus, kode QR, hapus semua data lalu masuk lagi, tab Siaga, Riwayat + rincian + CSV, desktop
-dan 390 px) seluruhnya hijau; jaga, tsc, lint, format, build hijau; tangkapan layar di PR.
+nama/hapus, kode QR, hapus semua data lalu masuk lagi, tab Siaga, Riwayat + rincian + CSV,
+bacaan keadaan lama tidak mengembalikan layar berbunyi, desktop dan 390 px) seluruhnya hijau; jaga, tsc, lint, format, build hijau; tangkapan layar di PR.
 
 Rujukan: PRD A5, H1, H4, J, K1 sampai K3, M, B10; `04-DESAIN.md` §4.7, §4.9 sampai §4.11.
 

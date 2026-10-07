@@ -34,6 +34,12 @@ Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untu
 - "Siap malam ini" di Beranda kini benar-benar memeriksa suara alarm berikutnya sudah tersimpan di
   perangkat, bukan sekadar perangkatnya menyala.
 
+**Diperbaiki**
+- Saat internet lambat, layar alarm bisa sekejap kembali ke "berbunyi" sesudah soal terjawab
+  (keadaan lama dari server tiba belakangan). Kini hanya keadaan terbaru yang dipakai, jadi Selamat
+  pagi tetap tampil. Ditemukan oleh CI dan dibuktikan dengan uji yang sengaja memperlambat jawaban
+  server.
+
 **Keputusan**
 - K-96 sampai K-102 (siap malam ini, perangkat di Riwayat, isi Riwayat dan CSV, hapus data,
   perkenalan, bawaan alarm baru, akun uji Sari). Lihat `KEPUTUSAN.md`.
@@ -49,6 +55,8 @@ Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untu
 - Akun tiruan keempat **Sari Pengguna Baru** (aktif) untuk uji yang mulai dari nol. Helper e2e
   `masukSebagai` menandai perkenalan selesai kecuali `{ orientasi: true }`.
 - Alat MCP untuk Riwayat, template, preferensi, dan hapus data dikerjakan di P12 (paritas).
+- `pantauGalat` (e2e) kini menyertakan jalur sumber yang gagal dimuat (`... @ /api/...`), supaya
+  galat konsol di CI langsung bisa ditelusuri. `LayarAlarmHidup` memakai nomor urut bacaan.
 
 ## 2026-10-07 (P10): AntiKebo untuk PC, alarm yang tidak bisa ditutup
 

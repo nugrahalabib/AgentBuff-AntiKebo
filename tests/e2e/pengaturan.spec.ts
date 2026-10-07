@@ -185,7 +185,7 @@ test("kode QR: buat, cetak, ganti nama, hapus (ditolak bila dipakai alarm)", asy
   await qr.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(qr.getByText("Dapur")).toBeVisible();
   // Satu-satunya galat jaringan = penolakan hapus yang memang diharapkan (400).
-  expect(galat.filter((g) => !g.includes("status of 400"))).toEqual([]);
+  expect(galat.filter((g) => !/status of 400 \(Bad Request\) @ \/api\/app\/kode-qr\//.test(g))).toEqual([]);
 });
 
 test("hapus semua data: konfirmasi ketik, semua data hilang, masuk lagi mulai dari perkenalan", async ({ page }) => {

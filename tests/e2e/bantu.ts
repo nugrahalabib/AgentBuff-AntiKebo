@@ -69,7 +69,10 @@ export function pantauGalat(page: Page): string[] {
   const galat: string[] = [];
   page.on("pageerror", (e) => galat.push(`pageerror: ${e.message}`));
   page.on("console", (m) => {
-    if (m.type() === "error") galat.push(`console: ${m.text()}`);
+    if (m.type() !== "error") return;
+    // Sumber daya gagal dimuat: sertakan jalurnya supaya galat di CI bisa ditelusuri.
+    const url = m.text().startsWith("Failed to load resource") ? m.location().url : "";
+    galat.push(`console: ${m.text()}${url ? ` @ ${new URL(url).pathname}` : ""}`);
   });
   return galat;
 }
