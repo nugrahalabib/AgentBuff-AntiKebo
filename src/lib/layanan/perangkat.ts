@@ -9,6 +9,7 @@ import { acakBase64Url, sha256Hex } from "@/lib/kripto";
 import { catatAudit } from "./audit";
 import { GalatLayanan, pesanMasukan, type Sumber } from "./dasar";
 import { konteksPengguna } from "./konteks";
+import { omelanUntuk, type OmelanPerangkat } from "./suara";
 
 /**
  * Perangkat siaga (PRD H1, H4, H5; arsitektur §4 "perangkat juga memegang jadwal", §5).
@@ -288,6 +289,8 @@ export type ItemJadwal = {
   tunda: { jatah: number; menit: number; terpakai: number };
   tundaSampai: string | null;
   uji: boolean;
+  /** Kalimat omelan (teks untuk cadangan suara perangkat) + klip siap (`/api/perangkat/klip/<hash>`). */
+  omelan: OmelanPerangkat[];
 };
 
 /**
@@ -296,8 +299,9 @@ export type ItemJadwal = {
  */
 export async function jadwalPerangkat(penggunaId: string, sekarang = new Date()): Promise<ItemJadwal[]> {
   return denganPengguna(penggunaId, async (tx) => {
+    const k = await konteksPengguna(tx, penggunaId);
     const sampai = new Date(sekarang.getTime() + JENDELA_JADWAL_MS);
-    const kej = await tx
+    const kejadian = await tx
       .select()
       .from(schema.kejadianAlarm)
       .where(
@@ -320,28 +324,29 @@ export async function jadwalPerangkat(penggunaId: string, sekarang = new Date())
     const lewati = await tx.select().from(schema.lewatiAlarm).where(eq(schema.lewatiAlarm.penggunaId, penggunaId));
 
     const hasil = new Map<string, ItemJadwal>();
-    for (const k of kej) {
-      const a = alarm.find((x) => x.id === k.alarmId);
-      const isi = (k.isi as ReturnType<typeof isiDariBaris> | null) ?? (a ? isiDariBaris(a) : null);
+    for (const kej of kejadian) {
+      const a = alarm.find((x) => x.id === kej.alarmId);
+      const isi = (kej.isi as ReturnType<typeof isiDariBaris> | null) ?? (a ? isiDariBaris(a) : null);
       if (!isi) continue;
-      const kunci = k.uji || !k.alarmId ? `uji:${k.id}` : `${k.alarmId}:${k.tanggalLokal}`;
+      const kunci = kej.uji || !kej.alarmId ? `uji:${kej.id}` : `${kej.alarmId}:${kej.tanggalLokal}`;
       hasil.set(kunci, {
         kunci,
-        kejadianId: k.id,
-        alarmId: k.alarmId,
-        jadwalUtc: k.jadwalUtc.toISOString(),
-        tanggal: k.tanggalLokal,
-        jam: k.jamLokal,
-        status: k.status,
-        judul: k.judul,
+        kejadianId: kej.id,
+        alarmId: kej.alarmId,
+        jadwalUtc: kej.jadwalUtc.toISOString(),
+        tanggal: kej.tanggalLokal,
+        jam: kej.jamLokal,
+        status: kej.status,
+        judul: kej.judul,
         detail: isi.agendaDetail,
         bunyi: isi.bunyi,
         karakter: isi.karakter,
         suaraId: isi.suaraId,
         soal: { jenis: isi.soal.jenis, tingkat: isi.soal.tingkat, benar: isi.soal.benar },
-        tunda: { jatah: isi.tunda.jatah, menit: isi.tunda.menit, terpakai: k.jumlahTunda },
-        tundaSampai: k.tundaSampai?.toISOString() ?? null,
-        uji: k.uji,
+        tunda: { jatah: isi.tunda.jatah, menit: isi.tunda.menit, terpakai: kej.jumlahTunda },
+        tundaSampai: kej.tundaSampai?.toISOString() ?? null,
+        uji: kej.uji,
+        omelan: await omelanUntuk(tx, k, isi),
       });
     }
     for (const a of alarm) {
@@ -367,6 +372,7 @@ export async function jadwalPerangkat(penggunaId: string, sekarang = new Date())
           tunda: { jatah: isi.tunda.jatah, menit: isi.tunda.menit, terpakai: 0 },
           tundaSampai: null,
           uji: false,
+          omelan: await omelanUntuk(tx, k, isi),
         });
       }
     }

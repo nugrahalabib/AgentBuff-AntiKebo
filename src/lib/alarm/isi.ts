@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SkemaJam, SkemaPengulangan } from "@/lib/jadwal/pengulangan";
+import { bolehDiucapkan } from "@/lib/suara/saring";
 
 /**
  * Isi sebuah alarm (PRD B2). Satu skema dipakai web, MCP, template, dan bawaan pengguna, supaya
@@ -95,8 +96,13 @@ export const SkemaIsiAlarm = z.strictObject({
   liburNasional: z.boolean(),
   /** Berhenti sendiri sesudah X menit dan dicatat "tidak bangun" (PRD C4). Null = tanpa batas. */
   batasMenit: z.int().min(5).max(240).nullable(),
+  /** Kalimat omelan pribadi (PRD F3): maks 10, maks 150 huruf, lewat penyaring kata. */
+  kalimatPribadi: z.array(teks(150).pipe(z.string().min(1, "nama_wajib")).refine(bolehDiucapkan, "kalimat_kasar")).max(10, "kalimat_terlalu_banyak"),
   aktif: z.boolean(),
 });
+
+/** Karakter Kustom hanya memakai kalimat pribadi: wajib ada paling sedikit satu. */
+export const SkemaIsiAlarmUtuh = SkemaIsiAlarm.refine((i) => i.karakter !== "kustom" || i.kalimatPribadi.length > 0, { message: "kalimat_kustom_wajib", path: ["kalimatPribadi"] });
 
 export type IsiAlarm = z.infer<typeof SkemaIsiAlarm>;
 export type Soal = IsiAlarm["soal"];

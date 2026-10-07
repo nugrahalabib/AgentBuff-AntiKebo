@@ -21,6 +21,7 @@ export const en: Kamus = {
     terputus: "Connection lost. Reconnecting...",
     kurangi: "Decrease",
     tambah: "Increase",
+    kamu: "you",
   },
   waktu: {
     pagi: "Good morning",
@@ -355,6 +356,9 @@ export const en: Kamus = {
       tanggal_tidak_sah: "that date doesn't exist on the calendar",
       zona_tidak_sah: "unknown time zone",
       kode_qr_tidak_ada: "the selected QR code was not found",
+      kalimat_kasar: "one of the custom lines is too rude",
+      kalimat_terlalu_banyak: "at most 10 custom lines",
+      kalimat_kustom_wajib: "the Custom character needs at least one custom line",
       umum: "{isian} is not valid",
     },
     komitmen: {
@@ -407,6 +411,16 @@ export const en: Kamus = {
     petunjuk: "Stick this code at {nama}, far from your bed. When the alarm rings, scan it with your phone to turn it off.",
     cetak: "Print",
     kembali: "Back",
+  },
+  suara: {
+    contoh: "Hi {nama}, this is my voice. Tomorrow morning I'm the one waking you up!",
+    alasan: {
+      belum_diizinkan: "Allow voice in AgentBuff first.",
+      teks_tidak_sah: "A line was rejected by the voice maker. Change your custom lines.",
+      tidak_dikenal: "Your chosen voice was not found. Pick another voice.",
+      umum: "The voice can't be made yet. The alarm still rings with the device's built-in voice.",
+    },
+    ketukMulai: "Tap the screen to turn on sound",
   },
   prototipe: {
     judul: "Screen prototypes",

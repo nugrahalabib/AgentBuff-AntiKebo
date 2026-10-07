@@ -1,3 +1,4 @@
+import type { OmelanPutar } from "@/lib/suara/pemutar";
 import type { KanalTampil, KejadianRiwayat, RingkasAlarm, RingkasPerangkat } from "@/lib/tampilan/jenis";
 
 // Data contoh untuk galeri /prototipe (P1). Isi buatan pengguna (judul agenda, nama perangkat)
@@ -51,6 +52,18 @@ export const KANAL: KanalTampil[] = [
 export const SOAL_CONTOH = { teks: "7 × 8 + 13", jawaban: "69" };
 
 export const OMELAN_CONTOH = "BANGUN, Nugi! Ini bukan hari libur! Presentasi jam sembilan, kasurnya nggak ke mana-mana!";
+
+/**
+ * Omelan contoh untuk pemutar di layar berbunyi (P5). `klip` = hash klip AgentBuff; galeri biasa
+ * memakai suara perangkat (klip null), uji Playwright `?klip=1` menyajikan MP3 suara tiruan.
+ */
+export const OMELAN_PUTAR: OmelanPutar[] = [
+  { jenis: "umum", teks: "BANGUN, Nugi! Ini bukan hari libur!", klip: "1a".repeat(32) },
+  { jenis: "agenda", teks: "Presentasi jam sembilan, kasurnya nggak ke mana-mana!", klip: "2b".repeat(32) },
+  { jenis: "pribadi", teks: "Ingat cicilan motor, Nugi!", klip: null },
+  { jenis: "waktu", menit: 3, teks: "Nugi! Sudah tiga menit kamu masih molor!", klip: "3c".repeat(32) },
+  { jenis: "waktu", menit: 5, teks: "Lima menit, Nugi! Bangun sekarang!", klip: "4d".repeat(32) },
+];
 
 export const TEMPAT_QR = "di kamar mandi";
 

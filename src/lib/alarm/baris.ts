@@ -22,6 +22,7 @@ export function isiDariBaris(a: BarisAlarm): IsiAlarm {
     masihBangun: a.masihBangun,
     liburNasional: a.liburNasional,
     batasMenit: a.batasMenit,
+    kalimatPribadi: a.kalimatPribadi,
     aktif: a.aktif,
   };
 }
@@ -44,6 +45,7 @@ export function kolomDariIsi(i: IsiAlarm) {
     masihBangun: i.masihBangun,
     liburNasional: i.liburNasional,
     batasMenit: i.batasMenit,
+    kalimatPribadi: i.kalimatPribadi,
     aktif: i.aktif,
   };
 }

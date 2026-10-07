@@ -1,0 +1,58 @@
+import type { NaskahKarakter } from "./jenis";
+
+export const ibuGalak: NaskahKarakter = {
+  id: {
+    umum: [
+      "{nama}! Bangun! Matahari sudah tinggi, kamu masih molor!",
+      "{nama}, Ibu hitung sampai tiga. Satu, dua...",
+      "Anak macam apa jam segini masih tidur, {nama}?",
+      "{nama}! Ibu sudah masak dari subuh, kamu masih ngorok!",
+      "Bangun, {nama}! Rezekimu keburu dipatok ayam!",
+      "{nama}, kasurmu itu bukan kantor! Bangun sekarang!",
+      "Ibu nggak mau dengar alasan, {nama}. Bangun!",
+      "{nama}! Alarm bunyi dari tadi, telingamu ditaruh mana?",
+      "Kalau nggak bangun sekarang, Ibu cabut wifinya, {nama}!",
+      "{nama}, tetangga sudah jalan pagi, kamu masih guling-guling!",
+      "Mau jadi apa kamu kalau tiap pagi begini, {nama}?",
+      "{nama}! Buka mata! Ibu nggak bercanda!",
+      "Jangan pura-pura nggak dengar, {nama}. Ibu tahu kamu sudah melek!",
+    ],
+    waktu: {
+      3: "{nama}! Sudah tiga menit, kamu masih tidur juga!",
+      5: "Lima menit, {nama}! Ibu sudah capek teriak!",
+      10: "Sepuluh menit, {nama}! Mau Ibu siram air dingin?",
+      15: "Seperempat jam, {nama}! Ini sudah keterlaluan!",
+      30: "Setengah jam, {nama}! Ibu kecewa sekali sama kamu!",
+    },
+    agenda: ["{nama}, ingat {agenda}! Mau bikin malu Ibu?", "Hari ini ada {agenda}, {nama}! Bangun sekarang!", "{agenda} nggak akan nungguin kamu, {nama}!"],
+    cek: "{nama}, masih bangun kan? Jangan tidur lagi!",
+    penutup: "Nah, gitu dong, {nama}. Sekarang mandi dan sarapan!",
+  },
+  en: {
+    umum: [
+      "{nama}! Get up! The sun is already high and you're still snoring!",
+      "{nama}, I'm counting to three. One, two...",
+      "What kind of kid is still asleep at this hour, {nama}?",
+      "{nama}! I've been cooking since dawn and you're still snoring!",
+      "Up, {nama}! The early bird is eating your breakfast!",
+      "{nama}, your bed is not your office! Get up now!",
+      "I don't want to hear excuses, {nama}. Get up!",
+      "{nama}! The alarm has been ringing forever. Where are your ears?",
+      "If you don't get up now, I'm turning off the wifi, {nama}!",
+      "{nama}, the neighbors are already out walking and you're still rolling around!",
+      "What will become of you if every morning is like this, {nama}?",
+      "{nama}! Open your eyes! I'm not joking!",
+      "Don't pretend you can't hear me, {nama}. I know you're awake!",
+    ],
+    waktu: {
+      3: "{nama}! Three minutes already and you're still asleep!",
+      5: "Five minutes, {nama}! I'm tired of shouting!",
+      10: "Ten minutes, {nama}! Do you want a splash of cold water?",
+      15: "A quarter of an hour, {nama}! This is too much!",
+      30: "Half an hour, {nama}! I'm so disappointed in you!",
+    },
+    agenda: ["{nama}, remember {agenda}! Do you want to embarrass me?", "Today is {agenda}, {nama}! Get up now!", "{agenda} won't wait for you, {nama}!"],
+    cek: "{nama}, you're still awake, right? Don't go back to sleep!",
+    penutup: "That's better, {nama}. Now shower and have breakfast!",
+  },
+};

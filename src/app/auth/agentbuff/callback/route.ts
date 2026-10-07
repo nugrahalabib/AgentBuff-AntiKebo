@@ -5,6 +5,7 @@ import { cekHak } from "@/lib/agentbuff/status";
 import { buatSesi, NAMA_COOKIE_SESI, OPSI_COOKIE_SESI } from "@/lib/auth/sesi";
 import { db, schema } from "@/lib/db";
 import { env } from "@/lib/env";
+import { antreUlangSesudahIzin } from "@/lib/layanan/suara";
 import { catatAudit } from "@/lib/layanan/audit";
 import { log } from "@/lib/log";
 
@@ -77,6 +78,8 @@ export async function GET(req: NextRequest) {
     .where(eq(schema.pengguna.id, idPengguna));
 
   await catatAudit(idPengguna, { sumber: "web", jenis: "masuk", ringkasan: "Masuk dengan AgentBuff", detail: { izinKabar: izin.kabar, izinSuara: izin.suara } });
+  // Izin suara (baru) diberi: naskah yang tertahan "belum diizinkan" dibuat lagi.
+  if (izin.suara) await antreUlangSesudahIzin(idPengguna).catch(() => 0);
 
   const token = await buatSesi(idPengguna);
   const res = ke(isi.lanjut);

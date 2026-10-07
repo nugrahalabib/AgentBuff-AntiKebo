@@ -24,6 +24,7 @@ export function LayarBerbunyi({
   benarBeruntun,
   tunda,
   omelan,
+  omelanBesar,
   urutan,
   terlambatMenit,
   periksa,
@@ -38,6 +39,8 @@ export function LayarBerbunyi({
   benarBeruntun: number;
   tunda: { sisa: number; menit: number } | null;
   omelan?: string;
+  /** Perangkat tanpa suara bawaan dan klip belum ada: omelan tampil besar (docs/10-SUARA.md §5). */
+  omelanBesar?: boolean;
   urutan?: { ke: number; dari: number };
   terlambatMenit?: number;
   periksa?: (jawaban: string) => Promise<"benar" | "salah" | "selesai">;
@@ -62,7 +65,14 @@ export function LayarBerbunyi({
           <h1 className="mt-2 font-[family-name:var(--font-tampil)] text-[clamp(40px,9vw,84px)] leading-[1.02] font-extrabold tracking-[-0.035em] break-words">{judul}</h1>
           {detail ? <p className="mt-3 max-w-[40ch] text-[19px] leading-snug text-white/80">{detail}</p> : null}
           {terlambatMenit ? <p className="mt-3 text-[15px] font-semibold text-amber-200">{isi(T.terlambat, { n: terlambatMenit })}</p> : null}
-          {omelan ? (
+          {omelan && omelanBesar ? (
+            <p
+              aria-live="polite"
+              className="mt-6 max-w-[30ch] font-[family-name:var(--font-tampil)] text-[clamp(24px,4.6vw,40px)] leading-[1.12] font-extrabold tracking-[-0.02em] text-amber-100"
+            >
+              {omelan}
+            </p>
+          ) : omelan ? (
             <div aria-label={T.omelan} className="mt-6 overflow-hidden rounded-full bg-black/25 py-2" role="marquee">
               <p className="teks-jalan flex w-max gap-12 px-4 text-[15px] font-medium whitespace-nowrap text-white/85">
                 <span>{omelan}</span>

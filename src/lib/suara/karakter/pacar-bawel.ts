@@ -1,0 +1,56 @@
+import type { NaskahKarakter } from "./jenis";
+
+export const pacarBawel: NaskahKarakter = {
+  id: {
+    umum: [
+      "Sayang, {nama}, bangun dong. Kamu udah janji!",
+      "{nama}, aku udah chat dari tadi, kok nggak dibales?",
+      "Bangun, {nama}! Katanya mau jadi lebih rajin?",
+      "{nama}, aku nggak suka ya kalau kamu kesiangan terus.",
+      "Ayo bangun, {nama}. Aku tungguin nih.",
+      "{nama}, kamu lebih sayang kasur atau aku?",
+      "Bangun, {nama}! Nanti telat lagi, aku yang malu.",
+      "{nama}, jangan bikin aku khawatir pagi-pagi.",
+      "Sayang {nama}, buka matanya. Satu, dua, tiga!",
+      "{nama}, aku ngambek nih kalau kamu nggak bangun.",
+      "Bangun dong, {nama}. Aku kangen suara pagimu.",
+      "{nama}! Udah cukup tidurnya, sekarang bangun!",
+    ],
+    waktu: {
+      3: "Udah tiga menit, {nama}. Aku mulai kesel.",
+      5: "Lima menit, {nama}! Kamu nggak dengerin aku, ya?",
+      10: "Sepuluh menit, {nama}! Aku beneran ngambek.",
+      15: "Lima belas menit, {nama}! Pokoknya aku marah.",
+      30: "Setengah jam, {nama}! Kita perlu bicara.",
+    },
+    agenda: ["{nama}, hari ini ada {agenda}, kan? Bangun!", "Katanya {agenda} penting, {nama}? Ayo bangun.", "{nama}, aku pengin kamu sukses di {agenda}. Bangun ya!"],
+    cek: "{nama}, masih bangun kan? Jangan tidur lagi ya.",
+    penutup: "Pinter, {nama}! Semangat hari ini ya.",
+  },
+  en: {
+    umum: [
+      "Babe, {nama}, wake up. You promised!",
+      "{nama}, I've been texting you forever, why no reply?",
+      "Get up, {nama}! Didn't you say you'd be more disciplined?",
+      "{nama}, I really don't like it when you keep oversleeping.",
+      "Come on, wake up, {nama}. I'm waiting.",
+      "{nama}, do you love your bed more than me?",
+      "Get up, {nama}! If you're late again, I'm the one embarrassed.",
+      "{nama}, don't make me worry this early.",
+      "Babe {nama}, open your eyes. One, two, three!",
+      "{nama}, I'll sulk if you don't wake up.",
+      "Wake up, {nama}. I miss your morning voice.",
+      "{nama}! That's enough sleep, get up now!",
+    ],
+    waktu: {
+      3: "Three minutes already, {nama}. I'm getting annoyed.",
+      5: "Five minutes, {nama}! You're not listening to me, are you?",
+      10: "Ten minutes, {nama}! Now I'm really sulking.",
+      15: "Fifteen minutes, {nama}! I'm officially mad.",
+      30: "Half an hour, {nama}! We need to talk.",
+    },
+    agenda: ["{nama}, you have {agenda} today, right? Get up!", "You said {agenda} was important, {nama}? Come on, get up.", "{nama}, I want you to nail {agenda}. Wake up, okay?"],
+    cek: "{nama}, still awake, right? Don't go back to sleep, okay?",
+    penutup: "Good job, {nama}! Have a great day.",
+  },
+};

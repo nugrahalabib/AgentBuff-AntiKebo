@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { Shell, type IdTab } from "@/components/app/shell";
 import { LayarBeranda } from "@/components/layar/beranda";
-import { LayarBerbunyi } from "@/components/layar/berbunyi";
+import { LayarBerbunyiBersuara } from "@/components/layar/berbunyi-suara";
 import { LayarJamMejaSebelum, LayarJamMejaSiaga } from "@/components/layar/jam-meja";
 import { LayarMasihBangun, LayarSelamatPagi } from "@/components/layar/pagi-cek";
 import { JendelaPc, LayarOrientasi, LayarPengaturan } from "@/components/layar/pengaturan-orientasi";
 import { LayarRiwayat } from "@/components/layar/riwayat";
 import { LayarSiaga, LayarUnduhPc } from "@/components/layar/siaga";
 import { LembarUbahAlarm } from "@/components/layar/ubah-alarm";
+import { berkasBunyi } from "@/lib/bunyi/berkas";
 import { useKamus } from "@/lib/i18n/klien";
 import * as C from "@/lib/prototipe/contoh";
 import type { IdLayar } from "@/lib/prototipe/layar";
@@ -18,8 +19,10 @@ const HREF: Record<IdTab, string> = { alarm: "/prototipe/beranda", siaga: "/prot
 const SEMUA_TAB: IdTab[] = ["alarm", "siaga", "riwayat", "pengaturan"];
 
 /** Satu layar prototipe dengan data contoh (P1). Interaksi lokal saja, tidak ada yang tersimpan. */
-export function LayarContoh({ id }: { id: IdLayar }) {
-  const { t } = useKamus();
+export function LayarContoh({ id, cari = {} }: { id: IdLayar; cari?: { berlalu?: number; klip?: boolean } }) {
+  const { t, b: bahasa } = useKamus();
+  // Saat alarm mulai berbunyi: `?berlalu=185` = layar dibuka 185 detik sesudah berbunyi.
+  const [mulaiMs] = useState(() => Date.now() - (cari.berlalu ?? 0) * 1000);
   const [ubahBuka, setUbahBuka] = useState(id === "ubah");
   const [benar, setBenar] = useState(0);
   const sapaan = `${t.waktu.malam}, ${C.NAMA}`;
@@ -77,7 +80,18 @@ export function LayarContoh({ id }: { id: IdLayar }) {
     case "bunyiHitungan":
     case "bunyiQr":
       return (
-        <LayarBerbunyi
+        <LayarBerbunyiBersuara
+          suara={{
+            bunyi: berkasBunyi("klasik"),
+            omelan: cari.klip ? C.OMELAN_PUTAR : C.OMELAN_PUTAR.map((o) => ({ ...o, klip: null })),
+            benih: 2026,
+            mulaiMs,
+            bahasa,
+          }}
+          catat={(p) => {
+            const w = window as unknown as { __pemutar?: unknown[] };
+            (w.__pemutar ??= []).push(p);
+          }}
           jam={C.ALARM_BERIKUTNYA.jam}
           judul={C.ALARM_BERIKUTNYA.judul}
           detail={C.ALARM_BERIKUTNYA.detail}

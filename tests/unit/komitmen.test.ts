@@ -51,6 +51,7 @@ describe("periksa perubahan saat terkunci", () => {
     agendaJudul: "Presentasi",
     agendaDetail: null,
     tuya: [],
+    kalimatPribadi: [],
     komitmen: true,
     aktif: true,
     spam: { kanal: ["tg-1", "wa-1"], jedaDtk: null, batasMenit: null },

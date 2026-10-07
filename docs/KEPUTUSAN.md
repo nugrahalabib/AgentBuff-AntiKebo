@@ -176,3 +176,34 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
   `mesin.ts` dan `layanan/jawab.ts`; rute yang memakai layanan jawab wajib lewat `penjawabDari`
   (sesi pemilik + cek asal, atau token perangkatnya); modul MCP dilarang mengimpor layanan jawab
   atau mesin status dan dilarang punya alat bernama mematikan/menunda/menjawab.
+- **K-54 (2026-10-07, P5) Bunyi alarm berformat WAV PCM 16 bit mono 22,05 kHz**, bukan OGG Opus +
+  MP3 seperti rencana awal `10-SUARA.md`. Alasan: MP3/Opus menambah bantalan senyap di awal dan
+  akhir sehingga putaran ulang terdengar bercelah; WAV bisa diulang tanpa celah di semua peramban dan
+  rodio. Ukuran total 8 bunyi sekitar 1 MB, kecil untuk cache Service Worker. Kekerasan −14 LUFS
+  (ITU-R BS.1770 dengan pembobotan K dan gerbang), puncak sampel ≤ −1,5 dBFS (sisa 0,5 dB untuk
+  puncak antar-sampel supaya ≤ −1 dBTP). Berkas di repo wajib sama persis dengan sintesis ulang (tes).
+- **K-55 (2026-10-07, P5) Kunci klip = sha256 dari versi, bahasa, gaya, id suara, dan teks yang
+  sudah diisi**, tanpa nama penyedia. Alasan: penyedia ditentukan AgentBuff pengguna dan baru
+  diketahui sesudah klip dibuat; mengganti penyedia di AgentBuff tanpa mengganti id suara tetap
+  memakai klip lama sampai teks atau suara berubah. Klip sama dipakai lintas alarm (PRD F7).
+- **K-56 (2026-10-07, P5) Antrean suara:** galat tetap = `belum_diizinkan`, `teks_tidak_sah`,
+  `permintaan_tidak_sah`, `tidak_dikenal`, `klien` (berhenti dan tampil di status alarm); galat lain
+  diulang dengan jeda 1, 2, 4, ... menit, paling lama 6 jam, dan `ulangiSetelahMs` dari AgentBuff
+  dihormati. Begitu izin suara diberi, naskah yang gagal karena belum diizinkan diantre ulang
+  otomatis. Naskah yang ditinggal worker mati lebih dari 5 menit dikembalikan ke antrean.
+- **K-57 (2026-10-07, P5) Isi naskah:** nama sapaan = nama panggilan, atau nama depan dari
+  AgentBuff, atau "kamu". Kalimat agenda hanya dibuat bila judul bukan judul bawaan ("Bangun").
+  Karakter Kustom wajib punya paling sedikit satu kalimat pribadi dan hanya memutar kalimat pribadi
+  (tanpa kalimat waktu, cek, penutup karakter). Hanya alarm aktif yang dimintakan suara.
+- **K-58 (2026-10-07, P5) Pemutar web:** 3 detik pertama bunyi alarm saja, lalu omelan bergantian
+  dengan jeda 3 detik. Bila layar dibuka terlambat dan beberapa menit waktu terlewat sekaligus, hanya
+  kalimat menit terbaru yang diputar. Klip diunduh di depan begitu audio jalan. Klip tidak ada =
+  suara bawaan perangkat berbahasa sama (kecepatan 1,1); tanpa suara perangkat = teks omelan tampil
+  besar dan bunyi tidak diredam. Berkas bunyi gagal dimuat = nada bip 880 Hz dari peramban, jadi
+  alarm tidak pernah diam. Bila peramban menahan audio, tampil ajakan "Ketuk layar"; ketukan apa pun
+  (termasuk papan angka soal) membuka audio.
+- **K-59 (2026-10-07, P5) Klip diunduh lewat `/api/perangkat/klip/[hash]`** dengan token perangkat
+  atau sesi pemilik, `Cache-Control: private, immutable` karena isi klip untuk satu hash tidak pernah
+  berubah. Klip pengguna lain tidak bisa diunduh (RLS + uji).
+- **K-60 (2026-10-07, P5) Bersih-bersih suara:** naskah dan klip yang tidak dibutuhkan alarm mana
+  pun dan tidak dipakai 30 hari dihapus worker.
