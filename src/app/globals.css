@@ -17,7 +17,9 @@
  * - Latar ambient berubah menurut waktu lokal (data-waktu: pagi | siang | sore | malam).
  * - Kaca selalu di atas cahaya (latar ambient), hanya untuk permukaan yang disentuh.
  * - Warna bermakna: toska = hidup/aktif, amber (waspada) = butuh kamu, merah = galat/bahaya.
- *   Tombol utama grafit berbentuk pil. Bara (layar berbunyi) dan Fajar (Selamat pagi) di P1.
+ *   Tombol utama grafit berbentuk pil.
+ * - Bara (gradasi merah-jingga menyala) HANYA untuk layar berbunyi; Fajar (jingga-merah muda
+ *   lembut) untuk Selamat pagi; layar berbunyi, Masih bangun, dan Jam Meja selalu gelap.
  * Komponen HANYA memakai token. Kontras teks semantik diukur >= 4.5:1 di atas
  * --kaca dan --kaca-kuat pada temanya.
  */
@@ -58,6 +60,21 @@
   --pemisah: rgba(60, 60, 67, 0.16);
   --ease-pegas: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-lembut: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* Bara (layar berbunyi, selalu gelap) dan Fajar (Selamat pagi). Sama di kedua tema kecuali Fajar. */
+  --bara-dasar: #140403;
+  --bara-1: #ff3d1f;
+  --bara-2: #ff8a00;
+  --bara-3: #ff2d6f;
+  --fajar-dasar: #fff4ee;
+  --fajar-1: #ffbf94;
+  --fajar-2: #ffa8c8;
+  --fajar-3: #ffe2a8;
+  --fajar-label: #3a1d0e;
+  --fajar-label-2: #6b3d22;
+  /* Seri grafik tunggal (skor bangun), divalidasi dataviz: terang #5b5bd6, gelap #7577ef. */
+  --grafik: #5b5bd6;
+  --grafik-garis: rgba(60, 60, 67, 0.14);
 
   /* Latar ambient (diganti per waktu). */
   --amb-1: #ffd9c2;
@@ -105,6 +122,16 @@
     --toska: #5eead4;
     --grafit: #f5f5f7;
     --grafit-label: #111113;
+    --fajar-dasar: #1a0f12;
+    --fajar-1: #8a3d1e;
+    --fajar-2: #7a2a4f;
+    --fajar-3: #7a5a1e;
+    --fajar-label: #fff1e6;
+    --fajar-label-2: #f3cdb5;
+    --grafik: #7577ef;
+    --grafik-garis: rgba(255, 255, 255, 0.12);
+    --grafik: #7577ef;
+    --grafik-garis: rgba(255, 255, 255, 0.12);
     --pemisah: rgba(255, 255, 255, 0.12);
     --amb-1: #3a2a6b;
     --amb-2: #12345a;
@@ -130,6 +157,14 @@
   --toska: #5eead4;
   --grafit: #f5f5f7;
   --grafit-label: #111113;
+  --fajar-dasar: #1a0f12;
+  --fajar-1: #8a3d1e;
+  --fajar-2: #7a2a4f;
+  --fajar-3: #7a5a1e;
+  --fajar-label: #fff1e6;
+  --fajar-label-2: #f3cdb5;
+  --grafik: #7577ef;
+  --grafik-garis: rgba(255, 255, 255, 0.12);
   --pemisah: rgba(255, 255, 255, 0.12);
   --amb-1: #3a2a6b;
   --amb-2: #12345a;
@@ -159,6 +194,8 @@
   --color-toska-isi: var(--toska-isi);
   --color-grafit: var(--grafit);
   --color-grafit-label: var(--grafit-label);
+  --color-fajar-label: var(--fajar-label);
+  --color-fajar-label-2: var(--fajar-label-2);
   --color-pemisah: var(--pemisah);
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), "Segoe UI", system-ui, sans-serif;
   --font-tampil: -apple-system, BlinkMacSystemFont, "SF Pro Display", var(--font-inter), "Segoe UI", system-ui, sans-serif;
@@ -293,6 +330,118 @@ body {
   line-height: 1.02;
   font-weight: 700;
   letter-spacing: -0.035em;
+}
+
+/* Angka jam: bundar, rata tabel, tebal ringan, sangat besar (Jam iPhone). */
+.t-jam {
+  font-family: var(--font-bundar);
+  font-variant-numeric: tabular-nums;
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+
+/* Layar berbunyi: gelap pekat + cahaya Bara yang berdenyut (diselaraskan dengan suara di P5). */
+.latar-bara {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--bara-dasar);
+  overflow: hidden;
+}
+.latar-bara::before,
+.latar-bara::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(45% 40% at 20% 15%, var(--bara-1) 0%, transparent 70%), radial-gradient(40% 38% at 85% 25%, var(--bara-3) 0%, transparent 70%),
+    radial-gradient(60% 45% at 50% 100%, var(--bara-2) 0%, transparent 70%);
+  opacity: 0.55;
+  animation: bara-denyut 1.4s ease-in-out infinite;
+}
+.latar-bara::after {
+  animation-delay: 0.7s;
+  opacity: 0.3;
+  transform: scale(1.15);
+}
+@keyframes bara-denyut {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.06);
+  }
+}
+
+/* Selamat pagi: gradasi Fajar lembut. */
+.latar-fajar {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(60vmax 45vmax at 15% 0%, var(--fajar-1) 0%, transparent 65%), radial-gradient(55vmax 45vmax at 95% 20%, var(--fajar-2) 0%, transparent 65%),
+    radial-gradient(70vmax 50vmax at 50% 110%, var(--fajar-3) 0%, transparent 60%), var(--fajar-dasar);
+}
+
+/* Kaca di atas latar gelap (layar berbunyi, Masih bangun, Jam Meja). */
+.kaca-gelap {
+  background: rgba(255, 255, 255, 0.09);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  backdrop-filter: blur(30px) saturate(160%);
+  box-shadow:
+    inset 0 0.5px 0 0 rgba(255, 255, 255, 0.22),
+    0 20px 50px -20px rgba(0, 0, 0, 0.7);
+}
+
+/* Roda pemilih jam gaya iOS: tepi atas-bawah memudar. */
+.roda {
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 30%, #000 70%, transparent 100%);
+}
+.roda > * {
+  scroll-snap-align: center;
+}
+
+/* Salah jawab: kartu bergetar sekali. */
+@keyframes getar {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-10px);
+  }
+  40% {
+    transform: translateX(9px);
+  }
+  60% {
+    transform: translateX(-6px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+.getar {
+  animation: getar 0.42s var(--ease-lembut);
+}
+
+/* Teks omelan berjalan kecil di layar berbunyi. */
+@keyframes jalan {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.teks-jalan {
+  animation: jalan 18s linear infinite;
 }
 
 /* Tekan: umpan balik pegas. */

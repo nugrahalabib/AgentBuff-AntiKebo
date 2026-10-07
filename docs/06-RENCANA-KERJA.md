@@ -11,7 +11,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | Paket | Isi | Tempat | Status |
 |---|---|---|---|
 | P0 | Kerangka dari template Tuya + server tiruan AgentBuff | Cloud | Selesai 2026-10-07 |
-| P1 | Prototipe desain semua layar (untuk dinilai Chief) | Cloud | Belum |
+| P1 | Prototipe desain semua layar (untuk dinilai Chief) | Cloud | Selesai 2026-10-07 |
 | P2 | Data, pengulangan, layanan alarm, template, Komitmen | Cloud | Belum |
 | P3 | Penjadwal, kejadian, SSE, perangkat siaga | Cloud | Belum |
 | P4 | Soal, tunda, Masih bangun, Misi QR, anti curang | Cloud | Belum |
@@ -78,17 +78,36 @@ Catatan untuk paket berikutnya:
 
 ## P1 Prototipe desain semua layar
 
+**Status: selesai 2026-10-07.** 15 layar di galeri `/prototipe` (hanya pengembangan/tiruan,
+K-30), 60 tangkapan layar (desktop + 390 px, terang + gelap) di PR P1. Bukti: 36 uji Playwright
+prototipe (tiap layar tanpa galat konsol di kedua ukuran, interaksi soal salah/benar, roda jam
+papan ketik) + seluruh uji P0 hijau dalam mode produksi.
+
 Rujukan: `04-DESAIN.md` seluruhnya.
 
-- [ ] Token, kaca, latar ambient, Bara, Fajar, skala huruf, komponen dasar (tombol, kartu, lembar,
+- [x] Token, kaca, latar ambient, Bara, Fajar, skala huruf, komponen dasar (tombol, kartu, lembar,
       sakelar, segmen, roda jam, papan angka, daftar bergrup, toast, spanduk), maskot Kebo (SVG).
-- [ ] Layar statis dengan data contoh: Beranda, Ubah alarm, Berbunyi (hitungan dan QR), Selamat
-      pagi, Masih bangun, Jam Meja (sebelum dan saat siaga), tab Siaga + halaman unduh PC,
-      Riwayat, Pengaturan, Orientasi, jendela pengaturan aplikasi PC.
-- [ ] Tangkapan layar desktop dan 390 px, terang dan gelap, dilampirkan di PR.
+      (Tambahan: `Penghitung`, `Cip`, `Cincin`, `KotakIkon`; maskot 4 pose: tidur, kaget, segar,
+      netral.)
+- [x] Layar statis dengan data contoh: Beranda (berisi + kosong), Ubah alarm, Berbunyi (hitungan dan
+      QR), Selamat pagi, Masih bangun, Jam Meja (sebelum dan saat siaga), tab Siaga + halaman unduh
+      PC, Riwayat, Pengaturan, Orientasi, jendela pengaturan aplikasi PC.
+- [x] Tangkapan layar desktop dan 390 px, terang dan gelap, dilampirkan di PR.
 
 Selesai bila: PR berisi semua tangkapan layar. Lanjut ke P2 tanpa menunggu; masukan Chief
 dikerjakan di P8/P11 (catat di `KEPUTUSAN.md`).
+
+Catatan untuk paket berikutnya:
+- Layar adalah komponen presentasional murni di `src/components/layar/*` (data lewat props, tipe
+  di `src/lib/tampilan/jenis.ts`). P8/P9/P11 **menyambungkan komponen yang sama** ke API, bukan
+  membuat ulang: P8 = beranda, ubah-alarm, berbunyi, pagi-cek; P9 = jam-meja; P11 = siaga
+  (+ unduh), riwayat, pengaturan-orientasi. Data contoh: `src/lib/prototipe/contoh.ts`.
+- `Shell` sudah 4 tab + bilah samping laptop + tombol "Alarm baru"; `/app` masih memberi tab Alarm
+  dan Pengaturan saja (prop `tab`) sampai halaman Siaga/Riwayat ada.
+- Berbunyi: `periksa` masih lokal di prototipe; P4/P8 wajib mengirim jawaban ke server (kebenaran
+  di server, K-20). Tombol tunda hanya tampil bila jatah ada.
+- P10: jendela Tauri meniru `JendelaPc` (judul, daftar periksa, "Kamu dengar?").
+- Grafik Riwayat memakai token `--grafik` (K-31); P11 tinggal mengisi skor 7/30 hari.
 
 ## P2 Data, pengulangan, layanan alarm, template, Komitmen
 

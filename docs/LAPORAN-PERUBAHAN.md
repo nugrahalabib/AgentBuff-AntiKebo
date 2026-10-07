@@ -3,6 +3,33 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-07 (P1): Rancangan semua layar siap dinilai
+
+**Baru**
+- Semua layar AntiKebo sudah punya rupa, lengkap terang dan gelap, HP dan laptop: Beranda (ada
+  alarm dan masih kosong), Ubah alarm (roda jam, agenda, ulangi, pilihan karakter omelan, soal,
+  tunda, spam chat, rumah pintar), layar **berbunyi** (soal hitungan dan Misi QR), Selamat pagi,
+  "Masih bangun?", Mode Jam Meja (sebelum mulai dan saat siaga), tab Siaga, halaman unduh aplikasi
+  PC dengan panduan layar biru Windows, Riwayat dengan skor dan grafik, Pengaturan, perkenalan
+  pertama 6 langkah, dan jendela aplikasi PC.
+- Kenalan dengan **Kebo**, maskot kerbau yang tidur, kaget, segar, atau santai sesuai suasana.
+- Layar berbunyi sudah bisa dicoba: jawaban salah membuat kartu bergetar, jawaban benar menambah
+  titik. Roda jam bisa digeser jari atau dipakai dengan papan ketik.
+- Semua layar bisa dilihat di galeri `/prototipe` saat pengembangan (tidak ada di aplikasi asli).
+
+**Keputusan**
+- K-30 (layar prototipe dipakai langsung oleh aplikasi), K-31 (warna grafik), K-32 (4 tab).
+
+**Masih butuh Chief**
+- Menilai rancangan dari tangkapan layar di PR P1. Masukan dikerjakan di P8/P11.
+- K-07 masih menunggu.
+
+**Untuk teknisi**
+- Komponen baru: `RodaJam`, `PapanAngka`, `Grup`/`BarisGrup`, `Cincin`, `Penghitung`, `Cip`,
+  `Kebo`; token Bara, Fajar, grafik; `Shell` 4 tab + bilah samping.
+- Bukti: jaga, tsc, lint, format, 65 tes vitest, build, 50 uji Playwright mode produksi (14 P0 + 36
+  prototipe) hijau.
+
 ## 2026-10-07 (P0): Kerangka aplikasi AntiKebo berdiri
 
 **Baru**

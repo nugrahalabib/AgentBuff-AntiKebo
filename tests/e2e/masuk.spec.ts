@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { tangkap as tangkapLayar } from "./bantu";
 
 // P0 ujung ke ujung: halaman depan, /masuk, Masuk dengan AgentBuff lewat server tiruan
 // (OIDC sungguhan: PKCE, id_token ES256, cek hak ketat), izin kabar/suara, beku, keluar.
@@ -14,22 +15,7 @@ async function aturTiruan(sub: string, isi: Record<string, unknown>) {
   expect(r.ok).toBeTruthy();
 }
 
-async function tangkap(page: Page, nama: string) {
-  if (process.env.SIMPAN_TANGKAPAN !== "1") return;
-  const proyek = test.info().project.name;
-  const asli = page.viewportSize()!;
-  // Latar ambient `position: fixed` hanya selebar viewport: viewport dibuat setinggi halaman supaya
-  // tangkapan sama dengan yang dilihat saat menggulir.
-  const tinggi = await page.evaluate(() => document.documentElement.scrollHeight);
-  await page.setViewportSize({ width: asli.width, height: Math.max(asli.height, tinggi) });
-  for (const tema of ["light", "dark"] as const) {
-    await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" });
-    await page.waitForTimeout(200);
-    await page.screenshot({ path: `docs/tangkapan/p0/${nama}-${proyek}-${tema === "light" ? "terang" : "gelap"}.jpg`, type: "jpeg", quality: 82 });
-  }
-  await page.setViewportSize(asli);
-  await page.emulateMedia({ colorScheme: "light" });
-}
+const tangkap = (page: Page, nama: string) => tangkapLayar(page, "p0", nama);
 
 async function masukSebagai(page: Page, nama: string, izin: { kabar: boolean; suara: boolean } = { kabar: true, suara: true }) {
   await page.goto("/masuk");
