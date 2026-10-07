@@ -60,7 +60,7 @@ test("lembar Ubah alarm: buat, ubah, nyala/mati, lewati, hapus", async ({ page }
   await lembar.getByRole("radiogroup", { name: "Tingkat soal" }).getByRole("radio", { name: "Berat" }).click();
   await lembar.getByRole("group", { name: "Jatah tunda" }).getByRole("button", { name: "Tambah" }).click();
   await tangkap(page, "p8", "ubah-alarm", { setinggiHalaman: false });
-  await lembar.getByRole("button", { name: "Simpan" }).click();
+  await lembar.getByRole("button", { name: "Simpan", exact: true }).click();
   // Suara omelan dibuat worker; bila klip yang sama sudah ada (uji sebelumnya), langsung siap.
   await expect(page.getByText(/^Alarm tersimpan\.( Suara omelan sedang dibuat\.)?$/)).toBeVisible();
   await expect(lembar).toHaveCount(0);
@@ -77,7 +77,7 @@ test("lembar Ubah alarm: buat, ubah, nyala/mati, lewati, hapus", async ({ page }
   await expect(ubah.getByText("Hari kerja", { exact: true })).toBeVisible();
   await expect(ubah.getByRole("group", { name: "Jatah tunda" }).locator("output")).toHaveText("3");
   await ubah.getByRole("textbox", { name: "Mau bangun buat apa?" }).fill("Presentasi klien besar");
-  await ubah.getByRole("button", { name: "Simpan" }).click();
+  await ubah.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(ubah).toHaveCount(0);
   await expect(page.getByRole("region", { name: "Alarm berikutnya" }).getByText("Presentasi klien besar")).toBeVisible();
 
@@ -87,11 +87,11 @@ test("lembar Ubah alarm: buat, ubah, nyala/mati, lewati, hapus", async ({ page }
   await kedua.getByRole("textbox", { name: "Mau bangun buat apa?" }).fill("Kuliah pagi");
   // Galat dari server tampil di lembar dengan kalimat ramah; lembar tetap terbuka.
   await kedua.getByRole("radio", { name: "Kustom" }).click();
-  await kedua.getByRole("button", { name: "Simpan" }).click();
+  await kedua.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(kedua.getByRole("alert")).toHaveText(/karakter Kustom butuh paling sedikit satu kalimat pribadi/);
   await kedua.getByRole("button", { name: "Tambah kalimat" }).click();
   await kedua.getByRole("textbox", { name: "Kalimat 1" }).fill("Kuliah jam tujuh, jangan bolos lagi!");
-  await kedua.getByRole("button", { name: "Simpan" }).click();
+  await kedua.getByRole("button", { name: "Simpan", exact: true }).click();
   await expect(kedua).toHaveCount(0);
   const saklar = page.getByRole("switch", { name: "Nyalakan Kuliah pagi" });
   await expect(saklar).toHaveAttribute("aria-checked", "true");
@@ -115,7 +115,7 @@ test("lembar Ubah alarm: buat, ubah, nyala/mati, lewati, hapus", async ({ page }
   await expect(page.getByText("Alarm dihapus.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Ubah alarm Kuliah pagi" })).toHaveCount(0);
   // Satu-satunya galat konsol: penolakan Kustom tanpa kalimat yang memang disengaja.
-  expect(galat).toEqual(["console: Failed to load resource: the server responded with a status of 400 (Bad Request)"]);
+  expect(galat).toEqual([expect.stringMatching(/^console: Failed to load resource: the server responded with a status of 400 \(Bad Request\) @ \/api\/app\/alarm$/)]);
 });
 
 test("uji alarm benar-benar berbunyi 1 menit kemudian: jawab soal, Selamat pagi", async ({ page }, info) => {
@@ -222,6 +222,38 @@ test("dua alarm bersamaan: 1 dari 2, dijawab satu per satu", async ({ page }) =>
   await expect(page.getByRole("heading", { name: "Selamat pagi, Nugi!" })).toBeVisible();
   const status = await denganDb((sql) => sql<{ status: string }[]>`select status from kejadian_alarm where alarm_id in ${sql([a, b])} and status <> 'menunggu'`);
   expect(status.map((x) => x.status)).toEqual(["bangun", "bangun"]);
+});
+
+test("bacaan keadaan lama yang tiba belakangan tidak mengembalikan layar berbunyi sesudah soal terjawab", async ({ page }) => {
+  test.setTimeout(90_000);
+  const galat = pantauGalat(page);
+  await masukSebagai(page, "Nugi Pratama");
+  await expect(page).toHaveURL(/\/app$/);
+  await bersihkan(page);
+  const id = await buatLewatApi(page, { agendaJudul: "Apel pagi", masihBangun: { aktif: false } });
+  await bunyikanSekarang(id);
+  await page.reload();
+  await expect(page).toHaveURL(/\/app\/bunyi\//, { timeout: 30_000 });
+  const kejadian = page.url().split("/").pop()!;
+  // Bacaan pertama sesudah halaman dimuat (saat SSE tersambung) diambil dari server SEKARANG
+  // (masih berbunyi) tetapi baru diserahkan 3 detik kemudian, sesudah soal terjawab: meniru jaringan
+  // lambat di CI. Layar harus tetap Selamat pagi dan tidak meminta soal lagi.
+  let tertahan = 0;
+  await page.route(`**/api/app/kejadian/${kejadian}`, async (route) => {
+    if (route.request().method() !== "GET" || tertahan++ > 0) return route.continue();
+    const jawaban = await route.fetch();
+    await new Promise((r) => setTimeout(r, 3_000));
+    await route.fulfill({ response: jawaban });
+  });
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Apel pagi" })).toBeVisible();
+  await expect.poll(() => tertahan).toBeGreaterThan(0);
+  await jawabHitungan(page);
+  await expect(page.getByRole("heading", { name: "Selamat pagi, Nugi!" })).toBeVisible();
+  await page.waitForTimeout(3_500);
+  await expect(page.getByRole("heading", { name: "Selamat pagi, Nugi!" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Apel pagi" })).toHaveCount(0);
+  expect(galat).toEqual([]);
 });
 
 test("soal ingat angka, ketik kalimat, dan Misi QR saat kamera ditolak (diganti hitungan berat 3 kali)", async ({ page }) => {

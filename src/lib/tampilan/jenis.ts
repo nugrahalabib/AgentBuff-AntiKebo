@@ -45,7 +45,8 @@ export type RingkasPerangkat = {
   siapMalamIni: boolean;
   /** Teks relatif siap tampil ("2 menit lalu"). */
   terakhirTerlihat: string;
-  dicas?: boolean;
+  dicas?: boolean | null;
+  baterai?: number | null;
 };
 
 export type KanalTampil = { id: string; platform: "telegram" | "whatsapp" | "discord" | "slack" | "google_chat"; label: string; siap: boolean; alasan?: string; dipilih: boolean };

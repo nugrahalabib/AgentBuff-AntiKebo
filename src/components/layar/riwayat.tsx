@@ -1,8 +1,8 @@
 "use client";
 
-import { Clock, Download, Flame, Hourglass } from "lucide-react";
-import { useState } from "react";
-import { Segmen, Tombol } from "@/components/ui/dasar";
+import { ChevronDown, Clock, Download, Flame, Hourglass } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Segmen, TautanTombol, Tombol } from "@/components/ui/dasar";
 import { Cincin } from "@/components/ui/cincin";
 import { cn } from "@/lib/cn";
 import { isi } from "@/lib/i18n";
@@ -24,16 +24,24 @@ export function LayarRiwayat({
   labelHari,
   kejadian,
   ekspor,
+  hrefEkspor,
+  pilih,
+  rincian,
 }: {
-  skorHariIni: number;
+  skorHariIni: number | null;
   beruntun: number;
-  rataMenit: number;
+  rataMenit: number | null;
   totalTunda: number;
   skor30: Array<number | null>;
   /** Label tanggal tiap titik skor30 (sama panjang). */
   labelHari: string[];
   kejadian: KejadianRiwayat[];
   ekspor?: () => void;
+  /** Unduhan CSV (PRD K3); bila ada, dipakai sebagai tautan unduh. */
+  hrefEkspor?: string;
+  /** Buka/tutup rincian kejadian (PRD K1). */
+  pilih?: (id: string) => void;
+  rincian?: { id: string; isi: ReactNode } | null;
 }) {
   const { t } = useKamus();
   const R = t.riwayat;
@@ -44,22 +52,29 @@ export function LayarRiwayat({
     <div className="flex flex-col gap-6">
       <header className="flex items-center gap-3 pt-2">
         <h1 className="t-judul-besar muncul flex-1">{R.judul}</h1>
-        <Tombol varian="kaca" ukuran="kecil" onClick={ekspor}>
-          <Download size={16} />
-          {R.ekspor}
-        </Tombol>
+        {hrefEkspor ? (
+          <TautanTombol href={hrefEkspor} download varian="kaca" ukuran="kecil">
+            <Download size={16} />
+            {R.ekspor}
+          </TautanTombol>
+        ) : (
+          <Tombol varian="kaca" ukuran="kecil" onClick={ekspor}>
+            <Download size={16} />
+            {R.ekspor}
+          </Tombol>
+        )}
       </header>
 
       <section className="kaca-kuat flex flex-col items-center gap-5 rounded-[30px] p-6 sm:flex-row sm:items-center">
-        <Cincin nilai={skorHariIni / 100} ukuran={132} tebal={14} warna="var(--grafik)" label={`${R.skorHariIni} ${skorHariIni}`}>
+        <Cincin nilai={(skorHariIni ?? 0) / 100} ukuran={132} tebal={14} warna="var(--grafik)" label={`${R.skorHariIni} ${skorHariIni ?? R.belumAda}`}>
           <span className="flex flex-col items-center">
-            <span className="t-angka text-[40px] leading-none font-bold">{skorHariIni}</span>
+            <span className={cn("t-angka leading-none font-bold", skorHariIni === null ? "text-[22px] text-label-2" : "text-[40px]")}>{skorHariIni ?? R.belumAda}</span>
             <span className="t-keterangan mt-1 text-label-2">{R.skorHariIni}</span>
           </span>
         </Cincin>
         <dl className="grid w-full flex-1 grid-cols-1 gap-2.5 sm:grid-cols-1">
           <Statistik ikon={<Flame size={18} strokeWidth={1.75} />} label={isi(R.beruntun, { n: beruntun })} />
-          <Statistik ikon={<Clock size={18} strokeWidth={1.75} />} label={R.rata} nilai={isi(t.pagi.menit, { n: rataMenit })} />
+          <Statistik ikon={<Clock size={18} strokeWidth={1.75} />} label={R.rata} nilai={rataMenit === null ? R.belumAda : isi(t.pagi.menit, { n: rataMenit })} />
           <Statistik ikon={<Hourglass size={18} strokeWidth={1.75} />} label={R.totalTunda} nilai={String(totalTunda)} />
         </dl>
       </section>
@@ -88,30 +103,60 @@ export function LayarRiwayat({
         <h2 id="judul-kejadian" className="t-subjudul px-1 font-semibold text-label-2">
           {R.kejadian}
         </h2>
-        <ul className="kaca divide-y divide-pemisah overflow-hidden rounded-[22px]">
-          {kejadian.map((k) => (
-            <li key={k.id} className="flex items-center gap-4 px-4 py-3.5">
-              <div className="w-[64px] shrink-0">
-                <p className="t-angka text-[19px] font-semibold">{k.jam}</p>
-                <p className="t-keterangan text-label-2">{k.tanggal}</p>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="t-kepala truncate">{k.judul}</p>
-                <p className="t-keterangan text-label-2">
-                  {k.status === "terlewat" ? R.status.terlewat : isi(R.rincian, { tunda: k.tunda, menit: k.menitSampaiBangun, kanal: k.pesanKanal })}
-                </p>
-              </div>
-              <span
-                className={cn(
-                  "shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold",
-                  k.status === "bangun" ? "bg-berhasil-isi/15 text-berhasil" : k.status === "tidak_bangun" ? "bg-bahaya-isi/12 text-bahaya" : "bg-kaca-isi text-label-2",
-                )}
-              >
-                {k.skor !== null ? `${k.skor}` : R.status[k.status]}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {kejadian.length ? (
+          <ul className="kaca divide-y divide-pemisah overflow-hidden rounded-[22px]">
+            {kejadian.map((k) => {
+              const terbuka = rincian?.id === k.id;
+              const isiBaris = (
+                <>
+                  <div className="w-[76px] shrink-0">
+                    <p className="t-angka text-[19px] font-semibold">{k.jam}</p>
+                    <p className="t-keterangan whitespace-nowrap text-label-2">{k.tanggal}</p>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="t-kepala truncate">{k.judul}</p>
+                    <p className="t-keterangan text-label-2">
+                      {k.status === "terlewat"
+                        ? R.status.terlewat
+                        : k.status === "tidak_bangun"
+                          ? isi(R.rincianTidakBangun, { tunda: k.tunda, kanal: k.pesanKanal })
+                          : isi(R.rincian, { tunda: k.tunda, menit: k.menitSampaiBangun, kanal: k.pesanKanal })}
+                    </p>
+                  </div>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2.5 py-1 text-[13px] font-semibold",
+                      k.status === "bangun" ? "bg-berhasil-isi/15 text-berhasil" : k.status === "tidak_bangun" ? "bg-bahaya-isi/12 text-bahaya" : "bg-kaca-isi text-label-2",
+                    )}
+                  >
+                    {k.skor !== null ? `${k.skor}` : R.status[k.status]}
+                  </span>
+                </>
+              );
+              return (
+                <li key={k.id}>
+                  {pilih ? (
+                    <button
+                      type="button"
+                      aria-expanded={terbuka}
+                      aria-label={`${k.judul}, ${k.jam}. ${terbuka ? R.tutupRincian : R.lihatRincian}`}
+                      onClick={() => pilih(k.id)}
+                      className="flex w-full items-center gap-4 px-4 py-3.5 text-left hover:bg-kaca-isi/60"
+                    >
+                      {isiBaris}
+                      <ChevronDown size={18} className={cn("shrink-0 text-label-3 transition-transform", terbuka && "rotate-180")} aria-hidden />
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-4 px-4 py-3.5">{isiBaris}</div>
+                  )}
+                  {terbuka ? <div className="px-4 pb-4">{rincian.isi}</div> : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="kaca rounded-[22px] p-5 text-[15px] text-label-2">{R.kosong}</p>
+        )}
       </section>
     </div>
   );

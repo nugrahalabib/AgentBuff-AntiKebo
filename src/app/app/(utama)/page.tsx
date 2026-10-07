@@ -5,11 +5,12 @@ import { Spanduk, TautanTombol } from "@/components/ui/dasar";
 import { BAWAAN_SISTEM } from "@/lib/alarm/isi";
 import { sesiSaatIni } from "@/lib/auth/sesi";
 import { kamusServer } from "@/lib/i18n/server";
-import { daftarAlarm } from "@/lib/layanan/alarm";
+import { alarmBerikutnyaUtc, daftarAlarm } from "@/lib/layanan/alarm";
 import { daftarPerangkat } from "@/lib/layanan/perangkat";
 import { ambilPreferensi } from "@/lib/layanan/preferensi";
 import { statusRumah } from "@/lib/layanan/tuya";
 import type { AlarmKlien, FormAlarm } from "@/lib/tampilan/alarm-klien";
+import { siapMalamIni } from "@/lib/tampilan/siap";
 import { waktuHari } from "@/lib/waktu/suasana-hari";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,8 @@ export const dynamic = "force-dynamic";
 export default async function HalamanAlarm() {
   const s = await sesiSaatIni();
   if (!s) redirect("/masuk");
+  // Masuk pertama (atau sesudah hapus data): perkenalan dulu (PRD J).
+  if (!s.pengguna.orientasiSelesai) redirect("/app/orientasi");
   const { t } = await kamusServer();
   const [alarm, perangkat, rumah, pref] = await Promise.all([
     daftarAlarm(s.pengguna.id),
@@ -76,7 +79,7 @@ export default async function HalamanAlarm() {
         nama={nama || t.umum.kamu}
         hariIni={hariIni}
         awal={JSON.parse(JSON.stringify(alarm)) as AlarmKlien[]}
-        perangkat={perangkat.map((p) => ({ id: p.id, jenis: p.jenis, nama: p.nama, siapMalamIni: p.siaga, terakhirTerlihat: "" }))}
+        perangkat={perangkat.map((p) => ({ id: p.id, jenis: p.jenis, nama: p.nama, siapMalamIni: siapMalamIni(p, alarmBerikutnyaUtc(alarm)), terakhirTerlihat: "" }))}
         formBaru={formBaru}
         spanduk={spanduk}
         waktuServer={new Date().getTime()}

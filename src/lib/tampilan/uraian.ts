@@ -52,3 +52,14 @@ export function uraiPengulangan(p: Pengulangan, t: Kamus, b: Bahasa, hariIni: st
       return isi(U.bulananHariKe, { hari: t.hari.panjang[p.hari], ke: U.ke[String(p.ke) as keyof typeof U.ke] });
   }
 }
+
+/** "Baru saja", "5 menit lalu", "3 jam lalu", "2 hari lalu" (tab Siaga). */
+export function waktuRelatif(dulu: Date | string | null, sekarangMs: number, t: Kamus): string {
+  const W = t.siaga.waktu;
+  if (!dulu) return W.belum;
+  const menit = Math.floor((sekarangMs - new Date(dulu).getTime()) / 60_000);
+  if (menit < 1) return W.baruSaja;
+  if (menit < 60) return isi(W.menit, { n: menit });
+  if (menit < 48 * 60) return isi(W.jam, { n: Math.floor(menit / 60) });
+  return isi(W.hari, { n: Math.floor(menit / 1440) });
+}

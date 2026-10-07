@@ -62,6 +62,8 @@ export const PERSONA: Array<Pick<PenggunaTiruan, "sub" | "nama" | "email" | "hak
   { sub: "ab_tiruan_nugi", nama: "Nugi Pratama", email: "nugi@contoh.id", hak: "ok" },
   { sub: "ab_tiruan_rani", nama: "Rani Belum Beli", email: "rani@contoh.id", hak: "belum_beli" },
   { sub: "ab_tiruan_dodi", nama: "Dodi Langganan Habis", email: "dodi@contoh.id", hak: "akses_berakhir" },
+  // Pengguna aktif kedua untuk uji yang mengulang dari nol (perkenalan pertama, hapus semua data).
+  { sub: "ab_tiruan_sari", nama: "Sari Pengguna Baru", email: "sari@contoh.id", hak: "ok" },
 ];
 
 const PESAN_HAK: Record<AlasanHakTiruan | "tidak_dikenal", string> = {

@@ -110,7 +110,7 @@ perlu diulang: `bash scripts/siapkan-lokal.sh` (idempoten, tidak pernah menimpa 
 
 | Perintah | Guna |
 |---|---|
-| `pnpm tiruan` | Server tiruan AgentBuff di `http://127.0.0.1:3199/masuk` (masuk OIDC, cek hak, kanal, pesan, suara). Layar masuknya berisi akun contoh: Nugi (aktif), Rani (belum beli), Dodi (langganan habis) |
+| `pnpm tiruan` | Server tiruan AgentBuff di `http://127.0.0.1:3199/masuk` (masuk OIDC, cek hak, kanal, pesan, suara). Layar masuknya berisi akun contoh: Nugi (aktif), Rani (belum beli), Dodi (langganan habis), Sari (aktif, untuk uji dari nol) |
 | `pnpm dev` | Aplikasi di `http://localhost:3100` (butuh `pnpm tiruan` untuk masuk) |
 | `pnpm worker` | Worker (peran `antikebo_worker`) |
 | `pnpm db:migrate` | Migrasi aditif sebagai `antikebo_migrasi` |

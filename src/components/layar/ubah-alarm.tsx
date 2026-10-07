@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, ChevronDown, Copy, Lock, Play, Plus, Printer, SkipForward, Square, Trash2, X } from "lucide-react";
+import { AlarmClock, BookmarkPlus, ChevronDown, Copy, Lock, Play, Plus, Printer, SkipForward, Square, Trash2, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Penghitung, Saklar, Segmen, TautanTombol, Tombol } from "@/components/ui/dasar";
 import { Lembar } from "@/components/ui/lembar";
@@ -9,8 +9,9 @@ import { berkasBunyi } from "@/lib/bunyi/berkas";
 import { cn } from "@/lib/cn";
 import { isi } from "@/lib/i18n";
 import { useKamus } from "@/lib/i18n/klien";
+import { useDengarContoh } from "@/lib/klien/dengar";
 import { pratinjauBunyi } from "@/lib/suara/pemutar";
-import type { FormAlarm } from "@/lib/tampilan/alarm-klien";
+import { terapkanTemplate, type FormAlarm, type TemplateKlien } from "@/lib/tampilan/alarm-klien";
 import { DAFTAR_BUNYI, DAFTAR_KARAKTER, WARNA_KARAKTER, type KanalTampil, type StatusSuara } from "@/lib/tampilan/jenis";
 import { EditorPengulangan } from "./ubah-pengulangan";
 import { EditorAturanRumah, type DataRumah } from "./ubah-rumah";
@@ -26,8 +27,10 @@ export type AksiAlarm = {
   lewati: () => void;
   gandakan: () => void;
   hapus: () => void;
+  /** Simpan alarm ini sebagai template baru (PRD B10); true bila berhasil. */
+  simpanTemplate?: (nama: string) => Promise<boolean>;
   /** Aksi yang sedang berjalan. */
-  sibuk: "uji" | "lewati" | "gandakan" | "hapus" | null;
+  sibuk: "uji" | "lewati" | "gandakan" | "hapus" | "template" | null;
 };
 
 const JEDA_SPAM = ["bawaan", "30", "60", "120"] as const;
@@ -55,6 +58,7 @@ export function LembarUbahAlarm({
   aksi,
   buatKodeQr,
   dengarSuara,
+  template,
 }: {
   buka: boolean;
   ubahBuka: (v: boolean) => void;
@@ -65,16 +69,19 @@ export function LembarUbahAlarm({
   terkunciJam?: string | null;
   hariIni: string;
   nama: string;
-  simpan: (v: FormAlarm) => void;
+  simpan: (v: FormAlarm, opsi?: { template?: string }) => void;
   menyimpan?: boolean;
   galat?: string | null;
   aksi?: AksiAlarm;
   buatKodeQr?: (nama: string) => Promise<{ id: string; nama: string } | null>;
   dengarSuara?: (suaraId: string | null) => Promise<void>;
+  /** Template untuk alarm baru (PRD B10). */
+  template?: TemplateKlien[];
 }) {
   const { t } = useKamus();
   const U = t.ubah;
   const [v, setV] = useState(awal);
+  const [tpl, setTpl] = useState<string | null>(null);
   const atur = (ubah: Partial<FormAlarm>) => setV((lama) => ({ ...lama, ...ubah }));
   const [lanjutan, setLanjutan] = useState(false);
   const [yakinHapus, setYakinHapus] = useState(false);
@@ -95,7 +102,7 @@ export function LembarUbahAlarm({
               {galat}
             </p>
           ) : null}
-          <Tombol ukuran="besar" className="w-full" disabled={menyimpan || !v.agendaJudul.trim()} onClick={() => simpan(v)}>
+          <Tombol ukuran="besar" className="w-full" disabled={menyimpan || !v.agendaJudul.trim()} onClick={() => simpan(v, tpl ? { template: tpl } : undefined)}>
             {menyimpan ? t.umum.menyimpan : U.simpan}
           </Tombol>
         </div>
@@ -107,6 +114,21 @@ export function LembarUbahAlarm({
             <Lock size={17} className="mt-0.5 shrink-0 text-waspada" />
             {isi(U.terkunci, { jam: terkunciJam })}
           </p>
+        ) : null}
+
+        {baru && template?.length ? (
+          <Bagian judul={U.template}>
+            <PilihanPil
+              label={U.template}
+              nilai={tpl ?? ""}
+              ubah={(id) => {
+                const pilih = template.find((x) => x.id === id);
+                setTpl(pilih ? pilih.id : null);
+                setV(pilih ? terapkanTemplate(awal, pilih.isi) : awal);
+              }}
+              pilihan={[{ nilai: "", label: U.templateKosong }, ...template.map((x) => ({ nilai: x.id, label: x.nama }))]}
+            />
+          </Bagian>
         ) : null}
 
         <RodaJam jam={Number(jamStr)} menit={Number(menitStr)} ubah={ubahJam} labelJam={U.jam} labelMenit={U.menit} />
@@ -303,6 +325,7 @@ export function LembarUbahAlarm({
             <PanelUji aksi={aksi} adaSpam={awal.spam.kanal.length > 0} adaTuya={awal.tuya.length > 0} />
             <TombolAksi ikon={SkipForward} label={U.aksi.lewati} sibuk={aksi.sibuk === "lewati"} onClick={aksi.lewati} nonaktif={!awal.aktif} />
             <TombolAksi ikon={Copy} label={U.aksi.gandakan} sibuk={aksi.sibuk === "gandakan"} onClick={aksi.gandakan} />
+            {aksi.simpanTemplate ? <PanelTemplate simpan={aksi.simpanTemplate} sibuk={aksi.sibuk === "template"} namaAwal={awal.agendaJudul} /> : null}
             {yakinHapus ? (
               <div className="flex flex-wrap items-center gap-2 rounded-[16px] bg-bahaya-isi/10 px-3.5 py-3">
                 <span className="min-w-0 flex-1 text-[15px] font-semibold">{U.aksi.hapusYakin}</span>
@@ -323,7 +346,41 @@ export function LembarUbahAlarm({
   );
 }
 
-function Bagian({ judul, keterangan, children }: { judul: string; keterangan?: string; children: ReactNode }) {
+/** "Simpan sebagai template": nama lalu simpan (PRD B10). */
+function PanelTemplate({ simpan, sibuk, namaAwal }: { simpan: (nama: string) => Promise<boolean>; sibuk: boolean; namaAwal: string }) {
+  const { t } = useKamus();
+  const A = t.ubah.aksi;
+  const [buka, setBuka] = useState(false);
+  const [nama, setNama] = useState(namaAwal);
+  if (!buka) return <TombolAksi ikon={BookmarkPlus} label={A.simpanTemplate} keterangan={A.simpanTemplateKet} onClick={() => setBuka(true)} />;
+  const kirim = async () => {
+    if (await simpan(nama)) setBuka(false);
+  };
+  return (
+    <div className="flex flex-col gap-2 rounded-[16px] bg-kaca-isi px-3.5 py-3">
+      <label className="flex flex-col gap-1.5">
+        <span className="text-[15px] font-semibold">{A.namaTemplate}</span>
+        <input
+          value={nama}
+          maxLength={40}
+          onChange={(e) => setNama(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && void kirim()}
+          className="h-11 rounded-[12px] bg-kaca-isi px-3 text-[16px] outline-none focus-visible:ring-2 focus-visible:ring-aksen-isi"
+        />
+      </label>
+      <div className="flex justify-end gap-2">
+        <Tombol varian="kaca" ukuran="kecil" onClick={() => setBuka(false)}>
+          {t.umum.batal}
+        </Tombol>
+        <Tombol ukuran="kecil" disabled={sibuk || !nama.trim()} onClick={() => void kirim()}>
+          {sibuk ? t.umum.menyimpan : t.umum.simpan}
+        </Tombol>
+      </div>
+    </div>
+  );
+}
+
+export function Bagian({ judul, keterangan, children }: { judul: string; keterangan?: string; children: ReactNode }) {
   return (
     <section className="flex flex-col">
       <h3 className="t-kepala">{judul}</h3>
@@ -334,7 +391,7 @@ function Bagian({ judul, keterangan, children }: { judul: string; keterangan?: s
 }
 
 /** Pilihan tunggal berbentuk pil yang boleh turun baris (pilihan panjang di layar HP). */
-function PilihanPil<T extends string>({ label, nilai, ubah, pilihan }: { label: string; nilai: T; ubah: (v: T) => void; pilihan: Array<{ nilai: T; label: string }> }) {
+export function PilihanPil<T extends string>({ label, nilai, ubah, pilihan }: { label: string; nilai: T; ubah: (v: T) => void; pilihan: Array<{ nilai: T; label: string }> }) {
   return (
     <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-1.5">
       {pilihan.map((p) => (
@@ -356,7 +413,7 @@ function PilihanPil<T extends string>({ label, nilai, ubah, pilihan }: { label: 
   );
 }
 
-function Baris({ label, keterangan, children }: { label: string; keterangan?: string; children: ReactNode }) {
+export function Baris({ label, keterangan, children }: { label: string; keterangan?: string; children: ReactNode }) {
   return (
     <div className="flex min-h-[52px] items-center gap-3 py-1.5">
       <span className="min-w-0 flex-1">
@@ -437,23 +494,11 @@ function PanelUji({ aksi, adaSpam, adaTuya }: { aksi: AksiAlarm; adaSpam: boolea
 }
 
 /** Kartu karakter + tombol dengar (suara bawaan perangkat membacakan contoh kalimatnya). */
-function PilihKarakter({ nilai, ubah, nama }: { nilai: FormAlarm["karakter"]; ubah: (k: FormAlarm["karakter"]) => void; nama: string }) {
+export function PilihKarakter({ nilai, ubah, nama }: { nilai: FormAlarm["karakter"]; ubah: (k: FormAlarm["karakter"]) => void; nama: string }) {
   const { t, b } = useKamus();
   const U = t.ubah;
-  const [diputar, setDiputar] = useState<string | null>(null);
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
-  const dengar = (id: FormAlarm["karakter"]) => {
-    const s = window.speechSynthesis;
-    if (!s) return;
-    s.cancel();
-    if (diputar === id) return setDiputar(null);
-    const u = new SpeechSynthesisUtterance(isi(t.karakter[id].contoh, { nama }));
-    u.lang = b === "id" ? "id-ID" : "en-US";
-    u.rate = 1.05;
-    u.onend = () => setDiputar(null);
-    setDiputar(id);
-    s.speak(u);
-  };
+  const { diputar, dengar: putar } = useDengarContoh(b);
+  const dengar = (id: FormAlarm["karakter"]) => putar(id, isi(t.karakter[id].contoh, { nama }));
   return (
     <div role="radiogroup" aria-label={U.karakter} className="tanpa-gulir -mx-6 flex snap-x gap-2.5 overflow-x-auto px-6 pb-1">
       {DAFTAR_KARAKTER.map((id) => {
@@ -553,7 +598,7 @@ function PilihKanal({ dipilih, ubah, data }: { dipilih: string[]; ubah: (k: stri
   );
 }
 
-function PilihKodeQr({
+export function PilihKodeQr({
   dipilih,
   ubah,
   data,
@@ -625,7 +670,7 @@ function PilihKodeQr({
   );
 }
 
-function PilihBunyi({ nilai, ubah }: { nilai: FormAlarm["bunyi"]; ubah: (b: FormAlarm["bunyi"]) => void }) {
+export function PilihBunyi({ nilai, ubah }: { nilai: FormAlarm["bunyi"]; ubah: (b: FormAlarm["bunyi"]) => void }) {
   const { t } = useKamus();
   const U = t.ubah;
   const henti = useRef<(() => void) | null>(null);
@@ -675,7 +720,17 @@ function PilihBunyi({ nilai, ubah }: { nilai: FormAlarm["bunyi"]; ubah: (b: Form
   );
 }
 
-function PilihSuara({ nilai, ubah, data, dengar }: { nilai: string | null; ubah: (s: string | null) => void; data: DataSuara; dengar?: (s: string | null) => Promise<void> }) {
+export function PilihSuara({
+  nilai,
+  ubah,
+  data,
+  dengar,
+}: {
+  nilai: string | null;
+  ubah: (s: string | null) => void;
+  data: DataSuara;
+  dengar?: (s: string | null) => Promise<void>;
+}) {
   const { t } = useKamus();
   const U = t.ubah;
   const [mendengar, setMendengar] = useState(false);

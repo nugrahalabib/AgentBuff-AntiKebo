@@ -49,8 +49,13 @@ export function LayarAlarmHidup({
   const [berbunyiLain, setBerbunyiLain] = useState<Aktif[]>([]);
   const id = awal.id;
 
+  // Hanya bacaan terbaru yang dipakai: jawaban lama yang tiba belakangan (mis. bacaan saat SSE
+  // tersambung yang lambat) tidak boleh mengembalikan layar "berbunyi" sesudah soal terjawab.
+  const urutanMuat = useRef(0);
   const muat = useCallback(async () => {
+    const ke = ++urutanMuat.current;
     const [r, a] = await Promise.all([panggilApi<{ kejadian: LayarKejadianKlien }>(`/api/app/kejadian/${id}`), panggilApi<{ kejadian: Aktif[] }>("/api/app/kejadian/aktif")]);
+    if (ke !== urutanMuat.current) return;
     if (r.ok) setK(r.data.kejadian);
     if (a.ok) setBerbunyiLain(a.data.kejadian.filter((x) => x.status === "berbunyi").sort((x, y) => x.jadwalUtc.localeCompare(y.jadwalUtc)));
   }, [id]);

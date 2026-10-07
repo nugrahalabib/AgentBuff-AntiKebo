@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Tombol } from "@/components/ui/dasar";
 import { tampilToast } from "@/components/ui/toast";
 import { useKamus } from "@/lib/i18n/klien";
+import { bersihkanPeramban } from "@/lib/klien/bersihkan";
 
 /** Keluar: cabut sesi di server lalu kembali ke halaman depan. */
 export function TombolKeluar() {
@@ -21,24 +22,9 @@ export function TombolKeluar() {
       onClick={async () => {
         setProses(true);
         try {
-          // Peramban ini berhenti menerima notifikasi alarm akun ini (peramban bisa dipakai orang lain).
-          try {
-            const reg = await navigator.serviceWorker?.getRegistration("/");
-            const sub = await reg?.pushManager.getSubscription();
-            if (sub) {
-              await fetch("/api/app/push", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint }) });
-              await sub.unsubscribe();
-            }
-          } catch {
-            // Tidak didukung: lanjut keluar.
-          }
-          // Klip omelan (berisi nama) dan id Jam Meja tidak ditinggal di peramban ini.
-          try {
-            await window.caches?.delete("antikebo-siaga-v1");
-            localStorage.removeItem("antikebo:jam-meja");
-          } catch {
-            // Tidak didukung: lanjut keluar.
-          }
+          // Peramban ini berhenti menerima notifikasi alarm akun ini (peramban bisa dipakai orang lain);
+          // klip omelan (berisi nama) dan id Jam Meja tidak ditinggal.
+          await bersihkanPeramban({ lepasDiServer: true });
           const res = await fetch("/api/keluar", { method: "POST" });
           if (!res.ok) throw new Error(String(res.status));
           router.replace("/");

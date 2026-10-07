@@ -21,7 +21,7 @@ ditiru (`AGENTBUFF_TIRUAN=1`).
 | P8 | Layar inti tersambung API | Cloud | Selesai |
 | P9 | Mode Jam Meja dan PWA | Cloud | Selesai |
 | P10 | Aplikasi PC (Tauri) | Cloud | Selesai |
-| P11 | Orientasi, Siaga, Riwayat, Pengaturan, Template | Cloud | Belum |
+| P11 | Orientasi, Siaga, Riwayat, Pengaturan, Template | Cloud | Selesai |
 | P12 | MCP paritas penuh + SKILL.md | Cloud | Belum |
 | P13 | Mutu, keamanan, aksesibilitas, Inggris, legal | Cloud | Belum |
 | L1 | Pintu kanal, pesan, suara di AgentBuff | Laptop | Belum |
@@ -475,8 +475,39 @@ Catatan untuk paket berikutnya:
 
 ## P11 Orientasi, Siaga, Riwayat, Pengaturan, Template
 
-- [ ] Orientasi (PRD J), tab Siaga, Riwayat + skor (contoh emas) + grafik + ekspor CSV,
+**Status: selesai 2026-10-07.** Bukti di cloud: 626 tes vitest (baru: ringkasan Riwayat murni,
+rincian + CSV + perangkat yang siaga saat berbunyi terhadap migrasi asli, hapus data termasuk tolak
+saat berbunyi dan selama Komitmen) dan 117 uji Playwright mode produksi (baru: perkenalan 6 langkah,
+Pengaturan Kamu, bawaan alarm baru dipakai lembar Alarm baru, template simpan/pakai/ganti
+nama/hapus, kode QR, hapus semua data lalu masuk lagi, tab Siaga, Riwayat + rincian + CSV,
+bacaan keadaan lama tidak mengembalikan layar berbunyi, desktop dan 390 px) seluruhnya hijau; jaga, tsc, lint, format, build hijau; tangkapan layar di PR.
+
+Rujukan: PRD A5, H1, H4, J, K1 sampai K3, M, B10; `04-DESAIN.md` §4.7, §4.9 sampai §4.11.
+
+- [x] Orientasi (PRD J), tab Siaga, Riwayat + skor (contoh emas) + grafik + ekspor CSV,
       Pengaturan lengkap, hapus data, UI template.
+      (Perkenalan `/app/orientasi`, Beranda mengarahkan ke sana selama belum selesai, K-100; tab
+      Siaga dengan "siap malam ini" K-96, ganti nama, putus; Riwayat `src/lib/layanan/riwayat.ts`
+      memakai `src/lib/skor.ts` + rincian K-97 + CSV K-98; Pengaturan `pengaturan-lengkap.tsx`
+      dengan lembar Kamu, bawaan alarm baru K-101, template, kode QR; hapus data K-99; template di
+      lembar alarm baru + "Simpan sebagai template"; akun tiruan Sari K-102.)
+
+Selesai bila: semua layar P1 bagian ini tersambung API dan diuji ujung ke ujung, hapus data
+terbukti menghapus semua tabel milik pengguna, CI hijau.
+
+Catatan untuk paket berikutnya:
+- P12: alat MCP untuk rute baru: `get_history` (pakai `riwayatPengguna`), `get_event_detail`
+  (`rincianKejadian`), `export_history` (CSV, `csvRiwayat`), `list_templates`/`create_template`/
+  `update_template`/`delete_template`/`save_alarm_as_template`, `update_preferences` (nama, zona,
+  bahasa, jam tidur, tema, bawaan, pengingat), `list_devices`/`rename_device`/`disconnect_device`,
+  kode QR. Hapus semua data dan perkenalan: pengecualian di `paritas.ts` (hapus data butuh ketik di
+  web; perkenalan hanya untuk layar). Baris "Agen" (token MCP, cabut) ditambah ke grup Lainnya di
+  `src/components/app/pengaturan-lengkap.tsx`.
+- P13: halaman Privasi + baris Privasi di Pengaturan; aksesibilitas lembar Pengaturan (fokus,
+  pembaca layar) dan grafik Riwayat (tampilan tabel); terjemahan Inggris layar baru sudah ada di
+  kamus `en`, periksa ulang gaya bahasanya.
+- L2: perkenalan di HP asli (pasang ke layar utama, izin notifikasi, Jam Meja dari langkah 3) dan
+  di PC Windows (tombol Pasang di PC ini) wajib diuji.
 
 ## P12 MCP paritas penuh + SKILL.md
 

@@ -57,6 +57,13 @@
       "when": 1791379614021,
       "tag": "0007_tuya",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791394580330,
+      "tag": "0008_riwayat",
+      "breakpoints": true
     }
   ]
 }

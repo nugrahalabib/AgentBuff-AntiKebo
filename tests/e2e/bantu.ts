@@ -13,8 +13,17 @@ export async function aturTiruan(sub: string, isi: Record<string, unknown>) {
   expect(r.ok).toBeTruthy();
 }
 
-/** Masuk dengan AgentBuff lewat layar pilih akun server tiruan. */
-export async function masukSebagai(page: Page, nama: string, izin: { kabar: boolean; suara: boolean } = { kabar: true, suara: true }, mulai = "/masuk") {
+/**
+ * Masuk dengan AgentBuff lewat layar pilih akun server tiruan. Perkenalan pertama (PRD J) diuji
+ * sendiri di orientasi.spec.ts; tanpa `orientasi: true` perkenalan ditandai selesai lalu ke Beranda.
+ */
+export async function masukSebagai(
+  page: Page,
+  nama: string,
+  izin: { kabar: boolean; suara: boolean } = { kabar: true, suara: true },
+  mulai = "/masuk",
+  opsi: { orientasi?: boolean } = {},
+) {
   await page.goto(mulai);
   if (mulai === "/masuk") await page.getByRole("link", { name: "Masuk dengan AgentBuff" }).click();
   await expect(page.getByRole("heading", { name: "Masuk ke AntiKebo" })).toBeVisible();
@@ -22,6 +31,15 @@ export async function masukSebagai(page: Page, nama: string, izin: { kabar: bool
   await page.getByLabel("Kirim pesan lewat agenmu").setChecked(izin.kabar);
   await page.getByLabel("Buat suara memakai pengaturan suaramu").setChecked(izin.suara);
   await page.getByRole("button", { name: "Lanjutkan" }).click();
+  await page.waitForURL((u) => u.origin !== TIRUAN && !u.pathname.startsWith("/auth/"));
+  if (!opsi.orientasi && new URL(page.url()).pathname === "/app/orientasi") {
+    const ok = await page.evaluate(async () => {
+      const r = await fetch("/api/app/preferensi", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ orientasiSelesai: true }) });
+      return r.ok;
+    });
+    expect(ok).toBeTruthy();
+    await page.goto("/app");
+  }
 }
 
 /**
@@ -51,7 +69,10 @@ export function pantauGalat(page: Page): string[] {
   const galat: string[] = [];
   page.on("pageerror", (e) => galat.push(`pageerror: ${e.message}`));
   page.on("console", (m) => {
-    if (m.type() === "error") galat.push(`console: ${m.text()}`);
+    if (m.type() !== "error") return;
+    // Sumber daya gagal dimuat: sertakan jalurnya supaya galat di CI bisa ditelusuri.
+    const url = m.text().startsWith("Failed to load resource") ? m.location().url : "";
+    galat.push(`console: ${m.text()}${url ? ` @ ${new URL(url).pathname}` : ""}`);
   });
   return galat;
 }

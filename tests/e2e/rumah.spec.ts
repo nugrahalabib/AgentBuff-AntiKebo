@@ -79,7 +79,7 @@ test("sambung rumah lewat wizard, lihat perangkat per ruangan, uji lampu", async
   await page.getByRole("button", { name: "Lanjutan" }).click();
   await expect(page.getByRole("switch", { name: "Nyalakan lapisan darurat" })).toHaveAttribute("aria-checked", "true");
   // Satu-satunya galat konsol: penolakan kunci salah yang memang disengaja di awal.
-  expect(galat).toEqual(["console: Failed to load resource: the server responded with a status of 400 (Bad Request)"]);
+  expect(galat).toEqual([expect.stringMatching(/^console: Failed to load resource: the server responded with a status of 400 \(Bad Request\) @ \/api\/app\/rumah/)]);
 });
 
 test("kunci ditolak Tuya: spanduk perbaikan di Rumah pintar dan Beranda, perbarui kunci", async ({ page }) => {

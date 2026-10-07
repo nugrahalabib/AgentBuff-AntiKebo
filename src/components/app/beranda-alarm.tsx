@@ -9,7 +9,7 @@ import { useKamus } from "@/lib/i18n/klien";
 import { panggilApi } from "@/lib/klien/api";
 import { useDetik } from "@/lib/klien/jam";
 import { usePeristiwa } from "@/lib/klien/peristiwa";
-import { alarmPalingDulu, bedaForm, formDari, ringkasAlarm, type AlarmKlien, type FormAlarm } from "@/lib/tampilan/alarm-klien";
+import { alarmPalingDulu, bedaForm, formDari, ringkasAlarm, type AlarmKlien, type FormAlarm, type TemplateKlien } from "@/lib/tampilan/alarm-klien";
 import type { KanalTampil, RingkasPerangkat } from "@/lib/tampilan/jenis";
 import type { PerangkatAturan } from "@/components/layar/ubah-rumah";
 
@@ -52,6 +52,11 @@ export function BerandaAlarm({
   const [galat, setGalat] = useState<string | null>(null);
   const [sibuk, setSibuk] = useState<AksiAlarm["sibuk"]>(null);
   const [data, setData] = useState<DataUbah>(DATA_AWAL);
+  const [template, setTemplate] = useState<TemplateKlien[]>([]);
+  const muatTemplate = useCallback(async () => {
+    const r = await panggilApi<{ template: TemplateKlien[] }>("/api/app/template");
+    if (r.ok) setTemplate(r.data.template);
+  }, []);
   const dataDimuat = useRef(false);
   const kini = useDetik(waktuServer, 60) * 1000;
 
@@ -100,8 +105,9 @@ export function BerandaAlarm({
       setLembar((l) => ({ id, kunci: (l?.kunci ?? 0) + 1 }));
       setLembarBuka(true);
       void muatData();
+      void muatTemplate();
     },
-    [muatData],
+    [muatData, muatTemplate],
   );
 
   // `/app?alarm=baru` (tombol + di bilah samping) atau `/app?alarm=<id>`.
@@ -119,12 +125,12 @@ export function BerandaAlarm({
 
   const ganti = (a: AlarmKlien) => setDaftar((d) => (d.some((x) => x.id === a.id) ? d.map((x) => (x.id === a.id ? a : x)) : [...d, a]));
 
-  const simpan = async (v: FormAlarm) => {
+  const simpan = async (v: FormAlarm, opsi?: { template?: string }) => {
     setMenyimpan(true);
     setGalat(null);
     const r = alarmLembar
       ? await panggilApi<{ alarm: AlarmKlien }>(`/api/app/alarm/${alarmLembar.id}`, "PATCH", bedaForm(formDari(alarmLembar), v))
-      : await panggilApi<{ alarm: AlarmKlien }>("/api/app/alarm", "POST", v);
+      : await panggilApi<{ alarm: AlarmKlien }>(`/api/app/alarm${opsi?.template ? `?template=${encodeURIComponent(opsi.template)}` : ""}`, "POST", v);
     setMenyimpan(false);
     if (!r.ok) return setGalat(r.pesan ?? t.umum.galatUmum);
     ganti(r.data.alarm);
@@ -184,6 +190,18 @@ export function BerandaAlarm({
           tampilToast(U.aksi.digandakan);
         },
         hapus: () => void hapus(alarmLembar.id),
+        simpanTemplate: async (namaTpl) => {
+          setSibuk("template");
+          const r = await panggilApi(`/api/app/alarm/${alarmLembar.id}/template`, "POST", { nama: namaTpl });
+          setSibuk(null);
+          if (!r.ok) {
+            tampilToast(r.pesan ?? t.umum.galatUmum, "galat");
+            return false;
+          }
+          tampilToast(U.aksi.templateDisimpan);
+          void muatTemplate();
+          return true;
+        },
       }
     : undefined;
 
@@ -200,7 +218,7 @@ export function BerandaAlarm({
         lainnya={daftar.filter((a) => a.id !== berikutnya?.id).map((a) => ringkasAlarm(a, b))}
         perangkat={perangkat}
         hrefTambah="/app?alarm=baru"
-        hrefSiaga="/app/jam-meja"
+        hrefSiaga="/app/siaga"
         spanduk={spanduk}
         tambah={() => bukaLembar(null)}
         buka={(id) => bukaLembar(id)}
@@ -219,7 +237,8 @@ export function BerandaAlarm({
           terkunciJam={alarmLembar?.terkunciJam}
           hariIni={hariIni}
           nama={nama}
-          simpan={(v) => void simpan(v)}
+          simpan={(v, opsi) => void simpan(v, opsi)}
+          template={template}
           menyimpan={menyimpan}
           galat={galat}
           aksi={aksi}

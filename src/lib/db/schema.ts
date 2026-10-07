@@ -212,6 +212,8 @@ export const templateAlarm = pgTable(
   (t) => [uniqueIndex("template_alarm_nama_unik").on(t.penggunaId, sql`lower(${t.nama})`)],
 );
 
+export type PerangkatBerbunyi = { id: string; nama: string; jenis: string };
+
 /**
  * Satu bunyi alarm. Setiap alarm aktif punya TEPAT SATU kejadian `menunggu` (indeks unik parsial)
  * untuk jadwal berikutnya, dibuat di transaksi yang sama dengan perubahan alarm (arsitektur §4).
@@ -250,6 +252,8 @@ export const kejadianAlarm = pgTable(
     /** Siapa yang menghentikan: sesi | perangkat | luring | batas. */
     selesaiOleh: text("selesai_oleh"),
     perangkatSelesai: uuid("perangkat_selesai"),
+    /** P11: perangkat siaga (detak < 2 menit) saat mulai berbunyi, salinan nama untuk Riwayat (PRD K1). */
+    perangkatBerbunyi: jsonb("perangkat_berbunyi").$type<PerangkatBerbunyi[]>().notNull().default([]),
     dibuat: dibuat(),
     diubah: waktu("diubah").notNull().defaultNow(),
   },
