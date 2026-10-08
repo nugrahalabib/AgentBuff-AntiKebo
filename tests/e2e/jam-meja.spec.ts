@@ -101,6 +101,34 @@ test("Jam Meja: mulai siaga, jadi perangkat siaga, simpan bunyi, alarm berbunyi 
   expect(galat).toEqual([]);
 });
 
+test("Jam Meja: soal tidak diambil ulang saat layar digambar ulang, tanpa 400 sesudah terjawab", async ({ page }) => {
+  test.setTimeout(120_000);
+  const galat = pantauGalat(page);
+  await masukSebagai(page, "Nugi Pratama");
+  await expect(page).toHaveURL(/\/app$/);
+  await bersihkan(page);
+  const id = await buatLewatApi(page, { agendaJudul: "Rapat pagi", masihBangun: { aktif: false } });
+  await mulaiSiaga(page);
+  const ambilSoal: string[] = [];
+  page.on("request", (r) => {
+    if (r.method() === "GET" && /^\/api\/kejadian\/[^/]+\/soal$/.test(new URL(r.url()).pathname)) ambilSoal.push(r.url());
+  });
+  await bunyikanSekarang(id);
+  await expect(page.getByRole("heading", { name: "Rapat pagi" })).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator("section[aria-label] p.t-jam").first()).toBeVisible();
+  const awal = ambilSoal.length;
+  expect(awal).toBeGreaterThan(0);
+  // Jam halaman berdetak tiap 15 dtk dan layar membaca ulang keadaan tiap 15 dtk: keduanya
+  // menggambar ulang layar alarm, tetapi soal yang sama tidak boleh diambil lagi. Dulu setiap
+  // gambar ulang mengambil soal lagi; sesudah soal terakhir terjawab hasilnya 400.
+  await page.waitForTimeout(16_500);
+  expect(ambilSoal).toHaveLength(awal);
+  await jawabHitungan(page);
+  await expect(page.getByRole("heading", { name: "Selamat pagi, Nugi!" })).toBeVisible();
+  expect(ambilSoal).toHaveLength(awal);
+  expect(galat).toEqual([]);
+});
+
 test("Jam Meja saat koneksi putus: berbunyi sendiri dari simpanan, soal muncul begitu koneksi kembali", async ({ page, context }) => {
   test.setTimeout(150_000);
   await masukSebagai(page, "Nugi Pratama");

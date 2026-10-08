@@ -15,6 +15,13 @@ Chief ditaruh di "Menunggu Chief" sampai dijawab, sementara pekerjaan lain tetap
   "AntiKebo di Marketplace AgentBuff" dan kontak support@agentbuff.id tanpa nama badan hukum.
   Rekomendasi: Chief mengisi nama badan hukum pengendali data dan meminta tinjauan ahli hukum sebelum
   terbit (naskah sudah sesuai kenyataan sistem). Sampai dijawab, naskah tetap seperti sekarang.
+- **K-116 (2026-10-08) Kabar beku lewat kanal untuk akun yang haknya berakhir.** Kabar "aksesmu
+  berakhir" dan peringatan malam sebelum alarm ditahan dikirim lewat `/masuk/kabar`, tetapi kontrak
+  (05 §4, urutan K-25) memeriksa hak lebih dulu sehingga pintu asli akan menjawab `tidak_berhak` dan
+  hanya notifikasi web yang sampai. Rekomendasi: `/masuk/kabar` tetap menerima pesan selama 96 jam
+  sesudah hak berakhir (tenggang 3 hari + malam sebelumnya) dengan izin dan batas jeda yang sama;
+  diputuskan dan dibangun saat L1, lalu 05 §4, tiruan, dan `tests/integrasi/beku.test.ts` disesuaikan
+  (`SISA-PEKERJAAN.md` §2).
 
 ## Sudah diputuskan
 

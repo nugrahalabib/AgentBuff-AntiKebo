@@ -13,9 +13,11 @@
   hari, kabar, jalur bangun tidak pernah dibekukan), batas laju di semua rute, Komitmen mengunci putus
   perangkat/rumah, anggaran performa, dan bahan `integrasi-portal/`.
   Berikutnya: paket **laptop** L1 (pintu kanal, pesan, suara di AgentBuff), L2 (rilis uji, uji PC dan
-  HP asli, naskah pembaca layar `AKSESIBILITAS.md` §2), L3 (gerbang rilis, terbitkan). Acuan L1:
-  `tests/integrasi/tiruan-kontrak.test.ts`.
-- Menunggu Chief: K-07 (angka tenggang beku), K-114a (badan hukum pengendali data, tinjauan hukum)
+  HP asli, naskah pembaca layar `AKSESIBILITAS.md` §2), L3 (gerbang rilis, terbitkan).
+  **Sesi laptop mulai dari `SISA-PEKERJAAN.md`** (daftar lengkap yang masih kurang, urutan, dan
+  celah kabar beku lewat kanal yang harus diputuskan saat L1).
+- Menunggu Chief: K-07 (angka tenggang beku), K-114a (badan hukum pengendali data, tinjauan hukum),
+  K-116 (kabar beku lewat kanal untuk akun yang haknya berakhir)
   (`KEPUTUSAN.md`).
 
 (Perbarui bagian ini di akhir setiap sesi: tanggal, paket yang selesai, paket berikutnya.)
@@ -37,6 +39,7 @@
 | `10-SUARA.md` | Bunyi alarm, karakter omelan, pola jeda 3 detik, pembuatan suara | P5, P9, P10 |
 | `11-ALAT-MCP.md` | Alat MCP paritas penuh, pengecualian, `SKILL.md` | P12 |
 | `GERBANG-RILIS.md` | Syarat sebelum dijual | P13, L3 |
+| `SISA-PEKERJAAN.md` | Serah terima ke sesi laptop: semua yang masih kurang sampai terbit | L1, L2, L3 |
 | `AKSESIBILITAS.md` | Bukti audit aksesibilitas otomatis + naskah uji pembaca layar di perangkat asli | P13, L2 |
 | `../integrasi-portal/` | Bahan listing id/en dan draf skrip bukti untuk sesi laptop | L2, L3 |
 | `KEPUTUSAN.md` | Keputusan dan yang menunggu Chief | Saat ragu dan saat memutuskan hal baru |

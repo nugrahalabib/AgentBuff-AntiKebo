@@ -7,7 +7,7 @@ AntiKebo baru boleh diterbitkan bila semua butir hijau dan buktinya tercatat. Ac
 |---|---|---|---|
 | 1 | **Ujung ke ujung di produksi:** beli, masuk, izin, orientasi, buat alarm dari web dan dari chat agen, berbunyi, soal, bangun, Masih bangun, cabut hak, beku, perpanjang | Skrip bukti di VPS, semua lulus | Belum |
 | 2 | **Ketepatan:** p95 keterlambatan < 2 dtk selama 24 jam uji (≥ 200 kejadian), tidak dobel, restart worker di tengah alarm pulih benar, berhenti ≤ 2 dtk di semua perangkat | Laporan metrik | Belum |
-| 3 | **Aplikasi PC:** 8 uji manual `09-APLIKASI-PC.md` §9 lulus di PC Chief | Catatan + video | Belum |
+| 3 | **Aplikasi PC:** 10 uji manual `09-APLIKASI-PC.md` §9 lulus di PC Chief | Catatan + video | Belum |
 | 4 | **Jam Meja di HP asli:** iPhone (saklar senyap, layar redup) dan Android (layar redup, tab di latar, baterai) diuji; listing hanya menjanjikan yang terbukti | Catatan di `KEPUTUSAN.md` | Belum |
 | 5 | **Suara:** klip dibuat lewat pintu AgentBuff asli untuk pengguna tanpa kunci (suara gratis) dan dengan kunci penyedia; cadangan suara perangkat jalan saat pintu gagal | Skrip bukti + rekaman | Belum |
 | 6 | **Spam kanal:** pesan sampai di Telegram dan WhatsApp asli lewat bot agen, jeda dipatuhi, berhenti saat bangun | Bukti kanal asli | Belum |
