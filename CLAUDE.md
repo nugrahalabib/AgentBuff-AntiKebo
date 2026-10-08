@@ -91,7 +91,8 @@ Cek `CLAUDE_CODE_REMOTE`. Bila `true`, kamu di cloud:
 - Kerjakan di cabang sendiri, buka PR, **gabungkan sendiri ke `main`** bila jaga, tsc, lint, tes,
   build hijau. Lampirkan tangkapan layar UI di PR.
 
-Di laptop Chief: paket L1 sampai L3 (pintu AgentBuff, rilis, uji PC dan HP asli). Chief ingin
+Di laptop Chief: paket L1 sampai L3 (pintu AgentBuff, rilis, uji PC dan HP asli). Mulai dari
+`docs/SISA-PEKERJAAN.md`. Chief ingin
 langsung push dan deploy tanpa ditanya, kecuali tindakan yang merusak data atau memutar kunci.
 
 ## 7. Akhir setiap sesi

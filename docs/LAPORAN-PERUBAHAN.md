@@ -3,6 +3,25 @@
 Entri terbaru di paling atas. Ditulis dari sisi pengguna dengan bahasa sehari-hari. Kelompok:
 Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untuk teknisi.
 
+## 2026-10-08: Catatan serah terima ke sesi laptop
+
+**Baru**
+- `docs/SISA-PEKERJAAN.md`: satu catatan rapi berisi semua yang masih kurang sampai AntiKebo dijual,
+  berurutan: pintu kanal, pesan, dan suara di AgentBuff (satu-satunya yang masih harus dibangun),
+  menyiapkan produk di AgentBuff, memasang server, uji di PC dan HP asli, bukti produksi, terbit, dan
+  keputusan yang menunggu Chief. Dirujuk dari `CLAUDE.md`, `00-MULAI-DI-SINI.md`, dan rencana kerja.
+
+**Kesalahan**
+- Kabar "aksesmu berakhir" dan peringatan malam sebelum alarm ditahan dikirim lewat pintu pesan
+  AgentBuff, padahal menurut kontrak pintu itu menolak akun yang haknya sudah berakhir. Di dunia nyata
+  pesan kanal itu tidak akan sampai, hanya notifikasi web. Tes cloud tidak menangkapnya karena server
+  tiruan masih menganggap hak aktif. Dicatat sebagai keputusan L1 dengan rekomendasi (pintu pesan
+  tetap menerima selama 96 jam sesudah hak berakhir).
+
+**Diubah**
+- Gerbang rilis butir 3 kini menyebut 10 uji manual aplikasi PC, sesuai daftar di
+  `09-APLIKASI-PC.md` §9 (sebelumnya tertulis 8).
+
 ## 2026-10-07: Status gerbang rilis dirapikan
 
 **Diubah**

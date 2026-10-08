@@ -570,6 +570,9 @@ Catatan untuk paket berikutnya:
 - L3: ukur LCP/INP/CLS di HP asli terhadap produksi; skrip bukti dari `integrasi-portal/bukti.md`;
   Chief mengisi nama badan hukum pengendali data dan meminta tinjauan hukum (K-114a).
 
+Paket laptop L1 sampai L3: daftar lengkap yang masih kurang, urutan, dan keputusan terbuka ada di
+`SISA-PEKERJAAN.md` (serah terima 2026-10-08).
+
 ## L1 Pintu kanal, pesan, suara di AgentBuff (Laptop, repo AgentBuff)
 
 Kontrak `05-INTEGRASI-AGENTBUFF.md` §4, §5. Rincian teknis ada di repo AgentBuff (privat). Selesai
