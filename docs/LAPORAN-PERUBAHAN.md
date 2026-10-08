@@ -11,6 +11,15 @@ Baru, Diperbaiki, Diubah, Dihapus, Keputusan, Kesalahan, Masih butuh Chief, Untu
   menyiapkan produk di AgentBuff, memasang server, uji di PC dan HP asli, bukti produksi, terbit, dan
   keputusan yang menunggu Chief. Dirujuk dari `CLAUDE.md`, `00-MULAI-DI-SINI.md`, dan rencana kerja.
 
+**Diperbaiki**
+- Layar alarm tidak lagi meminta soal berulang kali ke server. Dulu setiap kali layar digambar ulang
+  (jam halaman berdetak, bacaan ulang tiap 15 detik), soal yang sama diminta lagi: dalam 16 detik
+  bisa 6 kali. Sesekali permintaan itu datang tepat sesudah soal terakhir terjawab, sehingga server
+  menjawab "alarm tidak berbunyi" dan pesan galat sempat muncul. Secara teori pola itu juga bisa
+  membuat soal lama menimpa soal baru di layar (belum pernah terlihat); jalur itu ikut tertutup. Kini
+  soal hanya diminta saat alarm atau mode (bangun/tunda) berganti. Ditemukan CI dan dibuktikan dengan uji baru
+  di `tests/e2e/jam-meja.spec.ts` yang gagal sebelum perbaikan.
+
 **Kesalahan**
 - Kabar "aksesmu berakhir" dan peringatan malam sebelum alarm ditahan dikirim lewat pintu pesan
   AgentBuff, padahal menurut kontrak pintu itu menolak akun yang haknya sudah berakhir. Di dunia nyata

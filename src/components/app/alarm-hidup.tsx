@@ -106,6 +106,13 @@ function SaatBerbunyi({ k, urutan, muat, konteks }: { k: LayarKejadianKlien; uru
   const [galat, setGalat] = useState<string | null>(null);
 
   const [mulaiCadangan] = useState(() => Date.now());
+  // `muat` dari induk berganti identitas setiap gambar ulang (jam halaman, bacaan ulang tiap 15 dtk).
+  // Lewat ref supaya soal hanya diambil saat kejadian atau mode berganti, bukan setiap gambar ulang:
+  // dulu soal terambil berulang kali dan, sesudah soal terakhir terjawab, berakhir 400.
+  const muatTerbaru = useRef(muat);
+  useEffect(() => {
+    muatTerbaru.current = muat;
+  });
   const terapkan = useCallback(
     (r: Awaited<ReturnType<typeof ambilSoal>>) => {
       if (r.ok) {
@@ -113,10 +120,10 @@ function SaatBerbunyi({ k, urutan, muat, konteks }: { k: LayarKejadianKlien; uru
         setSoal(r.data.soal);
       } else {
         setGalat(r.pesan ?? t.umum.galatUmum);
-        muat();
+        muatTerbaru.current();
       }
     },
-    [muat, t.umum.galatUmum],
+    [t.umum.galatUmum],
   );
   const ambil = useCallback((tujuan: "bangun" | "tunda") => void ambilSoal(k.id, tujuan).then(terapkan), [k.id, terapkan]);
 
